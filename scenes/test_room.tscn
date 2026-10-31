@@ -1,6 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="2_camera"]
+[ext_resource type="PackedScene" path="res://scenes/dummy_enemy.tscn" id="3_dummy"]
 
 [sub_resource type="RectangleShape2D" id="Shape_floor_a"]
 size = Vector2(1000, 80)
@@ -11,7 +13,15 @@ size = Vector2(1208, 80)
 [sub_resource type="RectangleShape2D" id="Shape_plat"]
 size = Vector2(200, 24)
 
+[sub_resource type="RectangleShape2D" id="Shape_pillar"]
+size = Vector2(32, 96)
+
 [node name="TestRoom" type="Node2D"]
+
+[node name="Backdrop" type="Polygon2D" parent="."]
+z_index = -10
+color = Color(0.42, 0.36, 0.3, 1)
+polygon = PackedVector2Array(-1000, -1000, 3400, -1000, 3400, 1600, -1000, 1600)
 
 [node name="FloorA" type="StaticBody2D" parent="."]
 position = Vector2(500, 640)
@@ -53,9 +63,20 @@ shape = SubResource("Shape_plat")
 color = Color(0.784314, 0.392157, 0.231373, 1)
 polygon = PackedVector2Array(-100, -12, 100, -12, 100, 12, -100, 12)
 
+[node name="Pillar" type="StaticBody2D" parent="."]
+position = Vector2(880, 552)
+
+[node name="Shape" type="CollisionShape2D" parent="Pillar"]
+shape = SubResource("Shape_pillar")
+
+[node name="Art" type="Polygon2D" parent="Pillar"]
+color = Color(0.784314, 0.392157, 0.231373, 1)
+polygon = PackedVector2Array(-16, -48, 16, -48, 16, 48, -16, 48)
+
+[node name="DummyEnemy" parent="." instance=ExtResource("3_dummy")]
+position = Vector2(600, 568)
+
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector2(150, 568)
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
-position_smoothing_enabled = true
-position_smoothing_speed = 6.0
+[node name="GameCamera" parent="Player" instance=ExtResource("2_camera")]
