@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/gaze.gd" id="1_gaze"]
+
+[node name="Gaze" type="Area2D"]
+collision_layer = 32
+collision_mask = 4
+monitorable = false
+script = ExtResource("1_gaze")
+
+[node name="Shape" type="CollisionPolygon2D" parent="."]
+
+[node name="Cone" type="Polygon2D" parent="."]
+visible = false

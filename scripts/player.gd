@@ -5,9 +5,9 @@
 class_name Player
 extends CharacterBody2D
 
-## All the things Medusa can be doing. WHIP, GAZE, HURT and DEAD are stubs for now:
-## the player simply falls and slows down while in them. Later features
-## (whip.gd, gaze.gd, the portrait) will call enter_state() to use them.
+## All the things Medusa can be doing. In WHIP, GAZE, HURT and DEAD she simply
+## falls and slows down (no movement input). GAZE is entered while K is held and
+## read by the Gaze child; WHIP, HURT and DEAD wait for the whip and portrait.
 enum State { IDLE, RUN, JUMP, FALL, WHIP, GAZE, HURT, DEAD }
 
 ## Fired whenever the state changes (animation, audio and VFX can listen).
@@ -28,6 +28,13 @@ var _buffer_left: float = 0.0
 
 
 func _physics_process(delta: float) -> void:
+	# Gaze roots Medusa while held: she brakes, still falls, and cannot turn.
+	# Releasing K hands control back to the normal locomotion states.
+	if Input.is_action_pressed("gaze") and can_gaze():
+		enter_state(State.GAZE)
+	elif state == State.GAZE:
+		_update_locomotion_state(0.0)
+
 	# Stub states: no player control yet, but keep physics sane (gravity + slow down).
 	if state in [State.WHIP, State.GAZE, State.HURT, State.DEAD]:
 		_process_stub_state(delta)
@@ -65,6 +72,11 @@ func enter_state(new_state: State) -> void:
 	var old: State = state
 	state = new_state
 	state_changed.emit(old, new_state)
+
+
+## False while whipping (anticipation through recovery), hurt or dead.
+func can_gaze() -> bool:
+	return state not in [State.WHIP, State.HURT, State.DEAD]
 
 
 ## Remember the last non-zero direction and mirror the art to match.
