@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+  shell.html - placeholder custom HTML shell for the Web export.
+  Purpose: image-only loading (no Godot logo text, no percentage) and a canvas that
+  fills the window. The Godot export fills in the $GODOT_* placeholders.
+  P16 (webcam) and P18 (hardening) extend this file.
+-->
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no">
+	<title>Medusa's Price</title>
+	<style>
+		html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+		canvas { display: block; width: 100%; height: 100%; outline: none; }
+	</style>
+	$GODOT_HEAD_INCLUDE
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+	<script src="$GODOT_URL"></script>
+	<script>
+		const GODOT_CONFIG = $GODOT_CONFIG;
+		const engine = new Engine(GODOT_CONFIG);
+		// No progress UI on purpose: the game shows no text or numbers.
+		engine.startGame({ canvas: document.getElementById('canvas') });
+	</script>
+</body>
+</html>

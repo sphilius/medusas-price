@@ -1,0 +1,14 @@
+# Godot 4 generated / local-only files
+.godot/
+.import/
+*.translation
+export_credentials.cfg
+# Web export output (rebuild with the Web preset)
+build/
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+# Secrets must never live in the Godot project (they belong in worker/ via wrangler secret)
+.env
+.dev.vars
