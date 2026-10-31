@@ -5,5 +5,7 @@ extends Node
 
 ## An enemy just turned to stone. pose_frame/flip describe the frozen pose.
 signal petrified(enemy_type: StringName, pose_frame: int, flip: bool, position: Vector2)
+## A statue hit something: landed = true after a fall, false when a slide stops.
+signal statue_thud(position: Vector2, landed: bool)
 ## Ask the active camera to shake: max offset in px, decay time in s.
 signal shake_requested(strength: float, duration: float)

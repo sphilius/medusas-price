@@ -1,12 +1,17 @@
 ## fx.gd (autoload "Fx")
 ## Purpose: game feel. Listens to Events and plays hit-stop, camera shake and
-## sounds. The crack sound is a short noise burst baked into an AudioStreamWAV
-## in code (no audio files yet, and WAV samples play reliably in the no-threads
-## Web build, unlike AudioStreamGenerator).
+## sounds. Placeholder sounds (crack, statue grind loop, thud) are baked into
+## AudioStreamWAVs in code: no audio files yet, and WAV samples play reliably in
+## the no-threads Web build, unlike AudioStreamGenerator.
 extends Node
+
+## Looping stone-on-stone grind. Each Statue plays it on its own player while sliding.
+var grind_stream: AudioStreamWAV
 
 ## Plays the crack; pitch is jittered each time so repeats don't sound identical.
 var _crack_player: AudioStreamPlayer
+## Plays the statue thud (higher pitch for a slide stopping, full for a landing).
+var _thud_player: AudioStreamPlayer
 ## Bumped by every hit_stop(); only the newest one may restore the time scale.
 var _stop_id: int = 0
 
@@ -14,11 +19,11 @@ var _stop_id: int = 0
 func _ready() -> void:
 	# Keep running while the tree is paused or slowed.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_crack_player = AudioStreamPlayer.new()
-	_crack_player.stream = _make_crack_stream()
-	_crack_player.volume_db = Balance.CRACK_SFX_VOLUME_DB
-	add_child(_crack_player)
+	grind_stream = _make_grind_stream()
+	_crack_player = _add_player(_make_crack_stream(), Balance.CRACK_SFX_VOLUME_DB)
+	_thud_player = _add_player(_make_thud_stream(), Balance.THUD_SFX_VOLUME_DB)
 	Events.petrified.connect(_on_petrified)
+	Events.statue_thud.connect(_on_statue_thud)
 
 
 ## Freeze the game for `duration` real seconds. Overlapping calls extend the stop.
@@ -44,22 +49,67 @@ func _on_petrified(_enemy_type: StringName, _pose_frame: int, _flip: bool, _posi
 	hit_stop(Balance.HITSTOP_DURATION)
 
 
-## Bake a mono 16-bit crack: white noise plus a low sine "thunk", both decaying fast.
+func _on_statue_thud(_position: Vector2, landed: bool) -> void:
+	_thud_player.pitch_scale = 1.0 if landed else Balance.THUD_SFX_STOP_PITCH
+	_thud_player.play()
+	if landed:
+		Events.shake_requested.emit(Balance.SHAKE_STATUE_LAND_PX, Balance.SHAKE_STATUE_LAND_TIME)
+
+
+func _add_player(stream: AudioStream, volume_db: float) -> AudioStreamPlayer:
+	var player := AudioStreamPlayer.new()
+	player.stream = stream
+	player.volume_db = volume_db
+	add_child(player)
+	return player
+
+
+## Crack: white noise plus a low sine "thunk", both decaying fast.
 func _make_crack_stream() -> AudioStreamWAV:
-	var rate: int = Balance.CRACK_SFX_MIX_RATE
-	var count: int = int(Balance.CRACK_SFX_LENGTH * rate)
-	var data := PackedByteArray()
-	data.resize(count * 2)
-	for i in count:
-		var t: float = float(i) / rate
-		var env: float = exp(-t * Balance.CRACK_SFX_DECAY)
+	var samples := PackedFloat32Array()
+	samples.resize(int(Balance.CRACK_SFX_LENGTH * Balance.SFX_MIX_RATE))
+	for i in samples.size():
+		var t: float = float(i) / Balance.SFX_MIX_RATE
 		var noise: float = randf_range(-1.0, 1.0) * Balance.CRACK_SFX_NOISE_MIX
 		var thunk: float = sin(TAU * Balance.CRACK_SFX_THUNK_HZ * t) * Balance.CRACK_SFX_THUNK_MIX
-		var sample: float = clampf((noise + thunk) * env, -1.0, 1.0)
-		data.encode_s16(i * 2, int(sample * 32767.0))
+		samples[i] = (noise + thunk) * exp(-t * Balance.CRACK_SFX_DECAY)
+	return _bake(samples)
+
+
+## Grind: low-passed noise (a dull rumble), looped forever.
+func _make_grind_stream() -> AudioStreamWAV:
+	var samples := PackedFloat32Array()
+	samples.resize(int(Balance.GRIND_SFX_LENGTH * Balance.SFX_MIX_RATE))
+	var smooth: float = 0.0
+	for i in samples.size():
+		smooth = lerpf(randf_range(-1.0, 1.0), smooth, Balance.GRIND_SFX_SMOOTH)
+		samples[i] = smooth * Balance.GRIND_SFX_GAIN
+	var wav: AudioStreamWAV = _bake(samples)
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = samples.size()
+	return wav
+
+
+## Thud: a low sine that dies away.
+func _make_thud_stream() -> AudioStreamWAV:
+	var samples := PackedFloat32Array()
+	samples.resize(int(Balance.THUD_SFX_LENGTH * Balance.SFX_MIX_RATE))
+	for i in samples.size():
+		var t: float = float(i) / Balance.SFX_MIX_RATE
+		samples[i] = sin(TAU * Balance.THUD_SFX_HZ * t) * exp(-t * Balance.THUD_SFX_DECAY)
+	return _bake(samples)
+
+
+## Pack -1..1 floats into a mono 16-bit AudioStreamWAV (values are clamped).
+func _bake(samples: PackedFloat32Array) -> AudioStreamWAV:
+	var data := PackedByteArray()
+	data.resize(samples.size() * 2)
+	for i in samples.size():
+		data.encode_s16(i * 2, int(clampf(samples[i], -1.0, 1.0) * 32767.0))
 	var wav := AudioStreamWAV.new()
 	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = rate
+	wav.mix_rate = Balance.SFX_MIX_RATE
 	wav.stereo = false
 	wav.data = data
 	return wav

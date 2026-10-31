@@ -84,11 +84,12 @@ const HITSTOP_TIME_SCALE: float = 0.05
 ## Camera shake on petrify: max offset (px) and decay time (s).
 const SHAKE_PETRIFY_PX: float = 6.0
 const SHAKE_PETRIFY_TIME: float = 0.2
-## Placeholder crack sound, generated in code: length (s), sample rate (Hz),
-## random pitch jitter (+/-), noise decay rate, thunk frequency (Hz), noise and
-## thunk mix levels, and volume (dB).
+## Sample rate (Hz) of every placeholder sound generated in code.
+const SFX_MIX_RATE: int = 22050
+## Placeholder crack sound, generated in code: length (s), random pitch jitter
+## (+/-), noise decay rate, thunk frequency (Hz), noise and thunk mix levels,
+## and volume (dB).
 const CRACK_SFX_LENGTH: float = 0.06
-const CRACK_SFX_MIX_RATE: int = 22050
 const CRACK_SFX_PITCH_JITTER: float = 0.1
 const CRACK_SFX_DECAY: float = 70.0
 const CRACK_SFX_THUNK_HZ: float = 110.0
@@ -126,6 +127,32 @@ const STATUE_PUSH_SPEED: float = 96.0
 ## Grinding loop pitch range, rising with speed.
 const STATUE_GRIND_PITCH_MIN: float = 0.9
 const STATUE_GRIND_PITCH_MAX: float = 1.2
+## Slide acceleration (px/s^2): a short ramp to full speed, so the grind pitch rises.
+const STATUE_PUSH_ACCEL: float = 480.0
+## Seconds a slide keeps going after the last push contact (absorbs one-frame gaps).
+const STATUE_PUSH_GRACE: float = 0.05
+## How square-on the contact must be to count as a push (|normal.x| at least this).
+const STATUE_PUSH_NORMAL: float = 0.7
+## Gravity for a statue pushed off an edge (px/s^2).
+const STATUE_GRAVITY: float = PLAYER_GRAVITY
+## A statue still falling after this many seconds went into a pit and is removed.
+const STATUE_MAX_FALL_TIME: float = 3.0
+## Camera shake when a falling statue lands: max offset (px) and decay time (s).
+const SHAKE_STATUE_LAND_PX: float = 4.0
+const SHAKE_STATUE_LAND_TIME: float = 0.15
+## Placeholder grinding loop, generated in code: length (s), low-pass smoothing
+## (0..1, higher = duller), gain, volume (dB).
+const GRIND_SFX_LENGTH: float = 0.5
+const GRIND_SFX_SMOOTH: float = 0.92
+const GRIND_SFX_GAIN: float = 3.0
+const GRIND_SFX_VOLUME_DB: float = -10.0
+## Placeholder thud, generated in code: length (s), frequency (Hz), decay rate,
+## volume (dB), and pitch multiplier for a slide stopping (a landing uses 1.0).
+const THUD_SFX_LENGTH: float = 0.18
+const THUD_SFX_HZ: float = 55.0
+const THUD_SFX_DECAY: float = 25.0
+const THUD_SFX_VOLUME_DB: float = -3.0
+const THUD_SFX_STOP_PITCH: float = 1.4
 
 # ---------------------------------------------------------------------------
 # Enemies
