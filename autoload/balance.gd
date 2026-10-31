@@ -12,6 +12,15 @@ extends Node
 const BL: float = 64.0
 
 # ---------------------------------------------------------------------------
+# Physics layer bits (names live in project.godot [layer_names])
+# ---------------------------------------------------------------------------
+const PHYS_WORLD: int = 1        # layer 1
+const PHYS_PLAYER: int = 2       # layer 2
+const PHYS_ENEMIES: int = 4      # layer 3
+const PHYS_STATUES: int = 8      # layer 4
+const PHYS_GAZE: int = 32        # layer 6
+
+# ---------------------------------------------------------------------------
 # Color code (the wordless UI)
 # ---------------------------------------------------------------------------
 ## Terracotta = the living world.
@@ -57,6 +66,35 @@ const GAZE_HOLD: float = 0.4
 const GAZE_HOLD_EYE_SHADING: float = 0.7
 ## Portrait cracks paid per petrified enemy.
 const GAZE_CRACK_COST: int = 1
+## Where the cone starts, relative to Medusa's center (her eyes).
+const GAZE_EYE_OFFSET: Vector2 = Vector2(0.0, -20.0)
+## Alpha of the gold cone polygon.
+const GAZE_CONE_ALPHA: float = 0.35
+## Points along the cone's far arc (more = rounder).
+const GAZE_ARC_SEGMENTS: int = 8
+## Line-of-sight ray mask: anything on these layers blocks the gaze.
+const GAZE_LOS_MASK: int = PHYS_WORLD | PHYS_STATUES
+
+# ---------------------------------------------------------------------------
+# Game feel
+# ---------------------------------------------------------------------------
+## Hit-stop on petrify: real seconds, and the time scale held during it.
+const HITSTOP_DURATION: float = 0.08
+const HITSTOP_TIME_SCALE: float = 0.05
+## Camera shake on petrify: max offset (px) and decay time (s).
+const SHAKE_PETRIFY_PX: float = 6.0
+const SHAKE_PETRIFY_TIME: float = 0.2
+## Placeholder crack sound, generated in code: length (s), sample rate (Hz),
+## random pitch jitter (+/-), noise decay rate, thunk frequency (Hz), noise and
+## thunk mix levels, and volume (dB).
+const CRACK_SFX_LENGTH: float = 0.06
+const CRACK_SFX_MIX_RATE: int = 22050
+const CRACK_SFX_PITCH_JITTER: float = 0.1
+const CRACK_SFX_DECAY: float = 70.0
+const CRACK_SFX_THUNK_HZ: float = 110.0
+const CRACK_SFX_NOISE_MIX: float = 0.7
+const CRACK_SFX_THUNK_MIX: float = 0.5
+const CRACK_SFX_VOLUME_DB: float = -6.0
 
 # ---------------------------------------------------------------------------
 # Whip (hold J) - snake hair
@@ -95,6 +133,15 @@ const STATUE_GRIND_PITCH_MAX: float = 1.2
 ## Hoplite spear reach (BL) and thrust wind-up (s, shows a gold glint).
 const HOPLITE_SPEAR_REACH_BL: float = 1.5
 const HOPLITE_WINDUP: float = 0.35
+## Gravity for all enemies (px/s^2).
+const ENEMY_GRAVITY: float = PLAYER_GRAVITY
+
+## Test dummy: walk speed (px/s), patrol half-width (BL), seconds between jumps,
+## jump launch speed (negative = up; apex ~1.6 BL, ~0.67 s in the air).
+const DUMMY_WALK_SPEED: float = 80.0
+const DUMMY_PATROL_BL: float = 2.0
+const DUMMY_JUMP_INTERVAL: float = 3.0
+const DUMMY_JUMP_VELOCITY: float = -600.0
 
 # ---------------------------------------------------------------------------
 # Portrait (the only HUD) - cracks needed to advance each stage
