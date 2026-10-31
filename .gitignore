@@ -12,3 +12,7 @@ Thumbs.db
 # Secrets must never live in the Godot project (they belong in worker/ via wrangler secret)
 .env
 .dev.vars
+
+# Design/reference PDFs live outside version control
+*.pdf
+*.PDF
