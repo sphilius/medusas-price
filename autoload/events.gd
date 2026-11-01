@@ -7,6 +7,9 @@ extends Node
 signal petrified(enemy_type: StringName, pose_frame: int, flip: bool, position: Vector2)
 ## A statue hit something: landed = true after a fall, false when a slide stops.
 signal statue_thud(position: Vector2, landed: bool)
+## The whip cracked an intact statue / shattered a cracked one.
+signal statue_cracked(enemy_type: StringName, position: Vector2)
+signal statue_shattered(enemy_type: StringName, position: Vector2)
 ## Ask the active camera to shake: max offset in px, decay time in s.
 signal shake_requested(strength: float, duration: float)
 ## The player was struck. source names the attacker (&"hoplite", &"leaper");

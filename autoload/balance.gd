@@ -181,6 +181,60 @@ const THUD_SFX_VOLUME_DB: float = -3.0
 const THUD_SFX_STOP_PITCH: float = 1.4
 
 # ---------------------------------------------------------------------------
+# Statue cracks and shatter (the whip: first hit cracks, second shatters)
+# ---------------------------------------------------------------------------
+## Fracture lines drawn over a cracked statue (alternating down and across), the
+## zigzag segments per line, how far a zigzag strays from its straight path (as a
+## fraction of the statue's shorter side), and the line widths (px): the white
+## crack on top of a wider dark edge (alpha) so it still reads on marble.
+const STATUE_CRACK_LINES: int = 6
+const STATUE_CRACK_SEGMENTS: int = 5
+const STATUE_CRACK_JITTER: float = 0.12
+const STATUE_CRACK_WIDTH: float = 2.0
+const STATUE_CRACK_EDGE_WIDTH: float = 4.0
+const STATUE_CRACK_EDGE_ALPHA: float = 0.5
+## Chip burst when a statue cracks: count, lifetime (s), spread (degrees either side
+## of straight up), launch speed range (px/s), and square size range (px).
+const STATUE_CHIP_COUNT: int = 10
+const STATUE_CHIP_SPREAD_DEG: float = 90.0
+const STATUE_CHIP_LIFETIME: float = 0.5
+const STATUE_CHIP_SPEED_MIN: float = 90.0
+const STATUE_CHIP_SPEED_MAX: float = 220.0
+const STATUE_CHIP_SIZE_MIN: float = 2.0
+const STATUE_CHIP_SIZE_MAX: float = 4.0
+## Rubble burst when a statue shatters (the statue is freed once it ends); 180 degrees
+## of spread is a full circle.
+const STATUE_RUBBLE_COUNT: int = 32
+const STATUE_RUBBLE_SPREAD_DEG: float = 180.0
+const STATUE_RUBBLE_LIFETIME: float = 0.9
+const STATUE_RUBBLE_SPEED_MIN: float = 80.0
+const STATUE_RUBBLE_SPEED_MAX: float = 300.0
+const STATUE_RUBBLE_SIZE_MIN: float = 4.0
+const STATUE_RUBBLE_SIZE_MAX: float = 9.0
+## Placeholder statue-crack sound: the petrify crack at this pitch (lower = heavier).
+const STATUE_CRACK_SFX_PITCH: float = 0.75
+## Placeholder shatter, generated in code: length (s), noise decay rate, rumble
+## frequency (Hz), noise and rumble mix levels, volume (dB).
+const SHATTER_SFX_LENGTH: float = 0.5
+const SHATTER_SFX_DECAY: float = 9.0
+const SHATTER_SFX_RUMBLE_HZ: float = 70.0
+const SHATTER_SFX_NOISE_MIX: float = 0.8
+const SHATTER_SFX_RUMBLE_MIX: float = 0.5
+const SHATTER_SFX_VOLUME_DB: float = -4.0
+
+# ---------------------------------------------------------------------------
+# Pressure plate (scenes/props/pressure_plate.tscn)
+# ---------------------------------------------------------------------------
+## Width in BL, and how tall (px) the trigger zone is above the plate's surface.
+## Anything standing on the floor there overlaps it; something jumping over briefly
+## does too, which the plate ignores (see PressurePlate._counts).
+const PLATE_WIDTH_BL: float = 1.0
+const PLATE_TRIGGER_HEIGHT: float = 8.0
+## Slab height (px) and how much of it is left when pressed (scale, 0..1).
+const PLATE_SLAB_HEIGHT: float = 6.0
+const PLATE_PRESSED_SCALE: float = 0.35
+
+# ---------------------------------------------------------------------------
 # Enemies
 # ---------------------------------------------------------------------------
 ## Hoplite spear reach (BL) and thrust wind-up (s, shows a gold glint).
