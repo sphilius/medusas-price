@@ -8,7 +8,9 @@ extends Node
 
 ## Gap between LedgeNear and LedgeFar in scenes/test_room.tscn (px).
 const GAP_LEFT: float = 640.0
-const GAP_RIGHT: float = 928.0
+## LedgeFar starts where a jump at the last coyote-time frame still falls short
+## (her center peaks near x=919, so her body's right edge near 939).
+const GAP_RIGHT: float = 960.0
 ## Player center y standing on either ledge.
 const LEDGE_STAND_Y: float = 568.0
 ## Half body heights (px): player 64 tall, leaper 40 tall.
@@ -143,8 +145,29 @@ func _test_gap_crossing() -> void:
 			land_x > 0.0 and absf(_player.position.y - LEDGE_STAND_Y) < 3.0)
 
 
-## Spec: "a gap too wide to jump". A full-speed jump from the very edge falls in.
+## Spec: "a gap too wide to jump". Tries a full-speed jump from the edge and then
+## from every later physics frame after leaving it, through the end of coyote
+## time (the farthest a plain jump can reach); none may land on the far ledge.
 func _test_plain_jump_falls_short() -> void:
+	var coyote_frames: int = ceili(Balance.PLAYER_COYOTE_TIME * Engine.physics_ticks_per_second) + 1
+	var jumps: int = 0
+	var cleared: int = 0
+	var best_x: float = 0.0
+	for late in range(-1, coyote_frames + 1):
+		var result: Dictionary = await _plain_jump(late)
+		if result["jumped"]:
+			jumps += 1
+			best_x = maxf(best_x, result["peak_x"])
+		if result["reached"]:
+			cleared += 1
+	_check("no plain or coyote-time jump clears the gap (%d jumps, farthest x=%.0f, ledge %.0f)" \
+			% [jumps, best_x, GAP_RIGHT], jumps > 1 and cleared == 0)
+
+
+## Run at the gap at full speed and press jump `late` physics frames after the
+## feet leave the ledge (-1 = one frame before). Reports whether a jump happened,
+## the farthest x reached at ledge height and whether she landed on the far side.
+func _plain_jump(late: int) -> Dictionary:
 	await _fresh_room()
 	for child in _room.get_children():
 		if child is Enemy:
@@ -152,21 +175,35 @@ func _test_plain_jump_falls_short() -> void:
 	await _frames(2)
 	_place_player(Vector2(400, LEDGE_STAND_Y), 1)
 	Input.action_press("move_right")
+	var off_frames: int = -1  # frames since the feet left the ledge
+	var pressed: bool = false
 	var jumped: bool = false
-	var reached_far: bool = false
+	var reached: bool = false
+	var peak_x: float = 0.0
 	for i in 150:
 		await _frames(1)
-		if not jumped and _player.position.x >= GAP_LEFT - 18.0:
+		var x: float = _player.position.x
+		if late < 0 and not pressed and x >= GAP_LEFT - 21.0:
 			Input.action_press("jump")
-			jumped = true
-		if jumped and i > 5 and _player.is_on_floor() and _player.position.x > GAP_RIGHT - 20.0:
-			reached_far = true
+			pressed = true
+		if off_frames < 0 and x > GAP_LEFT - 40.0 and not _player.is_on_floor():
+			off_frames = 0
+		elif off_frames >= 0:
+			off_frames += 1
+		if not pressed and off_frames == late:
+			Input.action_press("jump")
+			pressed = true
+		jumped = jumped or (pressed and _player.velocity.y < 0.0)
+		if _player.position.y <= LEDGE_STAND_Y:
+			peak_x = maxf(peak_x, x)
+		if i > 5 and _player.is_on_floor() and x > GAP_RIGHT - 20.0:
+			reached = true
 			break
 		if _player.position.y > LEDGE_STAND_Y + Balance.BL:
 			break
 	Input.action_release("move_right")
 	Input.action_release("jump")
-	_check("plain running jump cannot clear the gap", jumped and not reached_far)
+	return {"jumped": jumped, "reached": reached, "peak_x": peak_x}
 
 
 ## Spec: the leaper leaps only when the player is across the gap.

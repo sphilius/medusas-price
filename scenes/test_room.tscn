@@ -10,7 +10,7 @@
 size = Vector2(640, 80)
 
 [sub_resource type="RectangleShape2D" id="Shape_LedgeFar"]
-size = Vector2(1372, 80)
+size = Vector2(1340, 80)
 
 [node name="TestRoom" type="Node2D"]
 script = ExtResource("1_room")
@@ -31,14 +31,14 @@ color = Color(0.784314, 0.392157, 0.231373, 1)
 polygon = PackedVector2Array(-320, -40, 320, -40, 320, 40, -320, 40)
 
 [node name="LedgeFar" type="StaticBody2D" parent="."]
-position = Vector2(1614, 640)
+position = Vector2(1630, 640)
 
 [node name="Shape" type="CollisionShape2D" parent="LedgeFar"]
 shape = SubResource("Shape_LedgeFar")
 
 [node name="Art" type="Polygon2D" parent="LedgeFar"]
 color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-686, -40, 686, -40, 686, 40, -686, 40)
+polygon = PackedVector2Array(-670, -40, 670, -40, 670, 40, -670, 40)
 
 [node name="Hoplite1" parent="." instance=ExtResource("4_hoplite")]
 position = Vector2(470, 568)
