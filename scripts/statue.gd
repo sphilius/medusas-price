@@ -68,6 +68,12 @@ static func from_enemy(enemy: Enemy) -> Statue:
 	return statue
 
 
+## The whip landed on this statue. Stub: the cracked / shattered states come in
+## the next prompt (first hit cracks, second shatters). The whip never moves statues.
+func whip_hit() -> void:
+	pass
+
+
 ## Called by the player every physics frame she leans into this statue (after
 ## the push delay). The slide lasts while pushes keep coming.
 func push(dir: int) -> void:

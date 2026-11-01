@@ -116,6 +116,32 @@ const WHIP_STAGGER: float = 0.4
 const WHIP_KNOCKBACK_BL: float = 1.0
 ## Seconds a mirror-bearer's mirror is knocked aside.
 const WHIP_MIRROR_KNOCK: float = 1.5
+## Where the snakes grow from, relative to Medusa's center (her head). Reach is
+## measured from here, so the tip sits WHIP_REACH_BL ahead of her center.
+const WHIP_HEAD_OFFSET: Vector2 = Vector2(0.0, -22.0)
+## The hitbox fan is this tall (BL) at its far end and narrows to a point at the head.
+const WHIP_END_HEIGHT_BL: float = 0.6
+## The fan's centerline droops this many px by its tip, so the lash also lands on
+## short enemies (the leaper) standing level with her.
+const WHIP_TIP_DROOP: float = 18.0
+## Snakes drawn at full fan (3 to 5) and their line width (px).
+const WHIP_SNAKES_DRAWN: int = 5
+const WHIP_LINE_WIDTH: float = 4.0
+## Placeholder animation, one entry per frame: coil, head back, throw, full fan,
+## hold, retract, retract, neutral. Extent is the fraction of reach the snakes
+## stretch (negative = pulled back behind the head), spread is how open the fan is
+## (0 = snakes bundled, 1 = full hitbox width), snakes is how many are drawn.
+## Anticipation shows frames 0-1, the active hitbox frames 2-3, recovery 4-7.
+const WHIP_FRAME_EXTENT: Array[float] = [0.15, -0.30, 0.60, 1.0, 1.0, 0.65, 0.30, 0.0]
+const WHIP_FRAME_SPREAD: Array[float] = [0.0, 0.0, 0.5, 1.0, 1.0, 0.6, 0.2, 0.0]
+const WHIP_FRAME_SNAKES: Array[int] = [3, 3, 4, 5, 5, 4, 3, 0]
+## How many animation frames belong to anticipation and to the active lash; the
+## rest play during recovery. Each phase's frames split its time equally.
+const WHIP_ANTICIPATION_FRAMES: int = 2
+const WHIP_ACTIVE_FRAMES: int = 2
+## Deceleration (px/s^2) of a staggered enemy sliding from a whip knockback. The
+## launch speed is derived so the slide covers WHIP_KNOCKBACK_BL: v = sqrt(2 * a * d).
+const ENEMY_KNOCKBACK_DECEL: float = 1600.0
 
 # ---------------------------------------------------------------------------
 # Statues
