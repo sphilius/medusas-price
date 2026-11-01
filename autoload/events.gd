@@ -9,3 +9,6 @@ signal petrified(enemy_type: StringName, pose_frame: int, flip: bool, position: 
 signal statue_thud(position: Vector2, landed: bool)
 ## Ask the active camera to shake: max offset in px, decay time in s.
 signal shake_requested(strength: float, duration: float)
+## The player was struck. source names the attacker (&"hoplite", &"leaper");
+## from_position is where it came from, so the player knows which way to fly.
+signal player_hit(cracks: int, source: StringName, from_position: Vector2)

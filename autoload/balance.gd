@@ -162,6 +162,62 @@ const HOPLITE_SPEAR_REACH_BL: float = 1.5
 const HOPLITE_WINDUP: float = 0.35
 ## Gravity for all enemies (px/s^2).
 const ENEMY_GRAVITY: float = PLAYER_GRAVITY
+## Enemies below this y (px) fell into a pit and are removed.
+const ENEMY_KILL_Y: float = 1600.0
+## Player below this y (px) fell into a pit (graybox: back to the start).
+const PLAYER_PIT_Y: float = 1400.0
+## How far below the feet / ahead of the body (px) the ledge check looks.
+const ENEMY_LEDGE_PROBE_DOWN: float = 24.0
+const ENEMY_LEDGE_PROBE_AHEAD: float = 8.0
+## The ledge ray starts this far (px) above the feet, so it never begins inside the floor.
+const ENEMY_LEDGE_PROBE_INSET: float = 4.0
+## Half the standing enemy body width / height (px), the ledge probe's origin.
+const ENEMY_HALF_WIDTH: float = 20.0
+const ENEMY_HALF_HEIGHT: float = 32.0
+## Size (px) of the hoplite's gold wind-up glint.
+const HOPLITE_GLINT_SIZE: float = 10.0
+## Hoplite art geometry, matching scenes/enemies/hoplite.tscn: the Glint
+## polygon's radius and the spear tip's x in the Visual's right-facing space (px).
+const HOPLITE_GLINT_ART_RADIUS: float = 5.0
+const HOPLITE_SPEAR_TIP_X: float = 52.0
+
+## Hoplite: patrol speed, chase speed (px/s), patrol half-width (BL), notice
+## range (BL), vertical slack for "same level" (BL), thrust active time and
+## recovery after the thrust (s), thrust hitbox thickness (px), and how far
+## the spear is drawn back during the wind-up (px).
+const HOPLITE_PATROL_SPEED: float = 50.0
+const HOPLITE_CHASE_SPEED: float = 90.0
+const HOPLITE_PATROL_BL: float = 2.0
+const HOPLITE_NOTICE_BL: float = 5.0
+const HOPLITE_LEVEL_SLACK_BL: float = 1.0
+const HOPLITE_THRUST_ACTIVE: float = 0.12
+const HOPLITE_RECOVERY: float = 0.5
+const HOPLITE_HITBOX_THICKNESS: float = 14.0
+const HOPLITE_SPEAR_DRAW_BACK: float = 16.0
+
+## Leaper: leap trigger range (BL), vertical slack (BL), nearest target (BL),
+## leap apex height (BL), fastest horizontal leap speed (px/s), pause after
+## landing (s) and minimum landing time before it counts (s).
+const LEAPER_RANGE_BL: float = 6.0
+const LEAPER_LEVEL_SLACK_BL: float = 2.0
+const LEAPER_MIN_DISTANCE_BL: float = 1.0
+const LEAPER_APEX_BL: float = 1.5
+const LEAPER_MAX_SPEED: float = 500.0
+const LEAPER_RECOVERY: float = 0.8
+const LEAPER_MIN_AIR_TIME: float = 0.1
+## Spacing (px) of the floor samples between the leaper and the player when
+## checking she is across a gap (smaller than any gap worth leaping).
+const LEAPER_GAP_PROBE_STEP: float = 16.0
+
+## Player hurt: stun time (s), invulnerability (s), flicker half-period (s),
+## knockback launch speed (px/s, x and upward y), and friction while stunned.
+const PLAYER_HURT_TIME: float = 0.5
+const PLAYER_INVULN_TIME: float = 1.0
+const PLAYER_FLICKER_PERIOD: float = 0.08
+const PLAYER_FLICKER_ALPHA: float = 0.3
+const PLAYER_KNOCKBACK_X: float = 240.0
+const PLAYER_KNOCKBACK_Y: float = 220.0
+const PLAYER_HURT_FRICTION: float = 400.0
 
 ## Test dummy: walk speed (px/s), patrol half-width (BL), seconds between jumps,
 ## jump launch speed (negative = up; apex ~1.6 BL, ~0.67 s in the air).

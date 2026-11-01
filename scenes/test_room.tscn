@@ -1,86 +1,58 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="2_camera"]
-[ext_resource type="PackedScene" path="res://scenes/dummy_enemy.tscn" id="3_dummy"]
+[ext_resource type="Script" path="res://scripts/test_room.gd" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/hoplite.tscn" id="4_hoplite"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/leaper.tscn" id="5_leaper"]
 
-[sub_resource type="RectangleShape2D" id="Shape_floor_a"]
-size = Vector2(1000, 80)
+[sub_resource type="RectangleShape2D" id="Shape_LedgeNear"]
+size = Vector2(640, 80)
 
-[sub_resource type="RectangleShape2D" id="Shape_floor_b"]
-size = Vector2(1208, 80)
-
-[sub_resource type="RectangleShape2D" id="Shape_plat"]
-size = Vector2(200, 24)
-
-[sub_resource type="RectangleShape2D" id="Shape_pillar"]
-size = Vector2(32, 96)
+[sub_resource type="RectangleShape2D" id="Shape_LedgeFar"]
+size = Vector2(1372, 80)
 
 [node name="TestRoom" type="Node2D"]
+script = ExtResource("1_room")
 
 [node name="Backdrop" type="Polygon2D" parent="."]
 z_index = -10
 color = Color(0.42, 0.36, 0.3, 1)
 polygon = PackedVector2Array(-1000, -1000, 3400, -1000, 3400, 1600, -1000, 1600)
 
-[node name="FloorA" type="StaticBody2D" parent="."]
-position = Vector2(500, 640)
+[node name="LedgeNear" type="StaticBody2D" parent="."]
+position = Vector2(320, 640)
 
-[node name="Shape" type="CollisionShape2D" parent="FloorA"]
-shape = SubResource("Shape_floor_a")
+[node name="Shape" type="CollisionShape2D" parent="LedgeNear"]
+shape = SubResource("Shape_LedgeNear")
 
-[node name="Art" type="Polygon2D" parent="FloorA"]
+[node name="Art" type="Polygon2D" parent="LedgeNear"]
 color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-500, -40, 500, -40, 500, 40, -500, 40)
+polygon = PackedVector2Array(-320, -40, 320, -40, 320, 40, -320, 40)
 
-[node name="FloorB" type="StaticBody2D" parent="."]
-position = Vector2(1796, 640)
+[node name="LedgeFar" type="StaticBody2D" parent="."]
+position = Vector2(1614, 640)
 
-[node name="Shape" type="CollisionShape2D" parent="FloorB"]
-shape = SubResource("Shape_floor_b")
+[node name="Shape" type="CollisionShape2D" parent="LedgeFar"]
+shape = SubResource("Shape_LedgeFar")
 
-[node name="Art" type="Polygon2D" parent="FloorB"]
+[node name="Art" type="Polygon2D" parent="LedgeFar"]
 color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-604, -40, 604, -40, 604, 40, -604, 40)
+polygon = PackedVector2Array(-686, -40, 686, -40, 686, 40, -686, 40)
 
-[node name="PlatformA" type="StaticBody2D" parent="."]
-position = Vector2(400, 492)
+[node name="Hoplite1" parent="." instance=ExtResource("4_hoplite")]
+position = Vector2(470, 568)
 
-[node name="Shape" type="CollisionShape2D" parent="PlatformA"]
-shape = SubResource("Shape_plat")
+[node name="Hoplite2" parent="." instance=ExtResource("4_hoplite")]
+position = Vector2(1500, 568)
 
-[node name="Art" type="Polygon2D" parent="PlatformA"]
-color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-100, -12, 100, -12, 100, 12, -100, 12)
+[node name="Hoplite3" parent="." instance=ExtResource("4_hoplite")]
+position = Vector2(1950, 568)
 
-[node name="PlatformB" type="StaticBody2D" parent="."]
-position = Vector2(1500, 500)
+[node name="Leaper" parent="." instance=ExtResource("5_leaper")]
+position = Vector2(994, 580)
 
-[node name="Shape" type="CollisionShape2D" parent="PlatformB"]
-shape = SubResource("Shape_plat")
-
-[node name="Art" type="Polygon2D" parent="PlatformB"]
-color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-100, -12, 100, -12, 100, 12, -100, 12)
-
-[node name="Pillar" type="StaticBody2D" parent="."]
-position = Vector2(880, 552)
-
-[node name="Shape" type="CollisionShape2D" parent="Pillar"]
-shape = SubResource("Shape_pillar")
-
-[node name="Art" type="Polygon2D" parent="Pillar"]
-color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-16, -48, 16, -48, 16, 48, -16, 48)
-
-[node name="DummyEnemy" parent="." instance=ExtResource("3_dummy")]
-position = Vector2(600, 568)
-
-[node name="PlatformDummy" parent="." instance=ExtResource("3_dummy")]
-position = Vector2(460, 448)
-stationary = true
-
-[node name="Player" parent="." instance=ExtResource("1_player")]
+[node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(150, 568)
 
-[node name="GameCamera" parent="Player" instance=ExtResource("2_camera")]
+[node name="GameCamera" parent="Player" instance=ExtResource("3_camera")]

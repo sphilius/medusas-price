@@ -4,7 +4,7 @@
 extends Node
 
 func _ready() -> void:
-	var room: Node = load("res://scenes/test_room.tscn").instantiate()
+	var room: Node = load("res://tools/sim_room.tscn").instantiate()
 	add_child(room)
 	var p: Player = room.get_node("Player")
 	var ground_y: float = p.position.y

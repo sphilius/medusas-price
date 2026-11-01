@@ -1,0 +1,44 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/hoplite.gd" id="1_hoplite"]
+
+[sub_resource type="RectangleShape2D" id="Shape_body"]
+size = Vector2(40, 64)
+
+[sub_resource type="RectangleShape2D" id="Shape_hit"]
+size = Vector2(76, 14)
+
+[node name="Hoplite" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 9
+script = ExtResource("1_hoplite")
+enemy_type = &"hoplite"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)
+
+[node name="Helmet" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-12, -32, 0, -46, 12, -32)
+
+[node name="Spear" type="Node2D" parent="Visual"]
+position = Vector2(0, -8)
+
+[node name="Shaft" type="Polygon2D" parent="Visual/Spear"]
+polygon = PackedVector2Array(-14, -2, 46, -2, 52, 0, 46, 2, -14, 2)
+
+[node name="Glint" type="Polygon2D" parent="."]
+visible = false
+polygon = PackedVector2Array(-5, 0, 0, -5, 5, 0, 0, 5)
+
+[node name="SpearHitbox" type="Area2D" parent="."]
+position = Vector2(58, -8)
+collision_layer = 0
+collision_mask = 2
+
+[node name="Shape" type="CollisionShape2D" parent="SpearHitbox"]
+shape = SubResource("Shape_hit")

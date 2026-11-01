@@ -20,7 +20,7 @@ var _failures: int = 0
 
 
 func _ready() -> void:
-	_room = load("res://scenes/test_room.tscn").instantiate()
+	_room = load("res://tools/sim_room.tscn").instantiate()
 	add_child(_room)
 	_player = _room.get_node("Player")
 	_room.get_node("DummyEnemy").queue_free()  # the patrolling one would wander into tests
