@@ -15,6 +15,8 @@ var level: int = 1
 func _ready() -> void:
 	start_run()
 	Events.petrified.connect(_on_petrified)
+	Events.statue_cracked.connect(_on_statue_cracked)
+	Events.statue_shattered.connect(_on_statue_shattered)
 
 
 ## Forget the previous run and start the clock.
@@ -74,6 +76,14 @@ func _on_petrified(enemy_type: StringName, pose_frame: int, flip: bool, position
 		"level": level,
 		"portrait_stage": 1,  # no portrait yet; stage 1 until it exists
 	})
+
+
+func _on_statue_cracked(enemy_type: StringName, position: Vector2) -> void:
+	log_event("statue_cracked", {"enemy_type": String(enemy_type), "position": [position.x, position.y], "level": level})
+
+
+func _on_statue_shattered(enemy_type: StringName, position: Vector2) -> void:
+	log_event("statue_shattered", {"enemy_type": String(enemy_type), "position": [position.x, position.y], "level": level})
 
 
 ## Debug only: F9 prints the run JSON to the console. Stripped from release builds.
