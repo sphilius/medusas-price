@@ -4,7 +4,7 @@
     {
       "name": "web-build",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8060", "--directory", "build/web"],
+      "runtimeArgs": ["tools/serve_web.py", "8060"],
       "port": 8060
     }
   ]
