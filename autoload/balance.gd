@@ -392,8 +392,11 @@ const TOUCH_ICON_STROKE: float = 7.0
 const TOUCH_PRESSED_SCALE: float = 0.92
 ## Segments for round shapes (more = rounder).
 const TOUCH_CIRCLE_SEGMENTS: int = 40
-## "Turn your phone sideways" overlay: size of the phone icon (px) and seconds per half turn.
-const TOUCH_ROTATE_PHONE_SIZE: Vector2 = Vector2(110.0, 190.0)
+## "Turn your phone sideways" overlay: size of the phone icon (px), stroke width (px) and
+## seconds per half turn. Big on purpose: held upright the whole 1280 px width shrinks to
+## about a third, so a small picture would be unreadable.
+const TOUCH_ROTATE_PHONE_SIZE: Vector2 = Vector2(280.0, 460.0)
+const TOUCH_ROTATE_STROKE: float = 16.0
 const TOUCH_ROTATE_TURN_TIME: float = 1.1
 ## Touch layer, above the portrait HUD.
 const TOUCH_LAYER: int = 20

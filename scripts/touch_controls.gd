@@ -318,24 +318,24 @@ func _build_rotate_prompt() -> void:
 	outline.points = PackedVector2Array([
 		Vector2(-half.x, -half.y), Vector2(half.x, -half.y), Vector2(half.x, half.y), Vector2(-half.x, half.y)])
 	outline.closed = true
-	outline.width = Balance.TOUCH_RING_WIDTH
+	outline.width = Balance.TOUCH_ROTATE_STROKE
 	outline.joint_mode = Line2D.LINE_JOINT_ROUND
 	outline.default_color = Balance.COLOR_MARBLE
 	_phone.add_child(outline)
 	# The phone's "speaker": a short bar near the top, so it reads as a phone.
 	var speaker := Line2D.new()
 	speaker.points = PackedVector2Array([Vector2(-half.x * 0.3, -half.y * 0.82), Vector2(half.x * 0.3, -half.y * 0.82)])
-	speaker.width = Balance.TOUCH_RING_WIDTH
+	speaker.width = Balance.TOUCH_ROTATE_STROKE
 	speaker.default_color = Balance.COLOR_GOLD
 	_phone.add_child(speaker)
 	# A curved arrow above it that says "turn".
 	var arrow := Line2D.new()
 	var arc := PackedVector2Array()
-	var arc_radius: float = half.y + 56.0
+	var arc_radius: float = half.y + 40.0
 	for i in range(0, 11):
 		arc.append(Vector2.from_angle(deg_to_rad(-150.0 + 120.0 * i / 10.0)) * arc_radius)
 	arrow.points = arc
-	arrow.width = Balance.TOUCH_ICON_STROKE
+	arrow.width = Balance.TOUCH_ROTATE_STROKE
 	arrow.default_color = Balance.COLOR_TERRACOTTA
 	arrow.begin_cap_mode = Line2D.LINE_CAP_ROUND
 	_phone.add_child(arrow)
@@ -343,7 +343,7 @@ func _build_rotate_prompt() -> void:
 	var heading: Vector2 = (arc[arc.size() - 1] - arc[arc.size() - 2]).normalized()
 	var side: Vector2 = heading.orthogonal()
 	var head := Polygon2D.new()
-	head.polygon = PackedVector2Array([tip + heading * 30.0, tip + side * 22.0, tip - side * 22.0])
+	head.polygon = PackedVector2Array([tip + heading * 60.0, tip + side * 44.0, tip - side * 44.0])
 	head.color = Balance.COLOR_TERRACOTTA
 	_phone.add_child(head)
 	_rotate_prompt.visible = false
