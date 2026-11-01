@@ -1,27 +1,38 @@
 ## test_room.gd (root script of scenes/test_room.tscn)
-## Purpose: level 1 graybox. Placeholder pit handling until real pits exist:
-## a player who falls far below the level restarts the room. The whole room
-## resets (enemies included), because the gap can only be crossed on a leaper
-## frozen mid-leap: a wasted leaper must come back, or the level softlocks.
-## Jumping into the pit is also the wordless "retry".
-## When the room is not the current scene (a sim instanced it), only the
-## player goes back to the start, so the sim itself is never reloaded.
+## Purpose: level 1 graybox. The pit under the gap and the safe ledges put Medusa back
+## on her feet (see Player), so this script only keeps the room solvable: the gap can
+## only be crossed on a leaper frozen mid-leap, so if a fall finds no leaper and no
+## leaper statue left in the room, a fresh leaper appears at its starting spot.
 extends Node2D
 
-## Set once a reset is queued, so the pit only triggers once.
-var _resetting: bool = false
+const LEAPER_SCENE: PackedScene = preload("res://scenes/enemies/leaper.tscn")
 
-@onready var _player: Player = $Player
-@onready var _start: Vector2 = $Player.position
+## Where the room's leaper starts (taken from the scene).
+var _leaper_home: Vector2 = Vector2.ZERO
 
 
-func _physics_process(_delta: float) -> void:
-	if _resetting or _player.global_position.y <= Balance.PLAYER_PIT_Y:
+func _ready() -> void:
+	_leaper_home = $Leaper.position
+	Events.player_fell.connect(_on_player_fell)
+
+
+func _on_player_fell(_where: Vector2) -> void:
+	if _has_leaper():
 		return
-	RunLedger.log_event("pit", {"level": RunLedger.level})
-	if get_tree().current_scene == self:
-		_resetting = true
-		get_tree().reload_current_scene.call_deferred()
-	else:
-		_player.global_position = _start
-		_player.velocity = Vector2.ZERO
+	var leaper: Node2D = LEAPER_SCENE.instantiate()
+	leaper.name = "Leaper"
+	leaper.position = _leaper_home
+	add_child.call_deferred(leaper)
+
+
+## A live leaper in the room, or a leaper statue that has not shattered.
+func _has_leaper() -> bool:
+	for child in get_children():
+		if child is Enemy and (child as Enemy).enemy_type == &"leaper" and not child.is_queued_for_deletion():
+			return true
+	for node in get_tree().get_nodes_in_group(&"statues"):
+		var statue := node as Statue
+		if statue != null and statue.enemy_type == &"leaper" and statue.state != Statue.State.SHATTERED \
+				and not statue.is_queued_for_deletion():
+			return true
+	return false

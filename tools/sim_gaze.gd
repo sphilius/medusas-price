@@ -58,7 +58,9 @@ func _test_ground_petrify() -> void:
 				and data["pose_frame"] == 0 and data["flip"] == true \
 				and Vector2(data["position"][0], data["position"][1]).distance_to(Vector2(600, 568)) < 1.0)
 	var parsed: Variant = JSON.parse_string(RunLedger.to_json())
-	_check("ledger JSON round-trips", parsed is Array and (parsed as Array).size() == 1)
+	# The petrify also logged its crack, so look for the petrify among the events.
+	_check("ledger JSON round-trips", parsed is Array and (parsed as Array).filter(
+			func(e: Dictionary) -> bool: return e["type"] == "petrify").size() == 1)
 	var summary: Dictionary = RunLedger.summary()
 	_check("ledger summary counts the dummy", summary["petrified_by_enemy"].get("dummy", 0) == 1 \
 			and summary["counts"].get("petrify", 0) == 1)
