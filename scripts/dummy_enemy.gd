@@ -24,8 +24,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += Balance.ENEMY_GRAVITY * delta
+	apply_gravity(delta)
 	if stationary:
 		move_and_slide()
 		return

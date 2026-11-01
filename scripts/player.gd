@@ -22,6 +22,9 @@ var state: State = State.IDLE
 var _coyote_left: float = 0.0
 ## Seconds left in which a recent jump press is still remembered.
 var _buffer_left: float = 0.0
+## Seconds left in the HURT stun and in the invulnerability that follows a hit.
+var _hurt_left: float = 0.0
+var _invuln_left: float = 0.0
 ## Seconds spent walking into the same side of a statue (push starts at STATUE_PUSH_DELAY).
 var _push_time: float = 0.0
 
@@ -29,7 +32,13 @@ var _push_time: float = 0.0
 @onready var _visual: Node2D = $Visual
 
 
+func _ready() -> void:
+	add_to_group(&"player")
+	Events.player_hit.connect(_on_player_hit)
+
+
 func _physics_process(delta: float) -> void:
+	_tick_hurt(delta)
 	# Gaze roots Medusa while held: she brakes, still falls, and cannot turn.
 	# Releasing K hands control back to the normal locomotion states.
 	if Input.is_action_pressed("gaze") and can_gaze():
@@ -67,6 +76,38 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_update_push(dir, delta)
 	_update_locomotion_state(dir)
+
+
+## A hit lands: stun, knock away from the attacker, start the invulnerable window.
+## Ignored while already stunned, invulnerable or dead.
+func _on_player_hit(cracks: int, source: StringName, from_position: Vector2) -> void:
+	if _invuln_left > 0.0 or state in [State.HURT, State.DEAD]:
+		return
+	RunLedger.log_event("hit", {
+		"source": String(source),
+		"cracks": cracks,
+		"position": [global_position.x, global_position.y],
+		"level": RunLedger.level,
+	})
+	var away: float = signf(global_position.x - from_position.x)
+	if away == 0.0:
+		away = -float(facing)
+	velocity = Vector2(away * Balance.PLAYER_KNOCKBACK_X, -Balance.PLAYER_KNOCKBACK_Y)
+	_hurt_left = Balance.PLAYER_HURT_TIME
+	_invuln_left = Balance.PLAYER_INVULN_TIME
+	enter_state(State.HURT)
+
+
+## Count down the stun and invulnerability; flicker the art while invulnerable.
+func _tick_hurt(delta: float) -> void:
+	if _hurt_left > 0.0:
+		_hurt_left -= delta
+		if _hurt_left <= 0.0 and state == State.HURT:
+			_update_locomotion_state(0.0)
+	if _invuln_left > 0.0:
+		_invuln_left = maxf(_invuln_left - delta, 0.0)
+		var faded: bool = int(_invuln_left / Balance.PLAYER_FLICKER_PERIOD) % 2 == 0 and _invuln_left > 0.0
+		_visual.modulate.a = Balance.PLAYER_FLICKER_ALPHA if faded else 1.0
 
 
 ## Switch state and announce it. Safe to call from other scripts.
@@ -143,7 +184,8 @@ func _update_locomotion_state(dir: float) -> void:
 
 ## Placeholder for WHIP / GAZE / HURT / DEAD: fall, slow to a stop, no input.
 func _process_stub_state(delta: float) -> void:
-	velocity.x = move_toward(velocity.x, 0.0, Balance.PLAYER_GROUND_ACCEL * delta)
+	var friction: float = Balance.PLAYER_HURT_FRICTION if state == State.HURT else Balance.PLAYER_GROUND_ACCEL
+	velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	if not is_on_floor():
 		velocity.y += Balance.PLAYER_GRAVITY * delta
 	move_and_slide()
