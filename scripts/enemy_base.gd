@@ -1,8 +1,8 @@
 ## enemy_base.gd (base class; each enemy scene's root script extends it)
 ## Purpose: what every enemy shares - layer 3 body, gravity, facing, gaze progress
 ## (tinted from black toward marble white), petrification into a Statue, and
-## removal when it falls into a pit. Enemies have no hp: they die only by
-## petrify() or falling.
+## removal when it falls into a pit, and the whip's stagger + knockback. Enemies
+## have no hp: they die only by petrify() or falling.
 ## Expects a child Node2D named "Visual" holding the art. Placeholder art is drawn
 ## white so Visual.modulate alone sets its color.
 class_name Enemy
@@ -21,6 +21,12 @@ var gaze_hold_time: float = Balance.GAZE_HOLD
 ## Half the body's size (px), read from its rectangle CollisionShape2D in _ready.
 ## Floor probes start from it, so short bodies (the leaper) probe at their own feet.
 var half_size: Vector2 = Vector2(Balance.ENEMY_HALF_WIDTH, Balance.ENEMY_HALF_HEIGHT)
+
+## Mirror-bearers also have their mirror knocked aside by the whip (knock_mirror).
+@export var mirror_bearer: bool = false
+
+## Seconds left staggered by a whip hit: the enemy does nothing but slide to a stop.
+var _stagger_left: float = 0.0
 
 ## Seconds spent continuously in the gaze cone with a clear view.
 var _gaze_time: float = 0.0
@@ -48,6 +54,45 @@ func apply_gravity(delta: float) -> void:
 		velocity.y += Balance.ENEMY_GRAVITY * delta
 	if global_position.y > Balance.ENEMY_KILL_Y:
 		queue_free()
+
+
+## The whip landed: stagger and knock back away_dir (-1 / 1, away from Medusa).
+## Mirror-bearers also lose their mirror for a moment. Not for statues (see Statue.whip_hit).
+func whip_hit(away_dir: int) -> void:
+	if _petrified:
+		return
+	_stagger_left = Balance.WHIP_STAGGER
+	velocity.x = away_dir * sqrt(2.0 * Balance.ENEMY_KNOCKBACK_DECEL * Balance.WHIP_KNOCKBACK_BL * Balance.BL)
+	_on_staggered()
+	if mirror_bearer:
+		knock_mirror(Balance.WHIP_MIRROR_KNOCK)
+
+
+## True while a whip hit still holds the enemy.
+func is_staggered() -> bool:
+	return _stagger_left > 0.0
+
+
+## Subclasses call this right after apply_gravity(): while staggered it slides the
+## enemy to a stop and returns true, and the subclass should only move_and_slide()
+## and return (no AI, no attacks) for that frame.
+func tick_stagger(delta: float) -> bool:
+	if _stagger_left <= 0.0:
+		return false
+	_stagger_left -= delta
+	velocity.x = move_toward(velocity.x, 0.0, Balance.ENEMY_KNOCKBACK_DECEL * delta)
+	return true
+
+
+## Override to drop whatever the enemy was doing (a wind-up, a thrust) when staggered.
+func _on_staggered() -> void:
+	pass
+
+
+## Stub for the mirror-bearer enemy (a later prompt): knock the mirror aside for
+## `seconds`, so a gaze into it no longer reflects.
+func knock_mirror(_seconds: float) -> void:
+	pass
 
 
 ## The player node (group "player"), or null.

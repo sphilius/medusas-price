@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/whip.gd" id="1_whip"]
+
+[node name="Whip" type="Area2D"]
+collision_layer = 0
+collision_mask = 12
+monitorable = false
+script = ExtResource("1_whip")
+
+[node name="Shape" type="CollisionPolygon2D" parent="."]
+
+[node name="Snakes" type="Node2D" parent="."]
+
+[node name="Anim" type="AnimationPlayer" parent="."]

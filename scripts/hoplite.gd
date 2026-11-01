@@ -38,6 +38,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
+	if tick_stagger(delta):
+		move_and_slide()
+		return
 	match state:
 		State.PATROL: _patrol()
 		State.CHASE: _chase()
@@ -112,6 +115,15 @@ func _recover(delta: float) -> void:
 	_timer -= delta
 	if _timer <= 0.0:
 		state = State.CHASE
+
+
+## A whip hit breaks the attack: no glint, spear back at rest, and once the
+## stagger ends he goes back to chasing (a wind-up has to start over).
+func _on_staggered() -> void:
+	if state in [State.WINDUP, State.THRUST, State.RECOVER]:
+		state = State.CHASE
+	_glint.visible = false
+	_place_spear(0.0)
 
 
 ## Spear reach in px.

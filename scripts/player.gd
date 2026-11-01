@@ -7,16 +7,27 @@ extends CharacterBody2D
 
 ## All the things Medusa can be doing. In WHIP, GAZE, HURT and DEAD she simply
 ## falls and slows down (no movement input). GAZE is entered while K is held and
-## read by the Gaze child; WHIP, HURT and DEAD wait for the whip and portrait.
+## read by the Gaze child; WHIP (J) runs the three whip phases below and is read
+## by the Whip child; HURT and DEAD wait for the portrait.
 enum State { IDLE, RUN, JUMP, FALL, WHIP, GAZE, HURT, DEAD }
+
+## The parts of a lash, in order. NONE whenever the state is not WHIP. No other
+## action, and no gaze, during ANTICIPATION and RECOVERY; only RECOVERY can be
+## cancelled (by jumping).
+enum WhipPhase { NONE, ANTICIPATION, ACTIVE, RECOVERY }
 
 ## Fired whenever the state changes (animation, audio and VFX can listen).
 signal state_changed(old_state: State, new_state: State)
+## Fired at every whip phase change. The Whip child listens: it plays the lash
+## animation and enables its hitbox during ACTIVE only.
+signal whip_phase_changed(phase: WhipPhase)
 
 ## Which way she looks: -1 = left, 1 = right. Other systems read this (gaze cone, whip).
 var facing: int = 1
 ## Current state. Change it with enter_state(), not by assigning directly.
 var state: State = State.IDLE
+## Which part of the lash she is in (NONE outside State.WHIP).
+var whip_phase: WhipPhase = WhipPhase.NONE
 
 ## Seconds left in which a jump is still allowed after walking off a ledge.
 var _coyote_left: float = 0.0
@@ -27,6 +38,8 @@ var _hurt_left: float = 0.0
 var _invuln_left: float = 0.0
 ## Seconds spent walking into the same side of a statue (push starts at STATUE_PUSH_DELAY).
 var _push_time: float = 0.0
+## Seconds left in the current whip phase (a negative leftover carries into the next).
+var _whip_left: float = 0.0
 
 ## The child node holding the placeholder art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
@@ -39,6 +52,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_hurt(delta)
+	# Timers run in every state, so a jump pressed during the lash can cancel its recovery.
+	_update_jump_timers(delta)
+	_tick_whip(delta)
 	# Gaze roots Medusa while held: she brakes, still falls, and cannot turn.
 	# Releasing K hands control back to the normal locomotion states.
 	if Input.is_action_pressed("gaze") and can_gaze():
@@ -54,7 +70,6 @@ func _physics_process(delta: float) -> void:
 
 	var dir: float = Input.get_axis("move_left", "move_right")
 	_update_facing(dir)
-	_update_jump_timers(delta)
 
 	# Horizontal: accelerate toward the target speed (also brakes when dir is 0).
 	velocity.x = move_toward(velocity.x, dir * Balance.PLAYER_RUN_SPEED, Balance.PLAYER_GROUND_ACCEL * delta)
@@ -117,11 +132,58 @@ func enter_state(new_state: State) -> void:
 	var old: State = state
 	state = new_state
 	state_changed.emit(old, new_state)
+	# However the lash ends (finished, jump-cancelled, interrupted by a hit), clear its phase.
+	if old == State.WHIP:
+		_set_whip_phase(WhipPhase.NONE)
 
 
 ## False while whipping (anticipation through recovery), hurt or dead.
 func can_gaze() -> bool:
 	return state not in [State.WHIP, State.HURT, State.DEAD]
+
+
+## J starts a lash from any state but WHIP itself, HURT and DEAD (it interrupts a gaze).
+func can_whip() -> bool:
+	return state not in [State.WHIP, State.HURT, State.DEAD]
+
+
+## Start a lash on J, then walk its three phases by their Balance times. Leaving a
+## phase carries any overshoot into the next, so the whole lash lasts exactly
+## anticipation + active + recovery. A jump pressed during recovery (or buffered
+## just before it, with the ground or coyote time under her) ends the lash early;
+## the normal movement code then performs that jump in the same frame.
+func _tick_whip(delta: float) -> void:
+	if state != State.WHIP:
+		if Input.is_action_just_pressed("whip") and can_whip():
+			_start_whip()
+		return
+	_whip_left -= delta
+	if _whip_left <= 0.0:
+		match whip_phase:
+			WhipPhase.ANTICIPATION:
+				_set_whip_phase(WhipPhase.ACTIVE)
+				_whip_left += Balance.WHIP_ACTIVE
+			WhipPhase.ACTIVE:
+				_set_whip_phase(WhipPhase.RECOVERY)
+				_whip_left += Balance.WHIP_RECOVERY
+			WhipPhase.RECOVERY:
+				_update_locomotion_state(0.0)
+				return
+	if whip_phase == WhipPhase.RECOVERY and _buffer_left > 0.0 and _coyote_left > 0.0:
+		_update_locomotion_state(0.0)
+
+
+func _start_whip() -> void:
+	enter_state(State.WHIP)
+	_whip_left = Balance.WHIP_ANTICIPATION
+	_set_whip_phase(WhipPhase.ANTICIPATION)
+
+
+func _set_whip_phase(phase: WhipPhase) -> void:
+	if phase == whip_phase:
+		return
+	whip_phase = phase
+	whip_phase_changed.emit(phase)
 
 
 ## Remember the last non-zero direction and mirror the art to match.
@@ -187,5 +249,7 @@ func _process_stub_state(delta: float) -> void:
 	var friction: float = Balance.PLAYER_HURT_FRICTION if state == State.HURT else Balance.PLAYER_GROUND_ACCEL
 	velocity.x = move_toward(velocity.x, 0.0, friction * delta)
 	if not is_on_floor():
-		velocity.y += Balance.PLAYER_GRAVITY * delta
+		# Mid-air the lash itself hangs her up: half gravity while it is active.
+		var lashing: bool = state == State.WHIP and whip_phase == WhipPhase.ACTIVE
+		velocity.y += Balance.PLAYER_GRAVITY * (Balance.WHIP_AIR_GRAVITY_MULT if lashing else 1.0) * delta
 	move_and_slide()

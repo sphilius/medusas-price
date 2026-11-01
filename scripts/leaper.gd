@@ -17,6 +17,9 @@ var _air_time: float = 0.0
 
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
+	if tick_stagger(delta):
+		move_and_slide()  # a staggered leaper is harmless: no contact check
+		return
 	match state:
 		State.WAIT: _wait()
 		State.LEAP: _leap(delta)
@@ -74,6 +77,13 @@ func _recover(delta: float) -> void:
 	_timer -= delta
 	if _timer <= 0.0:
 		state = State.WAIT
+
+
+## A whip hit cancels a leap in progress; after the stagger it rests, then looks again.
+func _on_staggered() -> void:
+	if state == State.LEAP:
+		state = State.RECOVER
+		_timer = Balance.LEAPER_RECOVERY
 
 
 ## Touching the player hurts. (Her invulnerability stops repeat hits.)

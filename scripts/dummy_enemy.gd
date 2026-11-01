@@ -25,6 +25,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
+	if tick_stagger(delta):
+		move_and_slide()
+		return
 	if stationary:
 		move_and_slide()
 		return
