@@ -364,6 +364,41 @@ const HUD_TEXTURE_SIZE: int = 128
 const HUD_LAYER: int = 10
 
 # ---------------------------------------------------------------------------
+# Touch controls (scenes/ui/touch_controls.tscn): on-screen buttons for phones
+# ---------------------------------------------------------------------------
+# Positions are in game pixels on the 1280 x 720 screen (centre of each button).
+# Left thumb: walk left / right, with a small kneel button above them.
+const TOUCH_LEFT_POS: Vector2 = Vector2(130.0, 590.0)
+const TOUCH_RIGHT_POS: Vector2 = Vector2(310.0, 590.0)
+const TOUCH_DOWN_POS: Vector2 = Vector2(220.0, 440.0)
+# Right thumb: gaze (hold), whip (tap), jump (hold for height).
+const TOUCH_GAZE_POS: Vector2 = Vector2(1090.0, 420.0)
+const TOUCH_WHIP_POS: Vector2 = Vector2(960.0, 600.0)
+const TOUCH_JUMP_POS: Vector2 = Vector2(1150.0, 590.0)
+# Button radii (px). About 9 mm or more on a phone held in landscape.
+const TOUCH_MOVE_RADIUS: float = 76.0
+const TOUCH_DOWN_RADIUS: float = 56.0
+const TOUCH_ACTION_RADIUS: float = 80.0
+## A finger counts as on a button up to this many radii from its centre (forgiving thumbs).
+const TOUCH_HIT_SCALE: float = 1.25
+## Disc and icon opacity while idle and while a finger is down (idle stays see-through).
+const TOUCH_IDLE_DISC_ALPHA: float = 0.32
+const TOUCH_PRESSED_DISC_ALPHA: float = 0.65
+const TOUCH_ICON_ALPHA: float = 0.8
+## Width (px) of the ring around each button and of the whip/arrow strokes.
+const TOUCH_RING_WIDTH: float = 5.0
+const TOUCH_ICON_STROKE: float = 7.0
+## Pressed buttons shrink to this scale.
+const TOUCH_PRESSED_SCALE: float = 0.92
+## Segments for round shapes (more = rounder).
+const TOUCH_CIRCLE_SEGMENTS: int = 40
+## "Turn your phone sideways" overlay: size of the phone icon (px) and seconds per half turn.
+const TOUCH_ROTATE_PHONE_SIZE: Vector2 = Vector2(110.0, 190.0)
+const TOUCH_ROTATE_TURN_TIME: float = 1.1
+## Touch layer, above the portrait HUD.
+const TOUCH_LAYER: int = 20
+
+# ---------------------------------------------------------------------------
 # Respawn props and death
 # ---------------------------------------------------------------------------
 ## Distance (px) from Medusa's center to her feet; props sit on the floor, she is placed
