@@ -5,9 +5,9 @@
 class_name Player
 extends CharacterBody2D
 
-## All the things Medusa can be doing. WHIP, GAZE, HURT and DEAD are stubs for now:
-## the player simply falls and slows down while in them. Later features
-## (whip.gd, gaze.gd, the portrait) will call enter_state() to use them.
+## All the things Medusa can be doing. In WHIP, GAZE, HURT and DEAD she simply
+## falls and slows down (no movement input). GAZE is entered while K is held and
+## read by the Gaze child; WHIP, HURT and DEAD wait for the whip and portrait.
 enum State { IDLE, RUN, JUMP, FALL, WHIP, GAZE, HURT, DEAD }
 
 ## Fired whenever the state changes (animation, audio and VFX can listen).
@@ -22,14 +22,24 @@ var state: State = State.IDLE
 var _coyote_left: float = 0.0
 ## Seconds left in which a recent jump press is still remembered.
 var _buffer_left: float = 0.0
+## Seconds spent walking into the same side of a statue (push starts at STATUE_PUSH_DELAY).
+var _push_time: float = 0.0
 
 ## The child node holding the placeholder art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
 
 
 func _physics_process(delta: float) -> void:
+	# Gaze roots Medusa while held: she brakes, still falls, and cannot turn.
+	# Releasing K hands control back to the normal locomotion states.
+	if Input.is_action_pressed("gaze") and can_gaze():
+		enter_state(State.GAZE)
+	elif state == State.GAZE:
+		_update_locomotion_state(0.0)
+
 	# Stub states: no player control yet, but keep physics sane (gravity + slow down).
 	if state in [State.WHIP, State.GAZE, State.HURT, State.DEAD]:
+		_push_time = 0.0
 		_process_stub_state(delta)
 		return
 
@@ -55,6 +65,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y *= Balance.PLAYER_JUMP_CUT
 
 	move_and_slide()
+	_update_push(dir, delta)
 	_update_locomotion_state(dir)
 
 
@@ -65,6 +76,11 @@ func enter_state(new_state: State) -> void:
 	var old: State = state
 	state = new_state
 	state_changed.emit(old, new_state)
+
+
+## False while whipping (anticipation through recovery), hurt or dead.
+func can_gaze() -> bool:
+	return state not in [State.WHIP, State.HURT, State.DEAD]
 
 
 ## Remember the last non-zero direction and mirror the art to match.
@@ -85,6 +101,31 @@ func _update_jump_timers(delta: float) -> void:
 		_buffer_left = Balance.PLAYER_JUMP_BUFFER
 	else:
 		_buffer_left = maxf(_buffer_left - delta, 0.0)
+
+
+## Statue pushing: walk into a statue's side from the ground for STATUE_PUSH_DELAY,
+## then it slides while she keeps pushing. Her speed is matched to the slide so
+## she stays in contact instead of stuttering against it.
+func _update_push(dir: float, delta: float) -> void:
+	var statue: Statue = _statue_pushed_into(dir)
+	if statue == null or not is_on_floor():
+		_push_time = 0.0
+		return
+	_push_time += delta
+	if _push_time >= Balance.STATUE_PUSH_DELAY:
+		statue.push(int(signf(dir)))
+		velocity.x = signf(dir) * Balance.STATUE_PUSH_SPEED
+
+
+## The statue she just walked into side-on in the held direction, or null.
+func _statue_pushed_into(dir: float) -> Statue:
+	if dir == 0.0:
+		return null
+	for i in get_slide_collision_count():
+		var hit: KinematicCollision2D = get_slide_collision(i)
+		if hit.get_collider() is Statue and hit.get_normal().x * signf(dir) <= -Balance.STATUE_PUSH_NORMAL:
+			return hit.get_collider() as Statue
+	return null
 
 
 ## Pick IDLE / RUN / JUMP / FALL from what the body is actually doing.

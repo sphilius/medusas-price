@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/gaze.tscn" id="2_gaze"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(40, 64)
@@ -22,3 +23,5 @@ polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)
 [node name="FacingMark" type="Polygon2D" parent="Visual"]
 color = Color(0.909804, 0.709804, 0.278431, 1)
 polygon = PackedVector2Array(6, -22, 18, -16, 6, -10)
+
+[node name="Gaze" parent="." instance=ExtResource("2_gaze")]
