@@ -22,6 +22,7 @@ boot_splash/image="res://web/splash.png"
 Balance="*res://autoload/balance.gd"
 Features="*res://autoload/features.gd"
 Events="*res://autoload/events.gd"
+RunLedger="*res://autoload/run_ledger.gd"
 Fx="*res://autoload/fx.gd"
 
 [display]

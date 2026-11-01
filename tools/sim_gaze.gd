@@ -36,6 +36,7 @@ func _ready() -> void:
 func _test_ground_petrify() -> void:
 	var dummy: Enemy = _spawn_still_dummy(Vector2(600, 568), -1)
 	_place_player(Vector2(450, 568), 1)
+	RunLedger.start_run()
 	Input.action_press("gaze")
 	await _frames(12)
 	_check("rooted in GAZE state while held", _player.state == Player.State.GAZE)
@@ -48,6 +49,19 @@ func _test_ground_petrify() -> void:
 		var args: Array = _petrified_log[0]
 		_check("signal type/frame/flip", args[0] == &"dummy" and args[1] == 0 and args[2] == true)
 		_check("signal position", (args[3] as Vector2).distance_to(Vector2(600, 568)) < 1.0)
+	# RunLedger heard the same petrify and can hand it to the AI features as JSON.
+	var logged: Array = RunLedger.events_of("petrify")
+	_check("ledger logged one petrify", logged.size() == 1)
+	if logged.size() == 1:
+		var data: Dictionary = logged[0]["data"]
+		_check("ledger event carries type/frame/flip/position", data["enemy_type"] == "dummy" \
+				and data["pose_frame"] == 0 and data["flip"] == true \
+				and Vector2(data["position"][0], data["position"][1]).distance_to(Vector2(600, 568)) < 1.0)
+	var parsed: Variant = JSON.parse_string(RunLedger.to_json())
+	_check("ledger JSON round-trips", parsed is Array and (parsed as Array).size() == 1)
+	var summary: Dictionary = RunLedger.summary()
+	_check("ledger summary counts the dummy", summary["petrified_by_enemy"].get("dummy", 0) == 1 \
+			and summary["counts"].get("petrify", 0) == 1)
 	var statue: Statue = _latest_statue()
 	_check("statue on layer 4 at dummy spot", statue != null and statue.collision_layer == Balance.PHYS_STATUES \
 			and statue.position.distance_to(Vector2(600, 568)) < 1.0)
