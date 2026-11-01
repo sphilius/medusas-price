@@ -1,8 +1,9 @@
 ## sim_statue.gd - dev-only headless check (scene: tools/sim_statue.tscn).
 ## Petrifies fresh dummies in the test room, then pushes the statues and prints
-## PASS/FAIL: push delay, slide speed and stop on release, stop at a wall (one
-## thud), push off a platform edge and land, and a mid-air statue that hangs
-## until pushed and then falls.
+## PASS/FAIL: the test room's PlatformDummy can be frozen from the platform and
+## pushed off it, push delay, slide speed and stop on release, stop at a wall
+## (one thud), push off a platform edge and land, and a mid-air statue that
+## hangs until pushed and then falls.
 extends Node
 
 const DUMMY: PackedScene = preload("res://scenes/dummy_enemy.tscn")
@@ -22,10 +23,11 @@ func _ready() -> void:
 	_room = load("res://scenes/test_room.tscn").instantiate()
 	add_child(_room)
 	_player = _room.get_node("Player")
-	_room.get_node("DummyEnemy").queue_free()
+	_room.get_node("DummyEnemy").queue_free()  # the patrolling one would wander into tests
 	Events.statue_thud.connect(func(p, landed): _thuds.append([p, landed]))
 	await _frames(10)
 
+	await _test_platform_dummy_scene()
 	await _test_ground_push()
 	await _test_wall_stop()
 	await _test_platform_edge_fall()
@@ -33,6 +35,28 @@ func _ready() -> void:
 
 	print("sim_statue: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
+
+
+## The room's own PlatformDummy: gaze it from the platform, push it off, hear it land.
+func _test_platform_dummy_scene() -> void:
+	var dummy: Enemy = _room.get_node("PlatformDummy")
+	var start: Vector2 = dummy.position
+	await _frames(30)
+	_check("platform dummy stands still", dummy.position.distance_to(start) < 1.0)
+	_place_player(Vector2(360, PLATFORM_Y))
+	Input.action_press("gaze")
+	await _frames(40)
+	Input.action_release("gaze")
+	_check("platform dummy petrified from the platform", not is_instance_valid(dummy))
+	var statue: Statue = get_tree().get_nodes_in_group(&"statues").back() as Statue
+	_thuds.clear()
+	Input.action_press("move_right")
+	await _frames(120)
+	Input.action_release("move_right")
+	await _frames(60)
+	_check("pushed off the platform, landed on the floor", statue.motion == Statue.Motion.STILL 			and absf(statue.position.y - FLOOR_Y) < 1.0)
+	_check("landing thud played", not _thuds.is_empty() and _thuds.back()[1] == true)
+	await _free(statue)
 
 
 ## No slide before the delay, about 96 px/s after it, stops (with a thud) on release.

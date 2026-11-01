@@ -17,7 +17,9 @@ func _ready() -> void:
 	_room = load("res://scenes/test_room.tscn").instantiate()
 	add_child(_room)
 	_player = _room.get_node("Player")
-	_room.get_node("DummyEnemy").queue_free()  # tests use their own dummies
+	for child in _room.get_children():  # tests use their own dummies
+		if child is Enemy:
+			child.queue_free()
 	Events.petrified.connect(func(t, f, fl, p): _petrified_log.append([t, f, fl, p]))
 	await _frames(10)
 

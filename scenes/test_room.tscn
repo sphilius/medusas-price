@@ -76,6 +76,10 @@ polygon = PackedVector2Array(-16, -48, 16, -48, 16, 48, -16, 48)
 [node name="DummyEnemy" parent="." instance=ExtResource("3_dummy")]
 position = Vector2(600, 568)
 
+[node name="PlatformDummy" parent="." instance=ExtResource("3_dummy")]
+position = Vector2(460, 448)
+stationary = true
+
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector2(150, 568)
 

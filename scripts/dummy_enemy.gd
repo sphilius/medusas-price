@@ -1,8 +1,12 @@
 ## dummy_enemy.gd (root script of scenes/dummy_enemy.tscn)
 ## Purpose: a test target for the gaze. A black block that patrols around its
 ## spawn point and jumps every few seconds, so it can be frozen on the ground or
-## mid-air and then stood on.
+## mid-air and then stood on. With `stationary` on it just stands still (gravity
+## only), e.g. on a ledge to freeze and push off.
 extends Enemy
+
+## Stand still: no patrol, no jumping.
+@export var stationary: bool = false
 
 ## Patrol center (spawn x).
 var _home_x: float = 0.0
@@ -15,12 +19,16 @@ func _ready() -> void:
 	_home_x = position.x
 	_jump_timer.wait_time = Balance.DUMMY_JUMP_INTERVAL
 	_jump_timer.timeout.connect(_on_jump_timer_timeout)
-	_jump_timer.start()
+	if not stationary:
+		_jump_timer.start()
 
 
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y += Balance.ENEMY_GRAVITY * delta
+	if stationary:
+		move_and_slide()
+		return
 
 	# Turn around at a wall (face away from it) or at either end of the patrol.
 	var limit: float = Balance.DUMMY_PATROL_BL * Balance.BL
