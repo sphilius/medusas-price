@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/mirror_pool.gd" id="1_pool"]
+
+[node name="MirrorPool" type="Area2D"]
+script = ExtResource("1_pool")
+
+[node name="Trigger" type="CollisionShape2D" parent="."]
+
+[node name="Basin" type="Polygon2D" parent="."]
+
+[node name="Water" type="Polygon2D" parent="."]
+
+[node name="Glint" type="Polygon2D" parent="."]

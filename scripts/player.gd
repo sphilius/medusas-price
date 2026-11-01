@@ -41,16 +41,32 @@ var _push_time: float = 0.0
 ## Seconds left in the current whip phase (a negative leftover carries into the next).
 var _whip_left: float = 0.0
 
+## Where she stands again after a pit fall (center) and after dying (center). Both
+## start at her spawn; safe ledges and mirror pools move them.
+var _safe_ledge_point: Vector2 = Vector2.ZERO
+var _pool_point: Vector2 = Vector2.ZERO
+## True from the moment the portrait runs out until she is back on her feet.
+var _dying: bool = false
+
 ## The child node holding the placeholder art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
 
 
 func _ready() -> void:
 	add_to_group(&"player")
+	_safe_ledge_point = global_position
+	_pool_point = global_position
 	Events.player_hit.connect(_on_player_hit)
+	Events.safe_ledge_reached.connect(_on_safe_ledge_reached)
+	Events.pool_used.connect(_on_pool_used)
+	Events.player_fell.connect(_on_player_fell)
+	PortraitState.died.connect(_on_portrait_died)
 
 
 func _physics_process(delta: float) -> void:
+	# Backstop for a fall no Pit zone caught. The respawn moves her back up, so it fires once.
+	if not _dying and global_position.y > Balance.PLAYER_PIT_Y:
+		Events.player_fell.emit(global_position)
 	_tick_hurt(delta)
 	# Timers run in every state, so a jump pressed during the lash can cancel its recovery.
 	_update_jump_timers(delta)
@@ -104,6 +120,11 @@ func _on_player_hit(cracks: int, source: StringName, from_position: Vector2) -> 
 		"position": [global_position.x, global_position.y],
 		"level": RunLedger.level,
 	})
+	# Only a hit that gets past the gate above costs cracks (hits during the
+	# invulnerable window are ignored, however often the enemy re-sends them).
+	PortraitState.add_cracks(cracks, source)
+	if _dying:
+		return
 	var away: float = signf(global_position.x - from_position.x)
 	if away == 0.0:
 		away = -float(facing)
@@ -111,6 +132,83 @@ func _on_player_hit(cracks: int, source: StringName, from_position: Vector2) -> 
 	_hurt_left = Balance.PLAYER_HURT_TIME
 	_invuln_left = Balance.PLAYER_INVULN_TIME
 	enter_state(State.HURT)
+
+
+## Touching a safe ledge: a pit fall will put her back here (marker is on the floor).
+func _on_safe_ledge_reached(floor_point: Vector2) -> void:
+	_safe_ledge_point = floor_point + Vector2(0.0, -Balance.PLAYER_FEET_OFFSET)
+
+
+## Healing at a pool makes it the death respawn.
+func _on_pool_used(floor_point: Vector2) -> void:
+	_pool_point = floor_point + Vector2(0.0, -Balance.PLAYER_FEET_OFFSET)
+
+
+## Fell into a pit: one crack, then back to the last safe ledge with a brief grace
+## period. If that crack was the last one, dying takes over instead.
+func _on_player_fell(_where: Vector2) -> void:
+	if _dying:
+		return
+	RunLedger.log_event("pit", {"level": RunLedger.level})
+	PortraitState.add_cracks(Balance.CRACKS_PIT, &"pit")
+	if _dying:
+		return
+	_teleport(_safe_ledge_point)
+	_hurt_left = 0.0
+	_invuln_left = Balance.PLAYER_INVULN_TIME
+	_update_locomotion_state(0.0)
+
+
+## The portrait ran out: turn to marble (art tinted over DEATH_STONE_TIME while the
+## screen desaturates), hold, then get up at the last pool at the respawn stage.
+func _on_portrait_died() -> void:
+	if _dying:
+		return
+	_dying = true
+	_hurt_left = 0.0
+	enter_state(State.DEAD)
+	RunLedger.log_event("death", {
+		"source": String(PortraitState.last_source),
+		"position": [global_position.x, global_position.y],
+		"level": RunLedger.level,
+	})
+	Events.player_died.emit(global_position)
+	var polygons: Array[Polygon2D] = []
+	var base_colors: Array[Color] = []
+	for node: Node in _visual.find_children("*", "Polygon2D", true, false):
+		polygons.append(node as Polygon2D)
+		base_colors.append((node as Polygon2D).color)
+	var tint := func(t: float) -> void:
+		for i in polygons.size():
+			polygons[i].color = base_colors[i].lerp(Balance.COLOR_MARBLE, t)
+	var tween: Tween = create_tween()
+	tween.tween_method(tint, 0.0, 1.0, Balance.DEATH_STONE_TIME)
+	tween.tween_interval(Balance.DEATH_HOLD_TIME)
+	await tween.finished
+	PortraitState.reset_after_death()
+	for i in polygons.size():
+		polygons[i].color = base_colors[i]
+	_visual.modulate.a = 1.0
+	_teleport(_pool_point)
+	_invuln_left = Balance.PLAYER_INVULN_TIME
+	_dying = false
+	enter_state(State.IDLE)
+	Events.player_respawned.emit(global_position)
+
+
+## Put her somewhere else, standing still. A smoothed follow camera jumps with her
+## instead of swooping across the level.
+func _teleport(point: Vector2) -> void:
+	global_position = point
+	velocity = Vector2.ZERO
+	_push_time = 0.0
+	for node: Node in find_children("*", "Camera2D", false, false):
+		(node as Camera2D).reset_smoothing()
+
+
+## Down is held while she is on the floor and free to act: the kneel that works a mirror pool.
+func is_kneeling() -> bool:
+	return is_on_floor() and state in [State.IDLE, State.RUN] and Input.is_action_pressed("move_down")
 
 
 ## Count down the stun and invulnerability; flicker the art while invulnerable.

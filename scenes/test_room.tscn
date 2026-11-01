@@ -1,10 +1,14 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/test_room.gd" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/game_camera.tscn" id="3_camera"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/hoplite.tscn" id="4_hoplite"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/leaper.tscn" id="5_leaper"]
+[ext_resource type="PackedScene" path="res://scenes/props/safe_ledge.tscn" id="6_ledge"]
+[ext_resource type="PackedScene" path="res://scenes/props/pit.tscn" id="7_pit"]
+[ext_resource type="PackedScene" path="res://scenes/props/mirror_pool.tscn" id="8_pool"]
+[ext_resource type="PackedScene" path="res://scenes/ui/portrait_hud.tscn" id="9_hud"]
 
 [sub_resource type="RectangleShape2D" id="Shape_LedgeNear"]
 size = Vector2(640, 80)
@@ -39,6 +43,21 @@ shape = SubResource("Shape_LedgeFar")
 [node name="Art" type="Polygon2D" parent="LedgeFar"]
 color = Color(0.784314, 0.392157, 0.231373, 1)
 polygon = PackedVector2Array(-670, -40, 670, -40, 670, 40, -670, 40)
+
+[node name="SafeLedgeNear" parent="." instance=ExtResource("6_ledge")]
+position = Vector2(100, 600)
+
+[node name="SafeLedgeFar" parent="." instance=ExtResource("6_ledge")]
+position = Vector2(990, 600)
+
+[node name="MirrorPool" parent="." instance=ExtResource("8_pool")]
+position = Vector2(1110, 600)
+
+[node name="Pit" parent="." instance=ExtResource("7_pit")]
+position = Vector2(800, 760)
+size = Vector2(480, 500)
+
+[node name="PortraitHud" parent="." instance=ExtResource("9_hud")]
 
 [node name="Hoplite1" parent="." instance=ExtResource("4_hoplite")]
 position = Vector2(470, 568)

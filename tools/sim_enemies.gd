@@ -3,7 +3,7 @@
 ## HURT/invulnerability/ledger, leaper leaps the gap, gaze petrifies a hoplite,
 ## the gap is too wide for a plain jump but can be crossed on a leaper frozen
 ## mid-leap, the leaper ignores a player on its own ledge, and falling into the
-## pit reloads the room (the softlock guard).
+## pit puts her back on a ledge and restores a wasted leaper (the softlock guard).
 extends Node
 
 ## Gap between LedgeNear and LedgeFar in scenes/test_room.tscn (px).
@@ -215,27 +215,21 @@ func _test_leaper_ignores_same_ledge() -> void:
 	_check("leaper ignores a player on its own ledge", leaper.state == leaper.State.WAIT)
 
 
-## Softlock guard: when the graybox is the running scene, the pit reloads the
-## whole room, so a wasted leaper comes back at its spawn point.
+## Softlock guard: a pit fall puts her back on a ledge, and a wasted leaper comes
+## back at its spawn point so the gap can still be crossed.
 func _test_pit_reload() -> void:
 	await _fresh_room()
-	# Stand the room in for the running scene (it must be a child of root to be swapped).
-	var old_room: Node = _room
-	old_room.reparent(get_tree().root)
-	get_tree().current_scene = old_room
-	var leaper_home: Vector2 = old_room.get_node("Leaper").position
-	old_room.get_node("Leaper").queue_free()  # "wasted"
+	var leaper_home: Vector2 = _room.get_node("Leaper").position
+	_room.get_node("Leaper").queue_free()  # "wasted"
 	var pits_before: int = RunLedger.events_of("pit").size()
 	await _frames(2)
-	_place_player(Vector2(800, Balance.PLAYER_PIT_Y + Balance.BL), 1)
-	await _frames(5)
-	var room_now: Node = get_tree().current_scene
+	_place_player(Vector2(800, 900), 1)
+	await _frames(8)
 	_check("pit fall is logged to the ledger", RunLedger.events_of("pit").size() == pits_before + 1)
-	_check("pit fall reloads the room", room_now != null and room_now != old_room and not is_instance_valid(old_room))
-	_check("reloaded room has its leaper back home", room_now != null and room_now.has_node("Leaper") \
-			and room_now.get_node("Leaper").position.distance_to(leaper_home) < 1.0)
-	_check("player is back at the start", room_now != null \
-			and (room_now.get_node("Player") as Player).position.y < Balance.PLAYER_PIT_Y)
+	_check("pit fall puts her back on a ledge", _player.position.y < Balance.PLAYER_PIT_Y \
+			and _player.position.y < LEDGE_STAND_Y + Balance.BL)
+	_check("the room has its leaper back home", _room.has_node("Leaper") \
+			and _room.get_node("Leaper").position.distance_to(leaper_home) < 1.0)
 
 
 ## Throw away the current room and load a fresh copy of the graybox.

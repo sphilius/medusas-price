@@ -64,8 +64,6 @@ const GAZE_HALF_ANGLE_DEG: float = 20.0
 const GAZE_HOLD: float = 0.4
 ## Same, for eye-shading soldiers.
 const GAZE_HOLD_EYE_SHADING: float = 0.7
-## Portrait cracks paid per petrified enemy.
-const GAZE_CRACK_COST: int = 1
 ## Where the cone starts, relative to Medusa's center (her eyes).
 const GAZE_EYE_OFFSET: Vector2 = Vector2(0.0, -20.0)
 ## Alpha of the gold cone polygon.
@@ -244,7 +242,7 @@ const HOPLITE_WINDUP: float = 0.35
 const ENEMY_GRAVITY: float = PLAYER_GRAVITY
 ## Enemies below this y (px) fell into a pit and are removed.
 const ENEMY_KILL_Y: float = 1600.0
-## Player below this y (px) fell into a pit (graybox: back to the start).
+## Player below this y (px) fell into a pit: backstop for when no Pit zone caught her.
 const PLAYER_PIT_Y: float = 1400.0
 ## How far below the feet / ahead of the body (px) the ledge check looks.
 const ENEMY_LEDGE_PROBE_DOWN: float = 24.0
@@ -320,6 +318,75 @@ const CRACKS_REFLECT: int = 2    # own gaze reflected by a mirror
 const CRACKS_PERSEUS: int = 2    # any Perseus attack
 ## Stage a player respawns at after death (0 cracks).
 const DEATH_RESPAWN_STAGE: int = 2
+
+# ---------------------------------------------------------------------------
+# Portrait HUD (scenes/ui/portrait_hud.tscn): wordless, top-left
+# ---------------------------------------------------------------------------
+## Shield width = height (px) and gap from the screen corner (px).
+const HUD_SIZE: float = 140.0
+const HUD_MARGIN: float = 16.0
+## Width (px) of the round frame's rim, and the frame's segments (more = rounder).
+const HUD_FRAME_WIDTH: float = 6.0
+const HUD_CIRCLE_SEGMENTS: int = 48
+## Placeholder painting per stage, bright (Defiant) to gray (Stone).
+const PORTRAIT_STAGE_COLORS: Array[Color] = [
+	Color("F2D9A0"), Color("D9A066"), Color("B07A55"), Color("8A7468"), Color("6B6B6B"),
+]
+## Hairline cracks: line width (px), zigzag points per crack, how far the zigzag
+## strays (fraction of the shield radius), how deep a crack reaches (fraction of
+## the radius, from the rim inward), and how far it may lean off the straight line.
+const CRACK_LINE_WIDTH: float = 2.0
+## The wider dark edge drawn under each hairline (width px, alpha) so it reads on a bright painting.
+const CRACK_EDGE_WIDTH: float = 4.0
+const CRACK_EDGE_ALPHA: float = 0.55
+const CRACK_POINTS: int = 5
+const CRACK_JITTER: float = 0.12
+const CRACK_REACH_MIN: float = 0.55
+const CRACK_REACH_MAX: float = 0.95
+## White flash over the shield on a stage change: peak alpha and fade time (s).
+const HUD_FLASH_ALPHA: float = 0.9
+const HUD_FLASH_TIME: float = 0.3
+## Flinch on a hit: shake (px), scale dip and time (s).
+const HUD_FLINCH_PX: float = 6.0
+const HUD_FLINCH_SCALE: float = 0.9
+const HUD_FLINCH_TIME: float = 0.22
+## Snap on a petrify: scale pop and time (s).
+const HUD_SNAP_SCALE: float = 1.12
+const HUD_SNAP_TIME: float = 0.14
+## Soften at a pool: warm glow peak alpha and fade time (s).
+const HUD_SOFTEN_ALPHA: float = 0.55
+const HUD_SOFTEN_TIME: float = 0.9
+## Soften at a pool: the shield swells by this scale as the glow fades.
+const HUD_SOFTEN_SCALE: float = 1.05
+## Side (px) of the placeholder painting textures generated in code (round, solid color).
+const HUD_TEXTURE_SIZE: int = 128
+## Shield canvas layer, above the world. The death desaturate sits just below it.
+const HUD_LAYER: int = 10
+
+# ---------------------------------------------------------------------------
+# Respawn props and death
+# ---------------------------------------------------------------------------
+## Distance (px) from Medusa's center to her feet; props sit on the floor, she is placed
+## this far above them.
+const PLAYER_FEET_OFFSET: float = 32.0
+## Safe ledge marker: trigger size (BL) and the flag drawn on it (px).
+const SAFE_LEDGE_WIDTH_BL: float = 1.0
+const SAFE_LEDGE_HEIGHT_BL: float = 1.5
+const SAFE_LEDGE_POLE_HEIGHT: float = 44.0
+const SAFE_LEDGE_FLAG_SIZE: float = 14.0
+## Pit kill zone default size (BL). A scene can override it per instance.
+const PIT_WIDTH_BL: float = 6.0
+const PIT_HEIGHT_BL: float = 6.0
+## Mirror pool: width and trigger height (BL), basin depth (px), and seconds of standing
+## still inside before it heals without a kneel.
+const POOL_WIDTH_BL: float = 2.0
+const POOL_HEIGHT_BL: float = 1.0
+const POOL_DEPTH: float = 8.0
+const POOL_STAND_TIME: float = 1.0
+## Death: seconds to turn to marble, hold as a statue, and fade the screen back.
+const DEATH_STONE_TIME: float = 1.0
+const DEATH_HOLD_TIME: float = 0.5
+const DEATH_FADE_BACK_TIME: float = 0.4
 
 # ---------------------------------------------------------------------------
 # Perseus (boss)

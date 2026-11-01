@@ -74,7 +74,7 @@ func _on_petrified(enemy_type: StringName, pose_frame: int, flip: bool, position
 		"flip": flip,
 		"position": [position.x, position.y],
 		"level": level,
-		"portrait_stage": 1,  # no portrait yet; stage 1 until it exists
+		"portrait_stage": PortraitState.stage,
 	})
 
 

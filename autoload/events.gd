@@ -15,3 +15,14 @@ signal shake_requested(strength: float, duration: float)
 ## The player was struck. source names the attacker (&"hoplite", &"leaper");
 ## from_position is where it came from, so the player knows which way to fly.
 signal player_hit(cracks: int, source: StringName, from_position: Vector2)
+## Medusa touched a safe ledge marker; position is on the floor surface. A pit fall
+## puts her back at the last one.
+signal safe_ledge_reached(position: Vector2)
+## Medusa healed at a mirror pool; position is on the floor. It is now her death respawn.
+signal pool_used(position: Vector2)
+## Medusa fell into a pit (a Pit zone, or below Balance.PLAYER_PIT_Y).
+signal player_fell(position: Vector2)
+## Medusa's portrait ran out: the turn-to-stone began / she is back on her feet at position
+## (her center), after a death.
+signal player_died(position: Vector2)
+signal player_respawned(position: Vector2)
