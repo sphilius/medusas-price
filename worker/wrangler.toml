@@ -1,0 +1,44 @@
+# wrangler.toml - Cloudflare Worker config for Medusa's Price.
+# Only PLAIN settings live here. API keys are secrets, set with
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#   npx wrangler secret put GEMINI_API_KEY
+# and never written into this file or the code. See README.md.
+
+name = "medusas-price-worker"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# KV namespace for the per-IP rate limit and the daily spend counter.
+# Create it once with `npx wrangler kv namespace create LIMITS` and paste the id it prints.
+# (A KV id is not a secret; it is useless without your Cloudflare login.)
+[[kv_namespaces]]
+binding = "LIMITS"
+id = "PASTE_KV_NAMESPACE_ID_HERE"
+
+[vars]
+# Comma-separated origins allowed to call the Worker. "*." matches any subdomain.
+# http://localhost and http://127.0.0.1 on any port are always allowed (local dev).
+# itch.io serves HTML5 games from an *.itch.zone iframe; run `npx wrangler tail`
+# and look for "rejected origin:" lines to confirm the exact value.
+ALLOWED_ORIGINS = "https://*.itch.zone"
+
+# Generation requests allowed per IP per clock hour.
+RATE_LIMIT_PER_HOUR = "3"
+
+# Daily spend cap in USD (UTC day). Over the cap every generation returns 429 {fallback:true}.
+DAILY_CAP_USD = "10"
+
+# Per-call cost ESTIMATES in USD, charged to the daily counter BEFORE each call.
+# Rounded up on purpose. Prices checked 2026-11-02:
+#   claude-haiku-5-5: $0.10 / M input tokens, $0.50 / M output tokens
+#   gemini-3.1-flash-image: $0.045 per 512 px image, $0.067 per 1K image
+COST_TEXT_USD = "0.002"
+COST_VISION_USD = "0.002"
+COST_IMAGE_USD = "0.07"
+
+# Models. Changing a model is a config change here; changing a provider is src/providers.ts.
+LLM_MODEL = "claude-haiku-5-5"
+IMAGE_MODEL = "gemini-3.1-flash-image"
+
+# Largest accepted request body in bytes (16 KB).
+MAX_BODY_BYTES = "16384"
