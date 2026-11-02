@@ -31,6 +31,7 @@ Fx="*res://autoload/fx.gd"
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
+window/handheld/orientation=4
 
 [input]
 
@@ -90,6 +91,8 @@ gaze={
 2d_physics/layer_7="pickups"
 
 [rendering]
+
+textures/vram_compression/import_etc2_astc=true
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
