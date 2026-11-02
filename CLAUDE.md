@@ -40,7 +40,7 @@ The game shows **no words, no numbers and no readable glyphs** on screen.
 
 Run 300 px/s, ground accel 2400 px/s², gravity 1800 px/s², jump apex about 2 BL, coyote time 0.10 s, jump buffer 0.12 s, variable jump height on release.
 
-**Sprint (hold Shift, PC only):** top speed x1.5 (450 px/s) and, because speed carries through a jump, a sprint jump reaches about 1.5x as far. Whether she sprints is fixed on her last ground frame, so Shift in mid-air changes nothing. No touch button yet.
+**Sprint (hold Shift on PC; double-tap-and-hold a direction on touch):** top speed x1.5 (450 px/s) and, because speed carries through a jump, a sprint jump reaches about 1.5x as far. Whether she sprints is fixed on her last ground frame, so Shift in mid-air changes nothing. On touch: tap a direction, lift, press the same direction again within 0.25 s (`Balance.TOUCH_DOUBLE_TAP_WINDOW`) and keep holding; a gold chevron shows beside the arrow while it is on.
 
 ## Gaze (hold K)
 

@@ -412,6 +412,14 @@ const TOUCH_ROTATE_STROKE: float = 16.0
 const TOUCH_ROTATE_TURN_TIME: float = 1.1
 ## Touch layer, above the portrait HUD.
 const TOUCH_LAYER: int = 20
+## Double-tap sprint: tap a direction button, lift, and press the SAME direction again within
+## this many seconds; she sprints (like holding Shift) until that finger lifts or slides off.
+const TOUCH_DOUBLE_TAP_WINDOW: float = 0.25
+## While sprinting, a gold second arrow (a "double chevron") shows beside the direction
+## arrow. Its tip x, back x and half-height, as fractions of the button radius.
+const TOUCH_SPRINT_MARK_TIP: float = 0.84
+const TOUCH_SPRINT_MARK_BACK: float = 0.46
+const TOUCH_SPRINT_MARK_HALF: float = 0.30
 
 # ---------------------------------------------------------------------------
 # Respawn props and death
