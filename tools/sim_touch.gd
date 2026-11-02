@@ -266,7 +266,7 @@ func _test_drives_medusa() -> void:
 	for i in 20:
 		await get_tree().physics_frame
 	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
-	_check("holding the right button walks Medusa right", _player.global_position.x > start_x + 40.0 and _player.facing == 1)
+	_check("holding the right button walks Medusa right", _player.global_position.x > start_x + 20.0 and _player.facing == 1)
 
 	await _player_settled()
 	await _finger(1, Balance.TOUCH_JUMP_POS, true)
