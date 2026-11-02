@@ -1,18 +1,55 @@
 <!DOCTYPE html>
 <!--
-  shell.html - placeholder custom HTML shell for the Web export.
+  shell.html - custom HTML shell for the Web export.
   Purpose: image-only loading (no Godot logo text, no percentage) and a canvas that
   fills the window. The Godot export fills in the $GODOT_* placeholders.
+  Phone-safe: the page never scrolls, zooms, selects text or pops a long-press menu,
+  and it follows the real visible height as the phone's address bar slides away.
   P16 (webcam) and P18 (hardening) extend this file.
 -->
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no">
+	<!-- viewport-fit=cover lets the game reach the screen edges around a notch; the game's
+	     own 16:9 frame keeps its buttons inside the safe area. interactive-widget keeps the
+	     layout steady if a keyboard ever opens. -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
+	<!-- Lets "Add to Home Screen" open the game full screen (the only way to hide the
+	     browser bars on iPhone, which cannot fullscreen a web page). -->
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="theme-color" content="#000000">
 	<title>Medusa's Price</title>
 	<style>
-		html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-		canvas { display: block; width: 100%; height: 100%; outline: none; }
+		html, body {
+			margin: 0;
+			background: #000;
+			overflow: hidden;
+			/* position: fixed + overscroll-behavior stops the page bouncing or
+			   pull-to-refresh while a thumb drags across the game. */
+			position: fixed;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			overscroll-behavior: none;
+			/* No text selection, no long-press callout, no grey tap flash. */
+			-webkit-user-select: none;
+			user-select: none;
+			-webkit-touch-callout: none;
+			-webkit-tap-highlight-color: transparent;
+		}
+		canvas {
+			display: block;
+			width: 100%;
+			/* dvh = the height you can actually see (the address bar excluded); 100% is the
+			   fallback for browsers that do not know dvh yet. */
+			height: 100%;
+			height: 100dvh;
+			outline: none;
+			/* All touches belong to the game: no browser pan, pinch or double-tap zoom. */
+			touch-action: none;
+		}
 	</style>
 	$GODOT_HEAD_INCLUDE
 </head>
@@ -24,6 +61,20 @@
 		const engine = new Engine(GODOT_CONFIG);
 		// No progress UI on purpose: the game shows no text or numbers.
 		engine.startGame({ canvas: document.getElementById('canvas') });
+
+		// Keep the browser from taking over gestures meant for the game.
+		// Long-press / right-click menu:
+		document.addEventListener('contextmenu', (e) => e.preventDefault());
+		// iOS Safari pinch-zoom gestures (it ignores user-scalable=no):
+		['gesturestart', 'gesturechange', 'gestureend'].forEach((name) =>
+			document.addEventListener(name, (e) => e.preventDefault()));
+		// iOS double-tap zoom: swallow a second tap that lands within 300 ms of the last.
+		let lastTouchEnd = 0;
+		document.addEventListener('touchend', (e) => {
+			const now = Date.now();
+			if (now - lastTouchEnd < 300) e.preventDefault();
+			lastTouchEnd = now;
+		}, { passive: false });
 	</script>
 </body>
 </html>
