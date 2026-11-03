@@ -12,7 +12,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="10_touch"]
 
 [sub_resource type="RectangleShape2D" id="Shape_LedgeNear"]
-size = Vector2(640, 80)
+size = Vector2(672, 80)
 
 [sub_resource type="RectangleShape2D" id="Shape_LedgeFar"]
 size = Vector2(1340, 80)
@@ -26,14 +26,14 @@ color = Color(0.42, 0.36, 0.3, 1)
 polygon = PackedVector2Array(-1000, -1000, 3400, -1000, 3400, 1600, -1000, 1600)
 
 [node name="LedgeNear" type="StaticBody2D" parent="."]
-position = Vector2(320, 640)
+position = Vector2(336, 640)
 
 [node name="Shape" type="CollisionShape2D" parent="LedgeNear"]
 shape = SubResource("Shape_LedgeNear")
 
 [node name="Art" type="Polygon2D" parent="LedgeNear"]
 color = Color(0.784314, 0.392157, 0.231373, 1)
-polygon = PackedVector2Array(-320, -40, 320, -40, 320, 40, -320, 40)
+polygon = PackedVector2Array(-336, -40, 336, -40, 336, 40, -336, 40)
 
 [node name="LedgeFar" type="StaticBody2D" parent="."]
 position = Vector2(1630, 640)

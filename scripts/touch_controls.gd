@@ -7,6 +7,8 @@
 ## The buttons only show on touch devices: they appear on the first touch and hide again
 ## on the first key press. When a touch device is held upright (portrait) the game
 ## pauses behind a "turn your phone sideways" picture. No words, no numbers: shapes only.
+## Double-tap a direction (tap, lift, press the same direction again quickly) and she
+## sprints, exactly like holding Shift on a keyboard, until that thumb lifts.
 extends CanvasLayer
 
 ## One entry per button, in draw order. "action" is the InputMap action it presses.
@@ -17,6 +19,8 @@ const ACTION_DOWN: StringName = &"move_down"
 const ACTION_JUMP: StringName = &"jump"
 const ACTION_WHIP: StringName = &"whip"
 const ACTION_GAZE: StringName = &"gaze"
+## Not a button: the sprint action that a double tap presses (the Shift key's action).
+const ACTION_RUN: StringName = &"run"
 
 ## action -> {"pos": Vector2, "radius": float, "node": Node2D, "disc": Polygon2D}
 var _buttons: Dictionary = {}
@@ -24,6 +28,13 @@ var _buttons: Dictionary = {}
 ## A "finger index" is the number the engine gives each finger on the glass: 0 for the
 ## first finger down, 1 for the second, and so on. That is what makes multi-touch work.
 var _fingers: Dictionary = {}
+## Finger indexes whose press began as a double tap: while such a finger stays on a
+## direction button, the sprint action is held too.
+var _sprint_fingers: Dictionary = {}
+## Seconds of play time counted in physics steps (so sims and slow devices agree), and the
+## clock reading when a finger last lifted off each direction button (for the double-tap window).
+var _clock: float = 0.0
+var _last_lift: Dictionary = {}
 ## Actions this script has pressed and not yet released (so it never releases a key
 ## the player is holding on a real keyboard).
 var _pressed_by_us: Dictionary = {}
@@ -66,7 +77,7 @@ func set_touch_active(active: bool) -> void:
 	_touch_active = active
 	_buttons_root.visible = active
 	if not active:
-		_fingers.clear()
+		_clear_fingers()
 		_refresh_actions()
 	_on_window_resized()
 
@@ -104,6 +115,13 @@ func apply_window_size(window_size: Vector2i) -> void:
 		_stop_rotate_hint()
 
 
+## Godot calls _physics_process() 60 times a second with a fixed step (delta). Counting the
+## steps gives a clock that behaves the same on every device, and it keeps running while the
+## game is paused (this node's process mode is "always").
+func _physics_process(delta: float) -> void:
+	_clock += delta
+
+
 ## Godot calls _input() for every input event (touch, key, mouse...) before the game
 ## sees it. "event is InputEventScreenTouch" asks "is this event a finger going down or
 ## up?"; "as" then treats it as that type so we can read its fields.
@@ -113,15 +131,30 @@ func _input(event: InputEvent) -> void:
 		if not _touch_active:
 			set_touch_active(true)
 		if touch.pressed:
-			_fingers[touch.index] = _button_at(touch.position)
+			var pressed_action: StringName = _button_at(touch.position)
+			_fingers[touch.index] = pressed_action
+			# A second press on the same direction soon after the last lift = sprint.
+			var since_lift: float = _clock - float(_last_lift.get(pressed_action, -1000.0))
+			if _is_direction(pressed_action) and since_lift <= Balance.TOUCH_DOUBLE_TAP_WINDOW:
+				_sprint_fingers[touch.index] = true
+			else:
+				_sprint_fingers.erase(touch.index)
 		else:
+			var lifted_action: StringName = _fingers.get(touch.index, &"")
+			if _is_direction(lifted_action):
+				_last_lift[lifted_action] = _clock
 			_fingers.erase(touch.index)
+			_sprint_fingers.erase(touch.index)
 		_refresh_actions()
 	elif event is InputEventScreenDrag:
 		# A thumb that slides onto another button takes the press with it.
 		var drag := event as InputEventScreenDrag
 		if _fingers.has(drag.index):
-			_fingers[drag.index] = _button_at(drag.position)
+			var slid_to: StringName = _button_at(drag.position)
+			# Sliding onto a different button ends the sprint (it is tied to one direction).
+			if slid_to != _fingers[drag.index]:
+				_sprint_fingers.erase(drag.index)
+			_fingers[drag.index] = slid_to
 			_refresh_actions()
 	elif _touch_active and _is_keyboard_or_pad_press(event):
 		# Someone picked up a keyboard or gamepad: get the buttons out of the way.
@@ -153,12 +186,17 @@ func _button_at(point: Vector2) -> StringName:
 ## leaving, can never leave an action stuck "on". Only actions WE pressed are released,
 ## so a key held on a real keyboard is never cut off by mistake.
 func _refresh_actions() -> void:
-	# Step 1: which actions are held by at least one finger right now?
+	# Step 1: which actions are held by at least one finger right now? A finger that
+	# started with a double tap and still rests on a direction button also holds "run".
 	var held: Dictionary = {}
 	for finger: int in _fingers:
 		held[_fingers[finger]] = true
+		if _sprint_fingers.has(finger) and _is_direction(_fingers[finger]):
+			held[ACTION_RUN] = true
 	# Step 2: press the newly held ones, release the ones no finger holds any more.
-	for action: StringName in _buttons:
+	var actions: Array = _buttons.keys()
+	actions.append(ACTION_RUN)
+	for action: StringName in actions:
 		var is_down: bool = held.has(action)
 		if is_down and not _pressed_by_us.has(action):
 			Input.action_press(action)
@@ -166,22 +204,38 @@ func _refresh_actions() -> void:
 		elif not is_down and _pressed_by_us.has(action):
 			Input.action_release(action)
 			_pressed_by_us.erase(action)
-		_show_pressed(action, is_down)
+		if _buttons.has(action):
+			_show_pressed(action, is_down, held.has(ACTION_RUN))
 
 
 ## Let go of everything the buttons hold (used when the tab loses focus, the buttons
 ## hide, or the portrait picture appears).
 func _release_all() -> void:
-	_fingers.clear()
+	_clear_fingers()
 	_refresh_actions()
 
 
-## Looks of one button: brighter disc and a small squeeze while a finger is down.
-func _show_pressed(action: StringName, is_down: bool) -> void:
+## Forget every finger and every pending double tap.
+func _clear_fingers() -> void:
+	_fingers.clear()
+	_sprint_fingers.clear()
+	_last_lift.clear()
+
+
+## True for the walk-left and walk-right buttons (the ones a double tap can sprint on).
+func _is_direction(action: StringName) -> bool:
+	return action == ACTION_LEFT or action == ACTION_RIGHT
+
+
+## Looks of one button: brighter disc and a small squeeze while a finger is down. A held
+## direction button also shows its gold double-chevron while the sprint is on.
+func _show_pressed(action: StringName, is_down: bool, sprinting: bool) -> void:
 	var button: Dictionary = _buttons[action]
 	var disc: Polygon2D = button["disc"]
 	disc.modulate.a = Balance.TOUCH_PRESSED_DISC_ALPHA if is_down else Balance.TOUCH_IDLE_DISC_ALPHA
 	(button["node"] as Node2D).scale = Vector2.ONE * (Balance.TOUCH_PRESSED_SCALE if is_down else 1.0)
+	if button.has("sprint_mark"):
+		(button["sprint_mark"] as Polygon2D).visible = is_down and sprinting
 
 
 ## A key or gamepad button went down (not auto-repeat, not stick jitter).
@@ -232,7 +286,31 @@ func _build_button(action: StringName, pos: Vector2, radius: float, ring_color: 
 	root.add_child(icon)
 	_draw_icon(icon, action, radius)
 
-	_buttons[action] = {"pos": pos, "radius": radius, "node": root, "disc": disc}
+	var entry: Dictionary = {"pos": pos, "radius": radius, "node": root, "disc": disc}
+	# The direction buttons also carry a hidden gold chevron that shows while sprinting.
+	if _is_direction(action):
+		var mark: Polygon2D = _make_sprint_mark(action == ACTION_RIGHT, radius)
+		root.add_child(mark)
+		entry["sprint_mark"] = mark
+	_buttons[action] = entry
+
+
+## The second, gold arrow ("double chevron") shown in front of a direction arrow while the
+## double-tap sprint is on. It starts hidden. Drawn in the direction of travel.
+func _make_sprint_mark(pointing_right: bool, radius: float) -> Polygon2D:
+	# side flips every x coordinate for the left button, so one recipe draws both arrows.
+	var side: float = 1.0 if pointing_right else -1.0
+	# A Polygon2D is a filled shape; "polygon" is its list of corner points, and each
+	# unit-size corner is multiplied by the button radius so it fits the button.
+	var mark := Polygon2D.new()
+	mark.polygon = PackedVector2Array([
+		Vector2(Balance.TOUCH_SPRINT_MARK_TIP * side, 0.0) * radius,
+		Vector2(Balance.TOUCH_SPRINT_MARK_BACK * side, -Balance.TOUCH_SPRINT_MARK_HALF) * radius,
+		Vector2(Balance.TOUCH_SPRINT_MARK_BACK * side, Balance.TOUCH_SPRINT_MARK_HALF) * radius,
+	])
+	mark.color = Balance.COLOR_GOLD
+	mark.visible = false
+	return mark
 
 
 ## The picture on a button, drawn at the button's radius.

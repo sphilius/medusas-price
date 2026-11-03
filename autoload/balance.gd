@@ -37,6 +37,11 @@ const COLOR_GOLD: Color = Color("E8B547")
 # ---------------------------------------------------------------------------
 ## Top running speed (px/s).
 const PLAYER_RUN_SPEED: float = 300.0
+## Sprint (hold Shift, PC only): top speed becomes PLAYER_RUN_SPEED x this. Because the
+## speed carries through a jump, a sprint jump also travels farther (about 1.5x the reach
+## of a normal jump). Whether she sprints is decided on her last frame on the ground, so
+## pressing or releasing Shift in mid-air does not bend the jump arc.
+const PLAYER_SPRINT_MULT: float = 1.5
 ## Ground acceleration (px/s^2).
 const PLAYER_GROUND_ACCEL: float = 2400.0
 ## Gravity (px/s^2).
@@ -287,6 +292,13 @@ const LEAPER_MIN_AIR_TIME: float = 0.1
 ## checking she is across a gap (smaller than any gap worth leaping).
 const LEAPER_GAP_PROBE_STEP: float = 16.0
 
+## DEFAULT size of the level 1 gap (BL): the open space between the near and far ledges
+## in scenes/test_room.tscn, where the leaper first shows up. This is the default size;
+## it was 5.0 BL until it was shrunk by half a body length on 2026-11-02. The scene holds
+## the real geometry (LedgeNear's right edge to LedgeFar's left edge); sim_enemies.gd
+## fails if the scene and this number ever disagree, so change them together.
+const LEVEL1_GAP_BL: float = 4.5
+
 ## Player hurt: stun time (s), invulnerability (s), flicker half-period (s),
 ## knockback launch speed (px/s, x and upward y), and friction while stunned.
 const PLAYER_HURT_TIME: float = 0.5
@@ -400,6 +412,14 @@ const TOUCH_ROTATE_STROKE: float = 16.0
 const TOUCH_ROTATE_TURN_TIME: float = 1.1
 ## Touch layer, above the portrait HUD.
 const TOUCH_LAYER: int = 20
+## Double-tap sprint: tap a direction button, lift, and press the SAME direction again within
+## this many seconds; she sprints (like holding Shift) until that finger lifts or slides off.
+const TOUCH_DOUBLE_TAP_WINDOW: float = 0.25
+## While sprinting, a gold second arrow (a "double chevron") shows beside the direction
+## arrow. Its tip x, back x and half-height, as fractions of the button radius.
+const TOUCH_SPRINT_MARK_TIP: float = 0.84
+const TOUCH_SPRINT_MARK_BACK: float = 0.46
+const TOUCH_SPRINT_MARK_HALF: float = 0.30
 
 # ---------------------------------------------------------------------------
 # Respawn props and death

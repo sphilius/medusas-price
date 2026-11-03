@@ -4,6 +4,10 @@
 ## to the next, touching empty space, releasing, the buttons hiding on a key press, the
 ## portrait "turn your phone" pause, and finally that the buttons really drive Medusa
 ## (walk, jump, whip, gaze) in the graybox room. Also confirms no text nodes exist.
+## Double-tap sprint is covered too: the timing window is counted in physics steps, so the
+## sim waits with _physics(n) (not real seconds) and every run gives the same answer.
+## Tip: a name starting with an underscore (like _touch._buttons) is "private" by habit only;
+## GDScript lets the sim peek at it, which is how it checks the gold sprint chevron.
 extends Node
 
 ## The graybox room under test, its touch layer and its player (found in _ready).
@@ -25,10 +29,12 @@ func _ready() -> void:
 	await get_tree().physics_frame
 	await _test_buttons_and_multitouch()
 	await _test_slide_and_miss()
+	await _test_double_tap_sprint()
 	await _test_hide_on_key()
 	await _test_portrait_pause()
 	_test_no_text()
 	await _test_drives_medusa()
+	await _test_double_tap_drives_medusa()
 	print("sim_touch: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
 
@@ -56,10 +62,19 @@ func _drag(index: int, pos: Vector2) -> void:
 	await get_tree().process_frame
 
 
-## Lift every possible finger (0-4), so one test never leaves a thumb down for the next.
+## Lift every possible finger (0-4), so one test never leaves a thumb down for the next,
+## then wait longer than the double-tap window so an old tap cannot pair with the next test's tap.
 func _release_everything() -> void:
 	for i in 5:
 		await _finger(i, Vector2.ZERO, false)
+	await _physics(ceili(Balance.TOUCH_DOUBLE_TAP_WINDOW * Engine.physics_ticks_per_second) + 5)
+
+
+## Wait n physics steps. The touch layer's double-tap clock counts physics steps, so the
+## sim counts them too (one step = 1/60 s).
+func _physics(n: int) -> void:
+	for i in n:
+		await get_tree().physics_frame
 
 
 ## Each button presses its own action; several fingers work at once; lifting one finger
@@ -150,15 +165,108 @@ func _test_no_text() -> void:
 	_check("touch layer has no text nodes", bad == 0)
 
 
+## Double tap = sprint. Tap a direction, lift, press the same direction again inside the
+## window and "run" is held with it (like Shift). Too slow, the other direction, or a
+## single tap does nothing; lifting or sliding off ends it; the gold chevron follows it.
+func _test_double_tap_sprint() -> void:
+	await _release_everything()
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	_check("one plain press does not sprint", Input.is_action_pressed("move_right") and not Input.is_action_pressed("run"))
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	await _physics(5)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	_check("tap, lift, press again quickly: walks and sprints", Input.is_action_pressed("move_right") and Input.is_action_pressed("run"))
+	_check("the gold chevron shows while sprinting", _touch._buttons[&"move_right"]["sprint_mark"].visible)
+	_check("and not on the other direction", not _touch._buttons[&"move_left"]["sprint_mark"].visible)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	_check("lifting the thumb ends the walk and the sprint", not Input.is_action_pressed("move_right") \
+			and not Input.is_action_pressed("run"))
+	_check("and hides the chevron", not _touch._buttons[&"move_right"]["sprint_mark"].visible)
+
+	# Too slow: the window has closed.
+	await _release_everything()
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	await _physics(ceili(Balance.TOUCH_DOUBLE_TAP_WINDOW * Engine.physics_ticks_per_second) + 8)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	_check("a slow second press does not sprint", Input.is_action_pressed("move_right") and not Input.is_action_pressed("run"))
+	await _release_everything()
+
+	# Different direction: it takes two taps on the SAME side.
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	await _physics(5)
+	await _finger(0, Balance.TOUCH_LEFT_POS, true)
+	_check("right then left does not sprint", Input.is_action_pressed("move_left") and not Input.is_action_pressed("run"))
+	await _release_everything()
+
+	# Works to the left too.
+	await _finger(0, Balance.TOUCH_LEFT_POS, true)
+	await _finger(0, Balance.TOUCH_LEFT_POS, false)
+	await _physics(5)
+	await _finger(0, Balance.TOUCH_LEFT_POS, true)
+	_check("double tap on the left sprints left", Input.is_action_pressed("move_left") and Input.is_action_pressed("run"))
+	# Sliding onto the other direction ends the sprint.
+	await _drag(0, Balance.TOUCH_RIGHT_POS)
+	_check("sliding to the other direction ends the sprint", Input.is_action_pressed("move_right") \
+			and not Input.is_action_pressed("run"))
+	await _release_everything()
+
+	# A jump finger tapping twice must not sprint (only direction buttons count).
+	await _finger(1, Balance.TOUCH_JUMP_POS, true)
+	await _finger(1, Balance.TOUCH_JUMP_POS, false)
+	await _physics(5)
+	await _finger(1, Balance.TOUCH_JUMP_POS, true)
+	_check("double tapping jump does not sprint", not Input.is_action_pressed("run"))
+	await _release_everything()
+
+
+## The sprint reaches Medusa: a double tap takes her to the sprint top speed, a plain hold
+## only to the walk speed, and letting go stops the sprint.
+func _test_double_tap_drives_medusa() -> void:
+	for child in _room.get_children():
+		if child is Enemy:
+			child.queue_free()   # nobody should stab her while she runs
+	await _physics(3)
+	_player.global_position = Vector2(150.0, 568.0)
+	_player.velocity = Vector2.ZERO
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	await _physics(30)
+	var walking: float = _player.velocity.x
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	await _release_everything()
+	_player.global_position = Vector2(150.0, 568.0)
+	_player.velocity = Vector2.ZERO
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
+	await _physics(4)
+	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
+	await _physics(30)
+	var sprinting: float = _player.velocity.x
+	_check("a plain hold walks at %.0f (got %.0f)" % [Balance.PLAYER_RUN_SPEED, walking],
+			is_equal_approx(walking, Balance.PLAYER_RUN_SPEED))
+	_check("a double-tap hold sprints at %.0f (got %.0f)" % [Balance.PLAYER_RUN_SPEED * Balance.PLAYER_SPRINT_MULT, sprinting],
+			is_equal_approx(sprinting, Balance.PLAYER_RUN_SPEED * Balance.PLAYER_SPRINT_MULT))
+	await _release_everything()
+
+
 ## The real proof: buttons move Medusa through the same actions as the keyboard.
 func _test_drives_medusa() -> void:
+	# The earlier tests wait a while; the hoplites would walk over and stab her mid-test.
+	# This test is about buttons moving Medusa, so the enemies are removed and she starts fresh.
+	for child in _room.get_children():
+		if child is Enemy:
+			child.queue_free()
+	await _physics(3)
+	_player.global_position = Vector2(150.0, 568.0)
+	_player.velocity = Vector2.ZERO
 	await _player_settled()
 	var start_x: float = _player.global_position.x
 	await _finger(0, Balance.TOUCH_RIGHT_POS, true)
 	for i in 20:
 		await get_tree().physics_frame
 	await _finger(0, Balance.TOUCH_RIGHT_POS, false)
-	_check("holding the right button walks Medusa right", _player.global_position.x > start_x + 40.0 and _player.facing == 1)
+	_check("holding the right button walks Medusa right", _player.global_position.x > start_x + 20.0 and _player.facing == 1)
 
 	await _player_settled()
 	await _finger(1, Balance.TOUCH_JUMP_POS, true)

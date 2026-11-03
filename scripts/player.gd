@@ -47,6 +47,9 @@ var _safe_ledge_point: Vector2 = Vector2.ZERO
 var _pool_point: Vector2 = Vector2.ZERO
 ## True from the moment the portrait runs out until she is back on her feet.
 var _dying: bool = false
+## Whether Shift (sprint) was held on her last frame on the ground. In the air this stays
+## as it was at take-off, so a jump keeps the speed it started with.
+var _air_sprint: bool = false
 
 ## The child node holding the placeholder art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
@@ -88,7 +91,7 @@ func _physics_process(delta: float) -> void:
 	_update_facing(dir)
 
 	# Horizontal: accelerate toward the target speed (also brakes when dir is 0).
-	velocity.x = move_toward(velocity.x, dir * Balance.PLAYER_RUN_SPEED, Balance.PLAYER_GROUND_ACCEL * delta)
+	velocity.x = move_toward(velocity.x, dir * _top_speed(), Balance.PLAYER_GROUND_ACCEL * delta)
 
 	# Vertical: gravity only while airborne.
 	if not is_on_floor():
@@ -209,6 +212,15 @@ func _teleport(point: Vector2) -> void:
 ## Down is held while she is on the floor and free to act: the kneel that works a mirror pool.
 func is_kneeling() -> bool:
 	return is_on_floor() and state in [State.IDLE, State.RUN] and Input.is_action_pressed("move_down")
+
+
+## Her top horizontal speed right now: walking, or sprinting while Shift is held. Shift is
+## only read while she stands on the floor (see _air_sprint), so the speed she takes off
+## with is the speed she keeps through the jump, which is what makes a sprint jump longer.
+func _top_speed() -> float:
+	if is_on_floor():
+		_air_sprint = Input.is_action_pressed("run")
+	return Balance.PLAYER_RUN_SPEED * (Balance.PLAYER_SPRINT_MULT if _air_sprint else 1.0)
 
 
 ## Count down the stun and invulnerability; flicker the art while invulnerable.
