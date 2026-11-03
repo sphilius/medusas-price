@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mirror_bearer.gd" id="1_mirror"]
+
+[sub_resource type="RectangleShape2D" id="Shape_body"]
+size = Vector2(40, 64)
+
+[node name="MirrorBearer" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 9
+script = ExtResource("1_mirror")
+enemy_type = &"mirror_bearer"
+mirror_bearer = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)
+
+[node name="Helmet" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-12, -32, 0, -46, 12, -32)
+
+[node name="Mirror" type="Node2D" parent="Visual"]
+position = Vector2(26, -10)
+
+[node name="Handle" type="Polygon2D" parent="Visual/Mirror"]
+polygon = PackedVector2Array(-2, 8, 2, 8, 2, 22, -2, 22)
+
+[node name="Disc" type="Polygon2D" parent="Visual/Mirror"]
+polygon = PackedVector2Array(0, -14, 8, -10, 10, 0, 8, 10, 0, 14, -8, 10, -10, 0, -8, -10)
+
+[node name="Glint" type="Polygon2D" parent="."]
+visible = false
+polygon = PackedVector2Array(-5, 0, 0, -5, 5, 0, 0, 5)

@@ -299,6 +299,48 @@ const LEAPER_MIN_AIR_TIME: float = 0.1
 ## checking she is across a gap (smaller than any gap worth leaping).
 const LEAPER_GAP_PROBE_STEP: float = 16.0
 
+## Archer: sees the player within this range (BL) and in line of sight; draw time (s,
+## gold glint on the arrowhead), cooldown between shots (s), arrow launch speed (px/s)
+## and gravity (px/s^2), how much of the player's motion it leads (0 = aims at her
+## feet-first position, 1 = full lead), where the arrow leaves the body (px from the
+## center, facing side), glint size (px, the art's radius is ARCHER_GLINT_ART_RADIUS).
+const ARCHER_RANGE_BL: float = 9.0
+const ARCHER_DRAW_TIME: float = 0.5
+const ARCHER_COOLDOWN: float = 2.5
+const ARCHER_LEAD: float = 0.5
+const ARCHER_MUZZLE: Vector2 = Vector2(26.0, -8.0)
+const ARCHER_GLINT_SIZE: float = 10.0
+const ARCHER_GLINT_ART_RADIUS: float = 5.0
+## Arrow: speed (px/s), gravity (px/s^2), seconds it stays stuck in a wall or statue
+## before fading away, seconds it may fly before it is dropped, and its length (px).
+const ARROW_SPEED: float = 700.0
+const ARROW_GRAVITY: float = 600.0
+const ARROW_STUCK_TIME: float = 4.0
+const ARROW_MAX_FLIGHT: float = 3.0
+const ARROW_LENGTH: float = 28.0
+
+## Mirror-bearer: patrol and chase speeds (px/s), patrol half-width (BL), notice range
+## (BL), vertical slack (BL), the gap he keeps from Medusa (BL), mirror glint period
+## and flash length (s), seconds between reflected gazes (matches her invulnerability),
+## and how long the gold reflection beam is drawn (s) and how wide (px).
+const MIRROR_PATROL_SPEED: float = 50.0
+const MIRROR_CHASE_SPEED: float = 80.0
+const MIRROR_PATROL_BL: float = 2.0
+const MIRROR_NOTICE_BL: float = 6.0
+const MIRROR_LEVEL_SLACK_BL: float = 1.0
+const MIRROR_STOP_BL: float = 1.5
+const MIRROR_GLINT_PERIOD: float = 1.0
+const MIRROR_GLINT_TIME: float = 0.15
+const MIRROR_REFLECT_COOLDOWN: float = 1.0
+const MIRROR_BEAM_TIME: float = 0.25
+const MIRROR_BEAM_WIDTH: float = 5.0
+## Mirror centre relative to the body, facing side (px); the knocked-aside mirror
+## swings by this many degrees (it hangs down and away from the gaze).
+const MIRROR_HELD_OFFSET: Vector2 = Vector2(26.0, -10.0)
+const MIRROR_KNOCK_DEG: float = 80.0
+const MIRROR_GLINT_SIZE: float = 14.0
+const MIRROR_GLINT_ART_RADIUS: float = 5.0
+
 ## DEFAULT size of the level 1 gap (BL): the open space between the near and far ledges
 ## in scenes/test_room.tscn, where the leaper first shows up. This is the default size;
 ## it was 5.0 BL until it was shrunk by half a body length on 2026-11-02. The scene holds

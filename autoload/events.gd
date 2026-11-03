@@ -15,6 +15,8 @@ signal shake_requested(strength: float, duration: float)
 ## The player was struck. source names the attacker (&"hoplite", &"leaper");
 ## from_position is where it came from, so the player knows which way to fly.
 signal player_hit(cracks: int, source: StringName, from_position: Vector2)
+## A mirror-bearer's mirror threw Medusa's gaze back at her. position is the mirror.
+signal gaze_reflected(enemy_type: StringName, position: Vector2)
 ## Medusa touched a safe ledge marker; position is on the floor surface. A pit fall
 ## puts her back at the last one.
 signal safe_ledge_reached(position: Vector2)

@@ -17,6 +17,7 @@ func _ready() -> void:
 	Events.petrified.connect(_on_petrified)
 	Events.statue_cracked.connect(_on_statue_cracked)
 	Events.statue_shattered.connect(_on_statue_shattered)
+	Events.gaze_reflected.connect(_on_gaze_reflected)
 
 
 ## Forget the previous run and start the clock.
@@ -84,6 +85,16 @@ func _on_statue_cracked(enemy_type: StringName, position: Vector2) -> void:
 
 func _on_statue_shattered(enemy_type: StringName, position: Vector2) -> void:
 	log_event("statue_shattered", {"enemy_type": String(enemy_type), "position": [position.x, position.y], "level": level})
+
+
+## Her own gaze bounced off a mirror-bearer's mirror and cost her cracks.
+func _on_gaze_reflected(enemy_type: StringName, position: Vector2) -> void:
+	log_event("reflect", {
+		"enemy_type": String(enemy_type),
+		"position": [position.x, position.y],
+		"level": level,
+		"portrait_stage": PortraitState.stage,
+	})
 
 
 ## Debug only: F9 prints the run JSON to the console. Stripped from release builds.
