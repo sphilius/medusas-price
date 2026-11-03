@@ -33,7 +33,7 @@ This pack has about 30 prompts. **Do Tier 1 only until it is all in the game.** 
 
 | Tier | What | When |
 |---|---|---|
-| **1: ship-critical** | C0, C1, C2, C4 → Medusa ×2 sheets, 4 enemy sheets + eye-shading edit, detachables, 5 portraits, 4 backgrounds, itch cover | Tue Nov 3 to Wed Nov 4 |
+| **1: ship-critical** | C0, C1, C2, C4 → Medusa ×2 sheets + whip snakes, 4 enemy sheets + eye-shading edit, detachables, 5 portraits, 4 backgrounds, itch cover | Tue Nov 3 to Wed Nov 4 |
 | **1\*: if the boss ships** | C3 → Perseus sheet | Wed Nov 4 |
 | **2: polish** | Victim statues, props, title and ending cards, splash icon, vase fallback, terrain texture | Thu Nov 5, before 6 PM ET |
 | **3: only if bored** | Touch icons | never, probably |
@@ -58,7 +58,7 @@ This pack has about 30 prompts. **Do Tier 1 only until it is all in the game.** 
 
 1. 🎨 **Concept (Phase 1).** Run each C-prompt on **Nano Banana 2 at 1K** (cheap and fast). Re-roll about 3 to 4 times and pick a favourite.
 2. 🔁 **Polish the pick.** Re-run it with your favourite attached and add "refine this, same design", at **2K**.
-3. 💾 **Save the finals** to `art/concept/` with exactly these names: `C0_style.png`, `C1_medusa.png`, `C2_enemies.png`, `C3_perseus.png`, `C4_portrait.png`, `C5a_temple.png`, `C5b_cliffs.png`, `C5c_cave.png`, `C5d_storm.png`, `C6_stone.png`.
+3. 💾 **Save the finals** to `art/concept/` with exactly these names: `C0_style.png`, `C1_medusa.png`, `C1b_medusa_whip.png`, `C2_enemies.png`, `C3_perseus.png`, `C4_portrait.png`, `C5a_temple.png`, `C5b_cliffs.png`, `C5c_cave.png`, `C5d_storm.png`, `C6_stone.png`.
 4. 🏭 **Production (Phase 2).** Run each P-prompt on **Nano Banana Pro at 2K**, with the listed `art/concept/` files attached. Pro holds a character steady across many reference images better than the other models.
 5. 🩹 **Fix single frames by editing, not re-rolling.** Attach the sheet and say "keep everything, only change pose 6 so that…". Nano Banana is much better at edits than at hitting a full sheet in one shot.
 6. ✂️ **Clean up** (section 6): key out the magenta, snap to the palette, slice into frames, scale to 2× game size.
@@ -103,14 +103,26 @@ All three: one bright gold (#E8B547) almond-shaped eye in the profile face. A so
 
 **Step B: model sheet of the chosen design** (attach `C0_style.png` plus your pick):
 ```text
-Model sheet of the attached Medusa design, same black-figure vase style, on flat solid magenta (#FF00FF). Four key poses side by side, all strict side profile facing right, same scale, feet on one shared baseline, wide gaps between poses:
+Model sheet of the attached Medusa design, same black-figure vase style, on flat solid magenta (#FF00FF). Three key poses side by side, all strict side profile facing right, same scale, feet on one shared baseline, wide gaps between poses:
 1. standing still,
 2. mid-run stride,
-3. mid-jump with knees tucked,
-4. whip attack: her snake hair lashes forward in a fan of 4 snakes reaching about twice her body height ahead of her.
+3. mid-jump with knees tucked.
 Keep the costume, the proportions, the number of snakes and the single gold (#E8B547) eye identical in every pose. Flat fills, no gradients, no shading, crisp edges. No text, no letters, no watermark.
 ```
 → Save Step B as `C1_medusa.png`.
+
+**Step C: the whip attack, on its own wide canvas** · **Aspect:** 21:9 · **Attach:** `C0_style.png`, `C1_medusa.png`
+
+The whip can't share a row with other poses. The lash has to be wider than Medusa is tall, and "keep everything" edits leave it no room to grow. So it gets its own wide image, with Medusa pinned to the left and the length given as an absolute measure instead of "longer".
+```text
+A single pose of the attached Medusa, same character, same black-figure vase style, on a perfectly flat solid magenta (#FF00FF) background. Wide image. Medusa stands in the LEFT QUARTER of the frame, about half the image height tall, in an athletic attack crouch facing right: knees bent, torso and head pitched forward, one arm back for balance.
+
+Five snakes from her hair shoot straight forward to the right like cracking whips: long, thin, taut bodies with only a slight S-wave, each one TWICE AS LONG AS MEDUSA IS TALL, fanning out narrowly (the top snake angled a little upward, the bottom one a little downward, the middle one level with her eye), open jaws at the tips. The snake heads stop just short of the right edge of the image. All her OTHER hair snakes stay short and curled exactly as in the reference.
+
+Solid near-black (#1A1410) silhouette, thin incised terracotta (#C8643B) lines, one gold (#E8B547) eye. Flat fills, no gradients, no shading, crisp edges. No text, no letters, no watermark.
+```
+**Watch for:** the whole mane getting longer instead of five lashes (keep "OTHER hair snakes stay short") · Medusa drifting to the centre, which leaves no room for the lash · the snakes curling back toward her. They must point at the right edge.
+→ Save as `C1b_medusa_whip.png`. It's a concept for the look and length only. In the game the lash is drawn by code from the P2b sprite.
 
 ---
 
@@ -220,14 +232,16 @@ The same costume, proportions and number of snakes in every pose. The background
 **Watch for:** the run frames all looking alike (fix with an edit: "only change pose 4 so that…") · the snake count changing between poses.
 
 ### P2 · Medusa sheet B: actions · Tier 1
-**Model:** Nano Banana Pro · **Aspect:** 16:9 · **Res:** 2K · **Attach:** `C0_style.png`, `C1_medusa.png`, your final P1
+**Model:** Nano Banana Pro · **Aspect:** 16:9 · **Res:** 2K · **Attach:** `C0_style.png`, `C1_medusa.png`, `C1b_medusa_whip.png` (for the crouch), your final P1
+
+> The long lashing snakes are **not** drawn on her here. `scripts/whip.gd` draws them on top from the P2b sprite, so in poses 1 to 3 her hair keeps its normal short snakes.
 
 ```text
-Second game sprite sheet of the attached Medusa, at exactly the same scale and style as the attached first sheet. Eight poses in 2 rows of 4, full body, strict side profile facing right, feet on one shared baseline per row, fully separated by wide magenta gaps, nothing touching the edge. Leave extra empty space in front of poses 1 to 3 for the lashing snakes:
+Second game sprite sheet of the attached Medusa, at exactly the same scale and style as the attached first sheet. Eight poses in 2 rows of 4, full body, strict side profile facing right, feet on one shared baseline per row, fully separated by wide magenta gaps, nothing touching the edge. In EVERY pose her hair snakes stay their normal short curled length, exactly as in the reference; never draw long lashing snakes.
 
-1. whip wind-up: head pulled back, snakes coiled tight behind her head like drawn bowstrings.
-2. whip strike: her snakes lash forward in a fan of 4, reaching about twice her height ahead of her, jaws open.
-3. whip recovery: snakes recoiling back toward her head, her body still leaning forward.
+1. whip wind-up: head and shoulders pulled back, weight on the back foot, snakes in her hair bunched tight.
+2. whip strike: an athletic attack crouch, knees bent, torso and head pitched far forward, one arm back for balance.
+3. whip recovery: straightening up from the crouch, still leaning slightly forward.
 4. gaze: leaning forward, chin down, her single gold (#E8B547) eye wide and blazing, snakes flared out like a hood.
 5. hurt: recoiling backward, head snapped back, arms flung out.
 6. push: leaning hard into an invisible block in front of her, both palms forward, legs braced far apart.
@@ -237,6 +251,23 @@ Second game sprite sheet of the attached Medusa, at exactly the same scale and s
 The same costume, proportions and snake count as sheet 1. Near-black (#1A1410) silhouette, thin incised terracotta (#C8643B) lines; gold only in the eye. Perfectly flat solid magenta (#FF00FF) background, no ground, no shadows. Flat fills only, no gradients, crisp edges. No text, no letters, no numbers, no watermark.
 ```
 (Pose 4 is also used for Perseus's "ghost echoes" of your gazes.)
+
+### P2b · Whip lash snakes · Tier 1
+**Model:** Nano Banana Pro · **Aspect:** 16:9 · **Res:** 2K · **Attach:** `C0_style.png`, `C1b_medusa_whip.png`
+
+> **Why one snake instead of an animation sheet:** `scripts/whip.gd` already animates the lash in 8 frames: coil, head back, throw, full fan, hold, two retracts, neutral. It does this by drawing 3 to 5 snakes from her head, each stretched by `Balance.WHIP_FRAME_EXTENT` and fanned by `WHIP_FRAME_SPREAD`. So the art only needs **single snakes** for the code to copy, rotate and stretch. Each snake is 2 BL long (128 px) in game, the full whip reach. Three variants keep the fan from looking cloned.
+
+```text
+Three separate single snakes for a game sprite, in the attached black-figure vase style, on a perfectly flat solid magenta (#FF00FF) background. Stack them in three rows, one snake per row, each lying HORIZONTALLY across almost the whole image width, with wide magenta gaps between rows and nothing touching the image edge.
+
+Each snake: its tail end on the LEFT, a long thin taut body stretched to the right like a cracking whip, its head on the RIGHT with jaws wide open and fangs showing. The body is about 12 times longer than it is thick, the same thickness from tail to neck. Solid near-black (#1A1410) with thin incised terracotta (#C8643B) scale lines along the body, and a tiny gold (#E8B547) eye.
+Row 1: almost perfectly straight. Row 2: one gentle S-wave. Row 3: a slight upward curve near the head.
+
+Flat fills, no gradients, no shading, crisp hard edges. No text, no letters, no watermark.
+```
+**Cleanup:** `python tools/art_cleanup.py art/raw/whip_snakes.png --name whip_snake --fit-height 24`. Then check the frames' length, which should be about 128 px. If it isn't, rerun with `--scale` set to the printed scale × 128 ÷ the length you got.
+
+**Integration:** in `_apply_frame()` of `scripts/whip.gd`, replace each black line with a `Sprite2D` of one of these snakes. Rotate it to the line's angle and set `scale.x` from the frame's extent. This is a later code change; the timing and hitbox stay as they are.
 
 ### P3 · Hoplite · Tier 1
 **Model:** Nano Banana Pro · **Aspect:** 16:9 · **Res:** 2K · **Attach:** `C0_style.png`, `C2_enemies.png`, your final P1 (for scale)
