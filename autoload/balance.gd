@@ -460,3 +460,20 @@ const SHIELD_WINDOW_MIN: float = 0.45
 const SHIELD_WINDOW_MAX: float = 1.0
 ## How many of the player's last gazes the mirror replays in the study beat.
 const PERSEUS_ECHO_COUNT: int = 3
+
+# ---------------------------------------------------------------------------
+# AI Worker (Cloudflare Worker that talks to the LLM / image models)
+# ---------------------------------------------------------------------------
+## Base URL of the deployed Worker. Replace CHANGE-ME with the real workers.dev subdomain
+## after `wrangler deploy`. No keys live here: the Worker holds the secrets.
+const WORKER_URL: String = "https://medusas-price-worker.medusas-price-worker-dark-roots-creations.workers.dev"
+## Seconds before a /test request gives up (image models can be slow on a cold start).
+const AI_TEST_TIMEOUT_S: float = 60.0
+## Debug-build F10 test image: longest side (px) and where its center sits in the
+## 1280x720 screen (upper middle; drawn on its own CanvasLayer, so the follow camera
+## does not move it).
+const AI_DEBUG_SPRITE_SIZE: float = 512.0
+const AI_DEBUG_SPRITE_POS: Vector2 = Vector2(640.0, 300.0)
+## Origin header sent on desktop (non-web) runs. Browsers set Origin themselves; the
+## Worker only answers allowlisted origins, and it allows http://localhost on any port.
+const AI_DESKTOP_ORIGIN: String = "http://localhost"

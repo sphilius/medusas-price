@@ -21,6 +21,7 @@ boot_splash/image="res://web/splash.png"
 
 Balance="*res://autoload/balance.gd"
 Features="*res://autoload/features.gd"
+AIClient="*res://autoload/ai_client.gd"
 Events="*res://autoload/events.gd"
 RunLedger="*res://autoload/run_ledger.gd"
 PortraitState="*res://autoload/portrait_state.gd"
