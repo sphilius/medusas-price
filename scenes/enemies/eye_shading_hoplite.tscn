@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/hoplite.tscn" id="1_hoplite"]
+
+[node name="EyeShadingHoplite" instance=ExtResource("1_hoplite")]
+enemy_type = &"eye_shading_hoplite"
+eye_shading = true

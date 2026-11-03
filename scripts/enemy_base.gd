@@ -51,6 +51,11 @@ func _ready() -> void:
 	collision_mask = Balance.PHYS_WORLD | Balance.PHYS_STATUES | Balance.PHYS_PLAYER
 	gaze_hold_time = Balance.GAZE_HOLD_EYE_SHADING if eye_shading else Balance.GAZE_HOLD
 	visual.modulate = Balance.COLOR_BLACK
+	# Eye-shading soldiers show the "hand over the eyes" pose: a Visual/HandShade node,
+	# hidden for everyone else.
+	var shade := visual.get_node_or_null("HandShade") as Node2D
+	if shade != null:
+		shade.visible = eye_shading
 	var body := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if body and body.shape is RectangleShape2D:
 		half_size = (body.shape as RectangleShape2D).size * 0.5

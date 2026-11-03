@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/archer.gd" id="1_archer"]
+
+[sub_resource type="RectangleShape2D" id="Shape_body"]
+size = Vector2(40, 64)
+
+[node name="Archer" type="CharacterBody2D"]
+collision_layer = 4
+collision_mask = 9
+script = ExtResource("1_archer")
+enemy_type = &"archer"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("Shape_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Body" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)
+
+[node name="Hood" type="Polygon2D" parent="Visual"]
+polygon = PackedVector2Array(-14, -32, -2, -48, 14, -32)
+
+[node name="Bow" type="Line2D" parent="Visual"]
+points = PackedVector2Array(24, -30, 32, -18, 34, -8, 32, 2, 24, 14)
+width = 3.0
+
+[node name="HandShade" type="Polygon2D" parent="Visual"]
+visible = false
+polygon = PackedVector2Array(2, -30, 22, -36, 26, -30, 6, -24)
+
+[node name="Glint" type="Polygon2D" parent="."]
+visible = false
+polygon = PackedVector2Array(-5, 0, 0, -5, 5, 0, 0, 5)

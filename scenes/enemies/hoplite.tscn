@@ -31,6 +31,10 @@ position = Vector2(0, -8)
 [node name="Shaft" type="Polygon2D" parent="Visual/Spear"]
 polygon = PackedVector2Array(-14, -2, 46, -2, 52, 0, 46, 2, -14, 2)
 
+[node name="HandShade" type="Polygon2D" parent="Visual"]
+visible = false
+polygon = PackedVector2Array(2, -30, 22, -38, 26, -32, 6, -24)
+
 [node name="Glint" type="Polygon2D" parent="."]
 visible = false
 polygon = PackedVector2Array(-5, 0, 0, -5, 5, 0, 0, 5)
