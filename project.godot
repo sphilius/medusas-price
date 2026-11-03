@@ -26,6 +26,7 @@ Events="*res://autoload/events.gd"
 RunLedger="*res://autoload/run_ledger.gd"
 PortraitState="*res://autoload/portrait_state.gd"
 Fx="*res://autoload/fx.gd"
+GameFlow="*res://autoload/game_flow.gd"
 
 [display]
 
