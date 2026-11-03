@@ -6,6 +6,13 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["tools/serve_web.py", "8060"],
       "port": 8060
+    },
+    {
+      "name": "web-build-alt",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["tools/serve_web.py", "8065"],
+      "port": 8065,
+      "autoPort": false
     }
   ]
 }
