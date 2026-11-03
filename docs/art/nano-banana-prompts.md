@@ -465,10 +465,31 @@ Six simple game control icons in 2 rows of 3, flat marble white (#F2EFE8) shapes
 
 ## 6. Cleanup and Godot integration notes
 
+Steps 1 to 4 are automated by **`tools/art_cleanup.py`**. Put raw downloads in `art/raw/`; results go to `art/processed/<name>/`.
+
+```bash
+python tools/art_cleanup.py art/raw/medusa_a.png --name medusa_a --fit-height 128
+```
+
+It prints a `--scale` value. **Reuse that number for every other sheet of the same character** (and for the enemies, so everyone matches Medusa's size):
+
+```bash
+python tools/art_cleanup.py art/raw/medusa_b.png --name medusa_b --scale 0.1667
+```
+
+| Asset | Command flags |
+|---|---|
+| Sprite sheets (P1 to P9, P13, P14) | `--fit-height 128` for the first sheet, then `--scale <printed value>` |
+| Portraits (P10) | `--single --no-snap --size 128x128` |
+| Backgrounds (P11) | `--single --fit-height 720` |
+| Splash (P16) | `--single --size 64x64` |
+
+If a pose comes out split in two, raise `--gap` (default 6). If two poses merge into one, lower it. If pink edges survive, lower `--key-threshold` (default 60). To check the tool still works after a change, run `python tools/test_art_cleanup.py`.
+
 1. **Key out the magenta** → transparent background.
 2. **Snap colours to the palette**: every pixel goes to the nearest palette colour, alpha untouched. This removes the AI's colour drift and edge fuzz in one pass.
-3. **Slice by islands**: each pose is a separate blob, so cut it out automatically, then align every frame by the bottom of the feet.
-4. **Scale to 2× game size**: Medusa's body is 64 px in game, so frames are about 128 px tall. Set the `Sprite2D`/`AnimatedSprite2D` scale to 0.5. This stays crisp at 1080p, where the 1280×720 window scales by 1.5×.
+3. **Slice by islands**: each pose is a separate blob and gets cut out automatically, then every frame is aligned on its feet. The tool prints the feet point in each cell: set the Sprite's `offset` so that point sits on the node's origin.
+4. **Scale to 2× game size**: Medusa's body is 64 px in game, so frames are about 128 px tall. Set the `Sprite2D`/`AnimatedSprite2D` scale to 0.5. This stays crisp at 1080p, where the 1280×720 window scales by 1.5×. `<name>_strip.png` drops straight into a `Sprite2D` with `hframes` = the frame count.
 5. **Statues**: today the code tints the placeholder polygons marble white. With textures, a plain tint will **not** work: black × white is still black. They need a small **palette-swap shader**: black → marble, terracotta lines → black, gold kept. The statue crack lines also need to switch from white to black so they show on marble.
 6. **Spear, mirror, shield and arrow** stay separate `Sprite2D`s under the existing `Visual/Spear`, `Visual/Mirror` nodes, so the current code that moves them keeps working.
 7. **Portraits**: downscale each to 128×128 (`Balance.HUD_TEXTURE_SIZE`) and put them in `_stage_textures` in `scripts/portrait_hud.gd`.
