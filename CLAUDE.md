@@ -40,6 +40,8 @@ The game shows **no words, no numbers and no readable glyphs** on screen.
 
 Run 300 px/s, ground accel 2400 px/s², gravity 1800 px/s², jump apex about 2 BL, coyote time 0.10 s, jump buffer 0.12 s, variable jump height on release.
 
+**Sprint (hold Shift on PC; double-tap-and-hold a direction on touch):** top speed x1.5 (450 px/s) and, because speed carries through a jump, a sprint jump reaches about 1.5x as far. Whether she sprints is fixed on her last ground frame, so Shift in mid-air changes nothing. On touch: tap a direction, lift, press the same direction again within 0.25 s (`Balance.TOUCH_DOUBLE_TAP_WINDOW`) and keep holding; a gold chevron shows beside the arrow while it is on.
+
 ## Gaze (hold K)
 
 - Cone 4 BL long, 20 degree half-angle, facing direction only.
@@ -89,7 +91,7 @@ Caravaggio's Medusa shield. 5 stages; cracks needed to advance:
 
 ## Levels
 
-1. Temple steps (noon)
+1. Temple steps (noon). **Default gap size: 4.5 BL (288 px)** where the leaper first shows up (`Balance.LEVEL1_GAP_BL`; it was 5.0 BL until 2026-11-02). A normal jump falls short, a sprint jump clears it, and a jump pressed on the last two coyote frames (about 50 to 65 ms after leaving the edge) just squeaks across.
 2. Cliffs over the sea (dusk, archers)
 3. Cave of statues (torchlight, mirror-bearers)
 4. Boss: Perseus at the cave mouth (storm). Boss arena opens with a pool.
