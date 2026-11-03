@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/test_room.gd" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
@@ -10,6 +10,10 @@
 [ext_resource type="PackedScene" path="res://scenes/props/mirror_pool.tscn" id="8_pool"]
 [ext_resource type="PackedScene" path="res://scenes/ui/portrait_hud.tscn" id="9_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="10_touch"]
+
+[ext_resource type="PackedScene" path="res://scenes/enemies/archer.tscn" id="11_archer"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/mirror_bearer.tscn" id="12_mirror"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/eye_shading_hoplite.tscn" id="13_shade"]
 
 [sub_resource type="RectangleShape2D" id="Shape_LedgeNear"]
 size = Vector2(672, 80)
@@ -73,6 +77,15 @@ position = Vector2(1950, 568)
 
 [node name="Leaper" parent="." instance=ExtResource("5_leaper")]
 position = Vector2(994, 580)
+
+[node name="MirrorBearer" parent="." instance=ExtResource("12_mirror")]
+position = Vector2(1300, 568)
+
+[node name="EyeShadingHoplite" parent="." instance=ExtResource("13_shade")]
+position = Vector2(1750, 568)
+
+[node name="Archer" parent="." instance=ExtResource("11_archer")]
+position = Vector2(2220, 568)
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(150, 568)
