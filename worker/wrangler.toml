@@ -13,7 +13,7 @@ compatibility_date = "2026-10-01"
 # (A KV id is not a secret; it is useless without your Cloudflare login.)
 [[kv_namespaces]]
 binding = "LIMITS"
-id = "PASTE_KV_NAMESPACE_ID_HERE"
+id = "392b38cf32d34b4daa00b29615f6de63"
 
 [vars]
 # Comma-separated origins allowed to call the Worker. "*." matches any subdomain.

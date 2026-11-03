@@ -446,7 +446,7 @@ const PERSEUS_ECHO_COUNT: int = 3
 # ---------------------------------------------------------------------------
 ## Base URL of the deployed Worker. Replace CHANGE-ME with the real workers.dev subdomain
 ## after `wrangler deploy`. No keys live here: the Worker holds the secrets.
-const WORKER_URL: String = "https://medusas-price-worker.CHANGE-ME.workers.dev"
+const WORKER_URL: String = "https://medusas-price-worker.medusas-price-worker-dark-roots-creations.workers.dev"
 ## Seconds before a /test request gives up (image models can be slow on a cold start).
 const AI_TEST_TIMEOUT_S: float = 60.0
 ## Debug-build F10 test image: longest side (px) and where its center sits in the
