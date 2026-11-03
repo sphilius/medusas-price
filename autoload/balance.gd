@@ -257,6 +257,13 @@ const ENEMY_LEDGE_PROBE_INSET: float = 4.0
 ## Half the standing enemy body width / height (px), the ledge probe's origin.
 const ENEMY_HALF_WIDTH: float = 20.0
 const ENEMY_HALF_HEIGHT: float = 32.0
+## Enemy bodies are solid to Medusa (she can't run through them) and touching one hurts.
+## The touch zone is the body grown by this many px on every side, so a body pressed
+## flat against hers still counts as touching. A whip-staggered enemy blocks but is harmless.
+const ENEMY_CONTACT_MARGIN: float = 2.0
+## A replacement leaper (owed after a pit fall) waits until Medusa is at least this many
+## BL from its spawn point, so it never appears inside her.
+const LEAPER_RESPAWN_CLEARANCE_BL: float = 2.0
 ## Size (px) of the hoplite's gold wind-up glint.
 const HOPLITE_GLINT_SIZE: float = 10.0
 ## Hoplite art geometry, matching scenes/enemies/hoplite.tscn: the Glint

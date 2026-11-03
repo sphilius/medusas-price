@@ -3,6 +3,8 @@
 ## (tinted from black toward marble white), petrification into a Statue, and
 ## removal when it falls into a pit, and the whip's stagger + knockback. Enemies
 ## have no hp: they die only by petrify() or falling.
+## Bodies are solid to Medusa both ways (she masks enemies, enemies mask her), and a
+## ContactHitbox built in _ready lets subclasses hurt her on touch (check_contact).
 ## Expects a child Node2D named "Visual" holding the art. Placeholder art is drawn
 ## white so Visual.modulate alone sets its color.
 class_name Enemy
@@ -36,15 +38,50 @@ var _petrified: bool = false
 ## The art. Flipped for facing, tinted for gaze progress, handed to the Statue.
 @onready var visual: Node2D = $Visual
 
+## Touch zone around the body (built in _ready); check_contact() reads it.
+var _contact: Area2D = null
 
+
+## _ready runs once when the enemy enters the scene tree (after its children are
+## ready). Subclasses that override it must call super._ready() first.
 func _ready() -> void:
 	collision_layer = Balance.PHYS_ENEMIES
-	collision_mask = Balance.PHYS_WORLD | Balance.PHYS_STATUES
+	# Masking the player too makes the block two-way: an enemy walking into a standing
+	# Medusa stops against her instead of sliding inside her body.
+	collision_mask = Balance.PHYS_WORLD | Balance.PHYS_STATUES | Balance.PHYS_PLAYER
 	gaze_hold_time = Balance.GAZE_HOLD_EYE_SHADING if eye_shading else Balance.GAZE_HOLD
 	visual.modulate = Balance.COLOR_BLACK
 	var body := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if body and body.shape is RectangleShape2D:
 		half_size = (body.shape as RectangleShape2D).size * 0.5
+	_build_contact_area()
+
+
+## An Area2D a little bigger than the body. Solid bodies never overlap, so an area the
+## exact body size would miss a touch; the margin catches bodies pressed together.
+func _build_contact_area() -> void:
+	_contact = Area2D.new()
+	_contact.name = "ContactHitbox"
+	_contact.collision_layer = 0  # detects only; nothing detects it
+	_contact.collision_mask = Balance.PHYS_PLAYER
+	var shape := RectangleShape2D.new()
+	shape.size = (half_size + Vector2.ONE * Balance.ENEMY_CONTACT_MARGIN) * 2.0
+	var holder := CollisionShape2D.new()
+	holder.shape = shape
+	_contact.add_child(holder)
+	add_child(_contact)
+
+
+## Subclasses call this after move_and_slide(): touching Medusa costs her a crack and
+## knocks her back (her invulnerable window stops repeat hits). Staggered enemies and
+## statues never hurt. The hit names this enemy's type, e.g. "hoplite".
+func check_contact() -> void:
+	if _petrified or is_staggered():
+		return
+	for node in _contact.get_overlapping_bodies():
+		if node is Player:
+			Events.player_hit.emit(Balance.CRACKS_HIT, enemy_type, global_position)
+			return
 
 
 ## Gravity, plus removal once far below the level. Subclasses call this first
