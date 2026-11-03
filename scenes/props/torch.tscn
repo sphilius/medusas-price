@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/torch.gd" id="1_torch"]
+
+[node name="Torch" type="Node2D"]
+script = ExtResource("1_torch")
+
+[node name="Light" type="PointLight2D" parent="."]
+
+[node name="Flame" type="Polygon2D" parent="."]
