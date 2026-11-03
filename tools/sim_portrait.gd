@@ -110,7 +110,12 @@ func _test_pit() -> void:
 	_check("pit fall is logged", RunLedger.events_of("pit").size() == pits_before + 1)
 	_check("pit fall puts her back on the last safe ledge (at %s)" % str(_player.global_position), \
 			absf(_player.global_position.x - FAR_LEDGE_X) < 4.0 and absf(_player.global_position.y - STAND_Y) < 8.0)
-	_check("a leaper is back for the wasted one", _count_leapers() == 1)
+	# She respawned on the leaper's spawn point: no leaper may appear inside her body...
+	_check("no replacement leaper appears on top of her", _count_leapers() == 0)
+	# ...but once she walks away the room owes one and gets it.
+	_place_player(Vector2(FAR_LEDGE_X + 4.0 * Balance.BL, STAND_Y))
+	await _frames(3)
+	_check("a leaper is back for the wasted one once she steps clear", _count_leapers() == 1)
 	_place_player(Vector2(PIT_X, 900.0))
 	await _frames(10)
 	_check("a room with a live leaper does not grow a second", _count_leapers() == 1)

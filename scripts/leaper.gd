@@ -12,8 +12,6 @@ var _timer: float = 0.0
 ## Seconds airborne in the current leap (landing only counts after a minimum).
 var _air_time: float = 0.0
 
-@onready var _contact: Area2D = $ContactHitbox
-
 
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
@@ -25,7 +23,7 @@ func _physics_process(delta: float) -> void:
 		State.LEAP: _leap(delta)
 		State.RECOVER: _recover(delta)
 	move_and_slide()
-	_check_contact()
+	check_contact()  # shared with every enemy, see Enemy.check_contact
 
 
 func _wait() -> void:
@@ -85,10 +83,3 @@ func _on_staggered() -> void:
 		state = State.RECOVER
 		_timer = Balance.LEAPER_RECOVERY
 
-
-## Touching the player hurts. (Her invulnerability stops repeat hits.)
-func _check_contact() -> void:
-	for body in _contact.get_overlapping_bodies():
-		if body is Player:
-			Events.player_hit.emit(Balance.CRACKS_HIT, &"leaper", global_position)
-			return

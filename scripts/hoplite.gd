@@ -3,6 +3,7 @@
 ## HOPLITE_NOTICE_BL on the same level, walks toward her, and at spear range
 ## winds up (spear drawn back, gold glint) then thrusts. A thrust that touches
 ## the player emits Events.player_hit(1, "hoplite"). Never walks off a ledge.
+## His body blocks her, and touching it hurts too (Enemy.check_contact).
 extends Enemy
 
 enum State { PATROL, CHASE, WINDUP, THRUST, RECOVER }
@@ -48,6 +49,7 @@ func _physics_process(delta: float) -> void:
 		State.THRUST: _thrust(delta)
 		State.RECOVER: _recover(delta)
 	move_and_slide()
+	check_contact()
 
 
 func _patrol() -> void:

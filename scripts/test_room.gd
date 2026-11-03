@@ -11,6 +11,10 @@ const LEAPER_SCENE: PackedScene = preload("res://scenes/enemies/leaper.tscn")
 
 ## Where the room's leaper starts (taken from the scene).
 var _leaper_home: Vector2 = Vector2.ZERO
+## True when a replacement leaper is owed but Medusa is standing on its spawn point
+## (the far safe ledge sits right there). Spawning on top of her would shove her body
+## toward the gap and hurt her, so it waits until she has stepped clear.
+var _leaper_pending: bool = false
 ## Debug-only F10 test image, made in code on the first success (null until then).
 var _ai_debug_sprite: Sprite2D = null
 
@@ -22,9 +26,23 @@ func _ready() -> void:
 		AIClient.completed.connect(_on_ai_completed)
 
 
+## Events.player_fell (a signal on the Events autoload) fires on every pit fall. The
+## Player's own handler already moved her to the safe ledge, so here we only note that
+## the room owes a leaper; _physics_process decides when it is safe to spawn it.
 func _on_player_fell(_where: Vector2) -> void:
-	if _has_leaper():
+	if not _has_leaper():
+		_leaper_pending = true
+
+
+## Spawn an owed leaper once Medusa is clear of its spawn point. A cheap check each
+## physics frame, and only while one is owed (almost never).
+func _physics_process(_delta: float) -> void:
+	if not _leaper_pending:
 		return
+	var player := get_node_or_null("Player") as Node2D
+	if player and player.global_position.distance_to(_leaper_home) < Balance.LEAPER_RESPAWN_CLEARANCE_BL * Balance.BL:
+		return
+	_leaper_pending = false
 	var leaper: Node2D = LEAPER_SCENE.instantiate()
 	leaper.name = "Leaper"
 	leaper.position = _leaper_home
