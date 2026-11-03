@@ -526,3 +526,41 @@ const AI_DEBUG_SPRITE_POS: Vector2 = Vector2(640.0, 300.0)
 ## Origin header sent on desktop (non-web) runs. Browsers set Origin themselves; the
 ## Worker only answers allowlisted origins, and it allows http://localhost on any port.
 const AI_DESKTOP_ORIGIN: String = "http://localhost"
+
+# ---------------------------------------------------------------------------
+# Level kit (scenes/levels/level_base.tscn) and level flow (autoload GameFlow)
+# ---------------------------------------------------------------------------
+## Side of one terrain tile in px (2 tiles = 1 BL). The placeholder tileset uses it.
+const TILE_SIZE: int = 32
+## Tint multiplied over the whole level (CanvasModulate) for each time of day.
+## Noon: warm and bright. Dusk: orange-violet. Torchlight: dark (torches add light back).
+## Storm: desaturated blue.
+const LIGHT_NOON: Color = Color(1.0, 0.95, 0.84)
+const LIGHT_DUSK: Color = Color(0.95, 0.62, 0.68)
+const LIGHT_TORCH: Color = Color(0.16, 0.13, 0.18)
+const LIGHT_STORM: Color = Color(0.48, 0.55, 0.68)
+## Storm lightning: seconds between flashes (random in this range), the flash color,
+## and how long the flash holds and then fades back. Two flashes in a row feel like thunder.
+const LIGHTNING_MIN_S: float = 6.0
+const LIGHTNING_MAX_S: float = 12.0
+const LIGHTNING_COLOR: Color = Color(0.92, 0.96, 1.0)
+const LIGHTNING_HOLD_S: float = 0.06
+const LIGHTNING_FADE_S: float = 0.25
+const LIGHTNING_DOUBLE_GAP_S: float = 0.12
+## Torch (scenes/props/torch.tscn): light radius (px), strength, flicker amount (fraction
+## of strength) and speed (changes per second).
+const TORCH_RADIUS: float = 220.0
+const TORCH_ENERGY: float = 1.3
+const TORCH_FLICKER: float = 0.2
+const TORCH_FLICKER_RATE: float = 12.0
+## Level exit door: width and height in BL.
+const LEVEL_EXIT_WIDTH_BL: float = 1.0
+const LEVEL_EXIT_HEIGHT_BL: float = 2.0
+## Fade to black between levels: seconds out and seconds back in.
+const FADE_OUT_S: float = 0.35
+const FADE_IN_S: float = 0.35
+## Victim statue (scenes/props/victim_statue.tscn): body size (px) when standing, and
+## the shorter body height (px) of the crouched pose. The feet stay where a standing
+## enemy's feet would be, so it sits on the floor like any statue.
+const VICTIM_BODY_SIZE: Vector2 = Vector2(40.0, 64.0)
+const VICTIM_CROUCH_HEIGHT: float = 40.0
