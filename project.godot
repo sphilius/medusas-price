@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Medusa's Price"
-run/main_scene="res://scenes/test_room.tscn"
+run/main_scene="res://scenes/flow/intro.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/stretch_mode=0

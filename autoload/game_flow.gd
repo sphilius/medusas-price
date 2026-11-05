@@ -51,8 +51,23 @@ func _ready() -> void:
 	Events.level_exit_reached.connect(next_level)
 	# Debug-only level skip. Release builds never listen for the number keys.
 	set_process_unhandled_input(OS.is_debug_build())
+	# Debug-only performance log: frames per second to the browser console once a
+	# second (never on screen). Release builds skip _process entirely.
+	set_process(OS.is_debug_build())
 	# The first scene is loaded after the autoloads, so look at it next frame.
 	_adopt_current_scene.call_deferred()
+
+
+## Seconds since the last FPS log line (debug builds only).
+var _fps_clock: float = 0.0
+
+
+## Debug builds: print the frame rate once a second (read it in the browser console).
+func _process(delta: float) -> void:
+	_fps_clock += delta
+	if _fps_clock >= 1.0:
+		_fps_clock = 0.0
+		print("fps %d scene %d" % [Engine.get_frames_per_second(), current_index])
 
 
 ## Go to the next scene in ORDER (after the last one, back to the intro).

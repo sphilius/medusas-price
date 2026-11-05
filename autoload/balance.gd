@@ -737,8 +737,8 @@ const CARD_TITLE: String = "res://art/cards/title.png"
 const CARD_END: String = "res://art/cards/end.png"
 const CARD_LOGO: String = "res://art/cards/logo.png"
 ## Where the logo sits on the title card (center, px) and its width on screen (px).
-const CARD_LOGO_CENTER: Vector2 = Vector2(330.0, 330.0)
-const CARD_LOGO_WIDTH: float = 560.0
+const CARD_LOGO_CENTER: Vector2 = Vector2(290.0, 340.0)
+const CARD_LOGO_WIDTH: float = 520.0
 ## Victim statue art, one per VictimStatue.Pose (standing, arms raised, crouched,
 ## fleeing). Already drawn as white marble, so no shader is needed. All four share the
 ## standing figure's scale, which makes the standing one VICTIM_BODY_SIZE.y tall.
