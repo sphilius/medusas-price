@@ -6,5 +6,4 @@
 script = ExtResource("1_victim")
 
 [node name="EditorBox" type="Polygon2D" parent="."]
-color = Color(0.949, 0.937, 0.91, 0.6)
 polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)

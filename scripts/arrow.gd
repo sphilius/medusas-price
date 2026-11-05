@@ -19,6 +19,8 @@ var _stuck: bool = false
 ## Start the flight from the current position with the given velocity.
 ## Swap the placeholder shaft and head polygons for the arrow sprite (kept if missing).
 func _ready() -> void:
+	($Shaft as Polygon2D).color = Balance.COLOR_BLACK
+	($Head as Polygon2D).color = Balance.COLOR_GOLD
 	SpriteKit.weapon(self, &"arrow")
 
 

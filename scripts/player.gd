@@ -70,6 +70,9 @@ func _ready() -> void:
 	Events.pool_used.connect(_on_pool_used)
 	Events.player_fell.connect(_on_player_fell)
 	PortraitState.died.connect(_on_portrait_died)
+	# Placeholder colors (seen only if the sprite art is missing) come from the color code.
+	($Visual/Body as Polygon2D).color = Balance.COLOR_BLACK
+	($Visual/FacingMark as Polygon2D).color = Balance.COLOR_GOLD
 	_sprite = SpriteKit.attach(_visual, &"medusa")
 	state_changed.connect(func(_old: State, _new: State) -> void: _refresh_animation())
 	($Whip as Node).frame_changed.connect(_on_whip_frame)

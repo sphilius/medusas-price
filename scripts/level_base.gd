@@ -38,6 +38,7 @@ var _lightning_timer: Timer
 
 func _ready() -> void:
 	_tint.color = _base_color()
+	(_backdrop as Polygon2D).color = Balance.COLOR_BACKDROP
 	_build_world_art()
 	_build_exit()
 	_spawn_player()

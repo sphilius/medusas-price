@@ -13,7 +13,6 @@ lighting = 3
 
 [node name="Backdrop" type="Polygon2D" parent="." unique_id=395042339]
 z_index = -10
-color = Color(0.42, 0.36, 0.3, 1)
 polygon = PackedVector2Array(-1000, -1000, 6000, -1000, 6000, 2000, -1000, 2000)
 
 [node name="Terrain" type="TileMapLayer" parent="." unique_id=1031086661]

@@ -6,9 +6,7 @@
 script = ExtResource("1_arrow")
 
 [node name="Shaft" type="Polygon2D" parent="."]
-color = Color(0.101961, 0.0784314, 0.0627451, 1)
 polygon = PackedVector2Array(-14, -1, 10, -1, 14, 0, 10, 1, -14, 1)
 
 [node name="Head" type="Polygon2D" parent="."]
-color = Color(0.909804, 0.709804, 0.278431, 1)
 polygon = PackedVector2Array(8, -3, 15, 0, 8, 3)

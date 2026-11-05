@@ -31,6 +31,10 @@ const COLOR_BLACK: Color = Color("1A1410")
 const COLOR_MARBLE: Color = Color("F2EFE8")
 ## Gold = danger and power (gaze cone, mirror glints, telegraphs).
 const COLOR_GOLD: Color = Color("E8B547")
+## Dark clay brown: terrain and architecture in the painted art.
+const COLOR_CLAY_DARK: Color = Color("7A3A22")
+## The plain backdrop behind a level whose painting is missing (a dim clay grey).
+const COLOR_BACKDROP: Color = Color(0.42, 0.36, 0.3)
 
 # ---------------------------------------------------------------------------
 # Player movement

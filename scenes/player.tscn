@@ -18,11 +18,9 @@ shape = SubResource("RectangleShape2D_body")
 [node name="Visual" type="Node2D" parent="."]
 
 [node name="Body" type="Polygon2D" parent="Visual"]
-color = Color(0.101961, 0.0784314, 0.0627451, 1)
 polygon = PackedVector2Array(-20, -32, 20, -32, 20, 32, -20, 32)
 
 [node name="FacingMark" type="Polygon2D" parent="Visual"]
-color = Color(0.909804, 0.709804, 0.278431, 1)
 polygon = PackedVector2Array(6, -22, 18, -16, 6, -10)
 
 [node name="Gaze" parent="." instance=ExtResource("2_gaze")]
