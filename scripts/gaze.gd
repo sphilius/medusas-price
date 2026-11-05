@@ -29,6 +29,13 @@ func _physics_process(delta: float) -> void:
 	# The cone is symmetric, so turning it half a circle mirrors it (no negative scale on physics shapes).
 	rotation = 0.0 if _player.facing > 0 else PI
 	var active: bool = _player.state == Player.State.GAZE
+	# Log the start of each gaze (where and which way): Perseus replays the last ones.
+	if active and not _cone.visible:
+		RunLedger.log_event("gaze", {
+			"position": [_player.global_position.x, _player.global_position.y],
+			"facing": _player.facing,
+			"level": RunLedger.level,
+		})
 	_cone.visible = active
 	for enemy in _in_cone.duplicate():
 		if not is_instance_valid(enemy):

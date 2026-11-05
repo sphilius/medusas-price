@@ -30,3 +30,5 @@ signal player_died(position: Vector2)
 signal player_respawned(position: Vector2)
 ## Medusa reached the level exit. GameFlow answers by loading the next level.
 signal level_exit_reached
+## Perseus has turned to stone (opens the boss arena's exit).
+signal boss_defeated

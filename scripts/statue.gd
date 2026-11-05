@@ -191,6 +191,12 @@ func _crack() -> void:
 	Events.statue_cracked.emit(enemy_type, global_position)
 
 
+## Break this statue at once, whatever its state (Perseus's shield-bash does this).
+func shatter() -> void:
+	if state != State.SHATTERED:
+		_shatter()
+
+
 ## CRACKED -> SHATTERED: the statue turns into a rubble burst. It stops moving, stops
 ## being solid (deferred: this runs inside the whip's physics callback), leaves the
 ## "statues" group, and is freed once the rubble has finished.

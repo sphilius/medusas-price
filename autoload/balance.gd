@@ -513,6 +513,43 @@ const SHIELD_WINDOW_MIN: float = 0.45
 const SHIELD_WINDOW_MAX: float = 1.0
 ## How many of the player's last gazes the mirror replays in the study beat.
 const PERSEUS_ECHO_COUNT: int = 3
+## Seconds of gaze on his open chest (shield down) that count as one gaze hit.
+const PERSEUS_GAZE_HIT_TIME: float = 0.2
+## Phase 1 (flight): hover height above the arena floor (px), seconds spent drifting to
+## the attack side, drift speed (px/s), and dive speed (px/s).
+const PERSEUS_HOVER_HEIGHT: float = 3.0 * BL
+const PERSEUS_HOVER_TIME: float = 1.2
+const PERSEUS_DRIFT_SPEED: float = 260.0
+const PERSEUS_DIVE_SPEED: float = 700.0
+## How far to the side of Medusa he lines up before an attack (px).
+const PERSEUS_ATTACK_OFFSET: float = 3.5 * BL
+## Gold telegraph before every attack (s), the same warning as the hoplite's glint.
+const PERSEUS_TELEGRAPH_TIME: float = 0.45
+## Phase 2 (grounded): walk speed (px/s), harpe reach (px) and how long the cut is live (s).
+const PERSEUS_WALK_SPEED: float = 160.0
+const PERSEUS_SLASH_REACH: float = 1.6 * BL
+const PERSEUS_SLASH_TIME: float = 0.2
+## Phase 3 (desperate): shield-bash charge speed (px/s) and the longest a charge lasts (s).
+const PERSEUS_BASH_SPEED: float = 520.0
+const PERSEUS_BASH_MAX_TIME: float = 2.5
+## Study beat between phases 1 and 2: seconds each ghost echo of a past gaze shows,
+## and the ghosts' opacity.
+const PERSEUS_ECHO_TIME: float = 1.0
+const PERSEUS_ECHO_ALPHA: float = 0.6
+## Seconds of rest after a gaze hit (he reels, shield still down, no damage).
+const PERSEUS_REEL_TIME: float = 0.6
+## Defeat: seconds the stone takes to cover him before he becomes a statue.
+const PERSEUS_DEFEAT_STONE_TIME: float = 1.5
+## His shield (Visual/Shield): held in front, or dropped to his side during the window.
+const PERSEUS_SHIELD_UP_POS: Vector2 = Vector2(16.0, -6.0)
+const PERSEUS_SHIELD_DOWN_POS: Vector2 = Vector2(6.0, 22.0)
+const PERSEUS_SHIELD_DOWN_DEG: float = 70.0
+## Size of the gold telegraph diamond and where it shows (on the harpe / shield).
+const PERSEUS_GLINT_SIZE: float = 12.0
+const PERSEUS_GLINT_OFFSET: Vector2 = Vector2(24.0, -30.0)
+## Screen shake when a gaze hit lands.
+const SHAKE_PERSEUS_HIT_PX: float = 8.0
+const SHAKE_PERSEUS_HIT_TIME: float = 0.25
 
 # ---------------------------------------------------------------------------
 # AI Worker (Cloudflare Worker that talks to the LLM / image models)

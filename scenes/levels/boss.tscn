@@ -4,10 +4,13 @@
 [ext_resource type="TileSet" path="res://art/tiles/terrain_tileset.tres" id="2_gxo7s"]
 [ext_resource type="PackedScene" path="res://scenes/ui/portrait_hud.tscn" id="3_pychn"]
 [ext_resource type="PackedScene" path="res://scenes/ui/touch_controls.tscn" id="4_ebref"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/perseus.tscn" id="5_perseus"]
+[ext_resource type="PackedScene" path="res://scenes/props/mirror_pool.tscn" id="6_pool"]
 
 [node name="Boss" type="Node2D" unique_id=1370351452]
 script = ExtResource("1_k2q8d")
 lighting = 3
+exit_locked = true
 
 [node name="Tint" type="CanvasModulate" parent="." unique_id=1911842774]
 
@@ -28,6 +31,14 @@ position = Vector2(768, 608)
 [node name="Trigger" type="CollisionShape2D" parent="LevelExit" unique_id=633205645]
 
 [node name="Art" type="Polygon2D" parent="LevelExit" unique_id=817417062]
+
+[node name="MirrorPool" parent="." instance=ExtResource("6_pool")]
+position = Vector2(256, 608)
+
+[node name="Perseus" parent="." instance=ExtResource("5_perseus")]
+position = Vector2(1200, 568)
+arena_left = 0.0
+arena_right = 1856.0
 
 [node name="PortraitHud" parent="." unique_id=1763082837 instance=ExtResource("3_pychn")]
 

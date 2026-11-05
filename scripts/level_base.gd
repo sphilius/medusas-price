@@ -23,6 +23,8 @@ const CAMERA_SCENE: PackedScene = preload("res://scenes/game_camera.tscn")
 
 ## Set this per level in the Inspector.
 @export var lighting: Lighting = Lighting.NOON
+## Boss arena: the exit stays shut (hidden, no trigger) until Events.boss_defeated.
+@export var exit_locked: bool = false
 
 @onready var _spawn: Marker2D = $Spawn
 @onready var _exit: Area2D = $LevelExit
@@ -43,6 +45,10 @@ func _ready() -> void:
 	_build_exit()
 	_spawn_player()
 	_exit.body_entered.connect(_on_exit_body_entered)
+	if exit_locked:
+		_exit.visible = false
+		_exit.monitoring = false
+		Events.boss_defeated.connect(unlock_exit)
 	if lighting == Lighting.STORM:
 		_lightning_timer = Timer.new()
 		_lightning_timer.one_shot = true
@@ -150,6 +156,12 @@ func _spawn_player() -> void:
 	player.position = _spawn.position
 	add_child(player)
 	player.add_child(CAMERA_SCENE.instantiate())
+
+
+## Open the exit (shown, trigger on). Deferred: it may be called during a physics callback.
+func unlock_exit() -> void:
+	_exit.visible = true
+	_exit.set_deferred("monitoring", true)
 
 
 func _on_exit_body_entered(body: Node2D) -> void:
