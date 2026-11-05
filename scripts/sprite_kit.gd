@@ -3,9 +3,13 @@
 ## from Balance.SPRITE_ART, sizes it to the hitbox, stands it on the body's feet and
 ## hides the old placeholder polygons. If the art is missing it returns null and the
 ## placeholders stay visible (the game never breaks over a missing file).
-## Also makes weapon sprites from Balance.WEAPON_ART.
+## Also makes weapon sprites from Balance.WEAPON_ART, and the petrify / marble shader
+## materials with their colors and settings filled in from Balance.
 class_name SpriteKit
 extends RefCounted
+
+const PETRIFY_SHADER: Shader = preload("res://shaders/petrify.gdshader")
+const MARBLE_SHADER: Shader = preload("res://shaders/marble.gdshader")
 
 
 ## Adds the character `art` (a key of Balance.SPRITE_ART) under `visual` and returns
@@ -76,3 +80,51 @@ static func weapon(holder: Node2D, weapon_name: StringName) -> Sprite2D:
 			(child as CanvasItem).visible = false
 	holder.add_child(sprite)
 	return sprite
+
+
+## A fresh petrify material (one per body, because each has its own progress/origin).
+static func petrify_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = PETRIFY_SHADER
+	mat.set_shader_parameter(&"marble_color", Balance.COLOR_MARBLE)
+	mat.set_shader_parameter(&"vein_color", Balance.COLOR_MARBLE_VEIN)
+	mat.set_shader_parameter(&"edge_color", Balance.COLOR_PETRIFY_EDGE)
+	mat.set_shader_parameter(&"edge_width", Balance.PETRIFY_EDGE_WIDTH)
+	mat.set_shader_parameter(&"noise_scale", Balance.PETRIFY_NOISE_SCALE)
+	mat.set_shader_parameter(&"noise_amount", Balance.PETRIFY_NOISE_AMOUNT)
+	mat.set_shader_parameter(&"octaves", Balance.SHADER_NOISE_OCTAVES)
+	mat.set_shader_parameter(&"progress", 0.0)
+	return mat
+
+
+## A fresh marble material for a statue (one each, since `cracked` is per statue).
+static func marble_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = MARBLE_SHADER
+	mat.set_shader_parameter(&"marble_color", Balance.COLOR_MARBLE)
+	mat.set_shader_parameter(&"vein_color", Balance.COLOR_MARBLE_VEIN)
+	mat.set_shader_parameter(&"rim_color", Balance.COLOR_MARBLE_RIM)
+	mat.set_shader_parameter(&"crack_color", Balance.COLOR_BLACK)
+	mat.set_shader_parameter(&"vein_scale", Balance.MARBLE_VEIN_SCALE)
+	mat.set_shader_parameter(&"vein_strength", Balance.MARBLE_VEIN_STRENGTH)
+	mat.set_shader_parameter(&"rim_px", Balance.MARBLE_RIM_PX)
+	mat.set_shader_parameter(&"crack_scale", Balance.MARBLE_CRACK_SCALE)
+	mat.set_shader_parameter(&"crack_width", Balance.MARBLE_CRACK_WIDTH)
+	mat.set_shader_parameter(&"octaves", Balance.SHADER_NOISE_OCTAVES)
+	mat.set_shader_parameter(&"cracked", false)
+	return mat
+
+
+## Where `global_point` falls on the sprite's current frame, as UV (0..1 each way,
+## clamped to the frame). to_local() undoes the sprite's position, scale and the
+## Visual flip, so a gaze from the left lands on the left edge even when flipped.
+static func frame_uv(sprite: AnimatedSprite2D, global_point: Vector2) -> Vector2:
+	var texture: Texture2D = sprite.sprite_frames.get_frame_texture(sprite.animation, sprite.frame)
+	if texture == null:
+		return Vector2(0.5, 0.5)
+	var size: Vector2 = texture.get_size()
+	# A centered sprite's frame spans offset - size/2 .. offset + size/2 in local space.
+	var top_left: Vector2 = sprite.offset - size * 0.5
+	var uv: Vector2 = (sprite.to_local(global_point) - top_left) / size
+	return uv.clamp(Vector2.ZERO, Vector2.ONE)
+

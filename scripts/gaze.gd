@@ -34,6 +34,7 @@ func _physics_process(delta: float) -> void:
 		if not is_instance_valid(enemy):
 			_in_cone.erase(enemy)
 		elif active and _has_line_of_sight(enemy):
+			enemy.gaze_from = global_position  # the eye: where the stone starts spreading
 			enemy.add_gaze(delta)
 		else:
 			enemy.reset_gaze()

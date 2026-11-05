@@ -260,4 +260,6 @@ func _make_veil_material() -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = DESATURATE
 	material.set_shader_parameter("amount", 0.0)
+	material.set_shader_parameter("marble_color", Balance.COLOR_MARBLE)
+	material.set_shader_parameter("marble_mix", Balance.DEATH_VEIL_MARBLE_MIX)
 	return material

@@ -179,7 +179,7 @@ func _on_player_fell(_where: Vector2) -> void:
 	_update_locomotion_state(0.0)
 
 
-## The portrait ran out: turn to marble (art tinted over DEATH_STONE_TIME while the
+## The portrait ran out: turn to marble (stone spreads over DEATH_STONE_TIME while the
 ## screen desaturates), hold, then get up at the last pool at the respawn stage.
 func _on_portrait_died() -> void:
 	if _dying:
@@ -193,12 +193,22 @@ func _on_portrait_died() -> void:
 		"level": RunLedger.level,
 	})
 	Events.player_died.emit(global_position)
+	# Stone spreads over her from her own eyes (petrify.gdshader on her sprite). Without
+	# sprite art the placeholder polygons are lerped to marble instead.
 	var polygons: Array[Polygon2D] = []
 	var base_colors: Array[Color] = []
-	for node: Node in _visual.find_children("*", "Polygon2D", true, false):
-		polygons.append(node as Polygon2D)
-		base_colors.append((node as Polygon2D).color)
+	var stone: ShaderMaterial = null
+	if _sprite != null:
+		stone = SpriteKit.petrify_material()
+		stone.set_shader_parameter(&"origin", Balance.MEDUSA_EYE_UV)
+		_sprite.material = stone
+	else:
+		for node: Node in _visual.find_children("*", "Polygon2D", true, false):
+			polygons.append(node as Polygon2D)
+			base_colors.append((node as Polygon2D).color)
 	var tint := func(t: float) -> void:
+		if stone != null:
+			stone.set_shader_parameter(&"progress", t)
 		for i in polygons.size():
 			polygons[i].color = base_colors[i].lerp(Balance.COLOR_MARBLE, t)
 	var tween: Tween = create_tween()
@@ -208,6 +218,8 @@ func _on_portrait_died() -> void:
 	PortraitState.reset_after_death()
 	for i in polygons.size():
 		polygons[i].color = base_colors[i]
+	if _sprite != null:
+		_sprite.material = null  # flesh again
 	_visual.modulate.a = 1.0
 	_teleport(_pool_point)
 	_invuln_left = Balance.PLAYER_INVULN_TIME

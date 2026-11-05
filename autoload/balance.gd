@@ -633,3 +633,30 @@ const PORTRAIT_TEXTURES: Array[String] = [
 	"res://art/portrait/stage_4.png",
 	"res://art/portrait/stage_5.png",
 ]
+
+# ---------------------------------------------------------------------------
+# Shaders (petrify, marble, death veil)
+# ---------------------------------------------------------------------------
+## Noise layers in the petrify and marble shaders. 2 looks best; drop to 1 if the web
+## build cannot hold 60 fps in the busiest room.
+const SHADER_NOISE_OCTAVES: int = 2
+## Stone colors that are not in the 4-color code: the grey of carved lines and veins,
+## the slightly darker edge of a statue, and the bright front of the spreading stone.
+const COLOR_MARBLE_VEIN: Color = Color(0.55, 0.52, 0.49)
+const COLOR_MARBLE_RIM: Color = Color(0.72, 0.69, 0.65)
+const COLOR_PETRIFY_EDGE: Color = Color(1.0, 1.0, 1.0)
+## Petrify spread: width of the bright front (UV units), noise blob size and bend.
+const PETRIFY_EDGE_WIDTH: float = 0.05
+const PETRIFY_NOISE_SCALE: float = 5.0
+const PETRIFY_NOISE_AMOUNT: float = 0.3
+## Marble: veining size and strength, rim width (texture px; 0 = off, saves 4 reads),
+## crack cell size and crack line width.
+const MARBLE_VEIN_SCALE: float = 7.0
+const MARBLE_VEIN_STRENGTH: float = 0.12
+const MARBLE_RIM_PX: float = 3.0
+const MARBLE_CRACK_SCALE: float = 5.0
+const MARBLE_CRACK_WIDTH: float = 0.05
+## Where Medusa's eyes are in her frame (UV): her own death starts there.
+const MEDUSA_EYE_UV: Vector2 = Vector2(0.62, 0.15)
+## Death veil: how far the gray world is pushed toward marble white at full strength.
+const DEATH_VEIL_MARBLE_MIX: float = 0.45

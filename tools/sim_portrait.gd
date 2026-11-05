@@ -163,14 +163,25 @@ func _test_death() -> void:
 	_check("the last crack kills", PortraitState.is_dead and _player.state == Player.State.DEAD)
 	_check("death is logged", RunLedger.events_of("death").size() == 1)
 	await _frames(int(Balance.DEATH_STONE_TIME * 60.0 * 0.5))
-	var body: Polygon2D = _player.get_node("Visual/Body")
-	_check("she is turning to marble (body color %s)" % str(body.color), body.color.r > 0.3)
+	# With sprite art the petrify shader's progress shows it; without, the body polygon's color.
+	var sprite := _player.get_node_or_null("Visual/Sprite") as AnimatedSprite2D
+	if sprite != null:
+		var mat := sprite.material as ShaderMaterial
+		var progress: float = mat.get_shader_parameter(&"progress") if mat != null else 0.0
+		_check("she is turning to marble (stone progress %.2f)" % progress, progress > 0.3)
+	else:
+		var body: Polygon2D = _player.get_node("Visual/Body")
+		_check("she is turning to marble (body color %s)" % str(body.color), body.color.r > 0.3)
 	await _frames(int((Balance.DEATH_STONE_TIME + Balance.DEATH_HOLD_TIME) * 60.0 * 0.5) + 20)
 	_check("up again: stage %d with 0 cracks" % Balance.DEATH_RESPAWN_STAGE, not PortraitState.is_dead \
 			and PortraitState.stage == Balance.DEATH_RESPAWN_STAGE and PortraitState.cracks_in_stage == 0)
 	_check("respawned at the last pool (at %s)" % str(_player.global_position), \
 			absf(_player.global_position.x - POOL_X) < 4.0 and _player.state != Player.State.DEAD)
-	_check("her art is back to black", body.color.is_equal_approx(Balance.COLOR_BLACK))
+	if sprite != null:
+		_check("her art is flesh again (no stone shader)", sprite.material == null)
+	else:
+		var body: Polygon2D = _player.get_node("Visual/Body")
+		_check("her art is back to black", body.color.is_equal_approx(Balance.COLOR_BLACK))
 	await _frames(200)
 	_check("standing in the pool after a death gives no free heal", PortraitState.stage == Balance.DEATH_RESPAWN_STAGE)
 

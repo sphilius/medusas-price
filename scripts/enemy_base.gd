@@ -1,6 +1,6 @@
 ## enemy_base.gd (base class; each enemy scene's root script extends it)
 ## Purpose: what every enemy shares - layer 3 body, gravity, facing, gaze progress
-## (tinted from black toward marble white), petrification into a Statue, and
+## (marble spreading from where the gaze touched, petrify.gdshader), petrification into a Statue, and
 ## removal when it falls into a pit, and the whip's stagger + knockback. Enemies
 ## have no hp: they die only by petrify() or falling.
 ## Bodies are solid to Medusa both ways (she masks enemies, enemies mask her), and a
@@ -34,6 +34,11 @@ var _stagger_left: float = 0.0
 
 ## Seconds spent continuously in the gaze cone with a clear view.
 var _gaze_time: float = 0.0
+## Where the gazing eye is (global), set by the Gaze right before add_gaze(). The
+## stone starts spreading from the point of the sprite nearest to it.
+var gaze_from: Vector2 = Vector2.ZERO
+## The petrify shader on the sprite while a gaze is in progress (null otherwise).
+var _petrify_mat: ShaderMaterial = null
 ## Set once petrify() runs, so it can only happen once.
 var _petrified: bool = false
 
@@ -180,7 +185,15 @@ func add_gaze(delta: float) -> void:
 		return
 	_gaze_time += delta
 	var t: float = clampf(_gaze_time / gaze_hold_time, 0.0, 1.0)
-	visual.modulate = Balance.COLOR_BLACK.lerp(Balance.COLOR_MARBLE, t)
+	if sprite != null:
+		# First frame of this gaze: put the shader on and pin where the stone starts.
+		if _petrify_mat == null:
+			_petrify_mat = SpriteKit.petrify_material()
+			_petrify_mat.set_shader_parameter(&"origin", SpriteKit.frame_uv(sprite, gaze_from))
+			sprite.material = _petrify_mat
+		_petrify_mat.set_shader_parameter(&"progress", t)
+	else:
+		visual.modulate = Balance.COLOR_BLACK.lerp(Balance.COLOR_MARBLE, t)
 	if _gaze_time >= gaze_hold_time:
 		petrify()
 
@@ -190,7 +203,12 @@ func reset_gaze() -> void:
 	if _petrified or _gaze_time == 0.0:
 		return
 	_gaze_time = 0.0
-	visual.modulate = Balance.COLOR_BLACK
+	if sprite != null:
+		# Drop the shader entirely (cheaper than running it at progress 0).
+		sprite.material = null
+		_petrify_mat = null
+	else:
+		visual.modulate = Balance.COLOR_BLACK
 
 
 ## Face left (-1) or right (1) and mirror the art to match.
@@ -211,6 +229,8 @@ func petrify() -> void:
 		return
 	_petrified = true
 	set_physics_process(false)
+	if _petrify_mat != null:
+		_petrify_mat.set_shader_parameter(&"progress", 1.0)  # fully stone at the hand-off
 	var frame: int = pose_frame()
 	var flip: bool = facing < 0
 	var where: Vector2 = global_position
