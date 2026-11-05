@@ -65,8 +65,12 @@ func _ready() -> void:
 	_glow.visible = false
 	_veil.material = _make_veil_material()
 	_veil.visible = false
-	for color in Balance.PORTRAIT_STAGE_COLORS:
-		_stage_textures.append(_make_painting(color))
+	# The five painted stages (Defiant .. Stone). If a painting is missing, that stage
+	# silently falls back to the old flat colored disc.
+	for i in Balance.PORTRAIT_STAGE_COLORS.size():
+		var path: String = Balance.PORTRAIT_TEXTURES[i] if i < Balance.PORTRAIT_TEXTURES.size() else ""
+		var painting: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
+		_stage_textures.append(painting if painting != null else _make_painting(Balance.PORTRAIT_STAGE_COLORS[i]))
 	_show_stage(PortraitState.stage)
 	_sync_cracks(PortraitState.cracks_in_stage)
 	_last_total = PortraitState.total_cracks()
