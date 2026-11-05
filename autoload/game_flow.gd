@@ -10,17 +10,18 @@
 extends Node
 
 ## The game, in order. The position in this list is the level number RunLedger uses
-## (intro 0, temple 1, cliffs 2, cave 3, boss 4, ending 5).
+## (intro 0, temple 1, cliffs 2, cave 3, boss 4, vase 5, ending 6).
 const ORDER: Array[String] = [
 	"res://scenes/flow/intro.tscn",
 	"res://scenes/levels/level_1_temple.tscn",
 	"res://scenes/levels/level_2_cliffs.tscn",
 	"res://scenes/levels/level_3_cave.tscn",
 	"res://scenes/levels/boss.tscn",
+	"res://scenes/flow/vase.tscn",
 	"res://scenes/flow/ending.tscn",
 ]
 ## Names for the ledger (same order as ORDER).
-const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "ending"]
+const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "vase", "ending"]
 
 ## Index in ORDER of the scene we are in, or -1 for a scene that is not in the list.
 var current_index: int = -1
@@ -86,7 +87,7 @@ func go_to(index: int) -> void:
 	_changing = false
 
 
-## Debug builds: keys 1 to 5 jump to the temple, cliffs, cave, boss and ending.
+## Debug builds: keys 1 to 5 jump to the temple, cliffs, cave, boss and run vase.
 func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:

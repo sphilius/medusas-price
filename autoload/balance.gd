@@ -762,3 +762,18 @@ const PROP_ART: Dictionary = {
 }
 ## How much a spent mirror pool darkens (0 = not at all, 1 = black).
 const POOL_SPENT_DARKEN: float = 0.45
+
+# ---------------------------------------------------------------------------
+# Run vase (scenes/flow/vase.tscn)
+# ---------------------------------------------------------------------------
+## The painted fallback amphora, shown at once and kept if the AI one never arrives.
+const VASE_FALLBACK: String = "res://art/cards/vase_fallback.png"
+## How tall the vase is drawn on the 1280 x 720 screen (px), and where its middle sits.
+const VASE_HEIGHT: float = 640.0
+const VASE_CENTER: Vector2 = Vector2(640.0, 360.0)
+## Seconds to wait for the Worker (an LLM call plus an image) before giving up silently.
+const VASE_TIMEOUT_S: float = 60.0
+## Seconds the AI vase takes to fade in over the fallback.
+const VASE_FADE_S: float = 1.0
+## Seconds before a key press may leave the vase (so the boss's last press cannot skip it).
+const VASE_INPUT_DELAY_S: float = 1.0
