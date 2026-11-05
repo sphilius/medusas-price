@@ -564,3 +564,67 @@ const FADE_IN_S: float = 0.35
 ## enemy's feet would be, so it sits on the floor like any statue.
 const VICTIM_BODY_SIZE: Vector2 = Vector2(40.0, 64.0)
 const VICTIM_CROUCH_HEIGHT: float = 40.0
+
+# ---------------------------------------------------------------------------
+# Sprite art (made by tools/build_sprites.py from art/processed/)
+# ---------------------------------------------------------------------------
+## One entry per character, read by SpriteKit.attach():
+##   frames    = the SpriteFrames resource
+##   offset    = AnimatedSprite2D offset that puts the drawn feet on the node origin
+##               (printed by build_sprites.py; re-copy it if the art is rebuilt)
+##   figure_h  = height in px of the first frame's drawn figure (from the same tool)
+##   height    = how tall that figure should be in the game (px) - the hitbox height,
+##               so scale = height / figure_h
+##   feet_y    = where the feet go below the body's center (half the hitbox height)
+const SPRITE_ART: Dictionary = {
+	&"medusa": {"frames": "res://art/sprites/medusa/medusa_frames.tres",
+		"offset": Vector2(2.5, -64.0), "figure_h": 115.0, "height": 64.0, "feet_y": 32.0},
+	&"hoplite": {"frames": "res://art/sprites/hoplite/hoplite_frames.tres",
+		"offset": Vector2(24.0, -109.0), "figure_h": 209.0, "height": 64.0, "feet_y": 32.0},
+	&"eye_shading": {"frames": "res://art/sprites/eye_shading/eye_shading_frames.tres",
+		"offset": Vector2(23.0, -108.5), "figure_h": 209.0, "height": 64.0, "feet_y": 32.0},
+	&"leaper": {"frames": "res://art/sprites/leaper/leaper_frames.tres",
+		"offset": Vector2(63.5, -104.0), "figure_h": 203.0, "height": 40.0, "feet_y": 20.0},
+	&"archer": {"frames": "res://art/sprites/archer/archer_frames.tres",
+		"offset": Vector2(-6.0, -107.0), "figure_h": 207.0, "height": 64.0, "feet_y": 32.0},
+	&"mirror_bearer": {"frames": "res://art/sprites/mirror_bearer/mirror_bearer_frames.tres",
+		"offset": Vector2(-6.5, -105.5), "figure_h": 208.0, "height": 64.0, "feet_y": 32.0},
+	&"perseus": {"frames": "res://art/sprites/perseus/perseus_frames.tres",
+		"offset": Vector2(-16.0, -96.0), "figure_h": 192.0, "height": 80.0, "feet_y": 40.0},
+}
+## Animation speeds in frames per second, per character. Only animations with more
+## than one frame need an entry; single-frame poses just hold.
+const ANIM_FPS: Dictionary = {
+	&"medusa": {&"idle": 2.0, &"run": 10.0},
+	&"hoplite": {&"walk": 6.0},
+	&"eye_shading": {&"walk": 6.0},
+	&"archer": {&"idle": 2.0},
+	&"mirror_bearer": {&"walk": 6.0},
+	&"perseus": {&"hover": 6.0},
+}
+## Walk animation speed multiplier while an enemy chases (it moves faster, so do its legs).
+const ANIM_CHASE_SPEED_SCALE: float = 1.6
+## Detachable weapon sprites (Sprite2D) and how long each should be in the game (px,
+## measured along its longest side). Spear 1.5 BL, arrow 0.5 BL, mirror 0.5 BL, shield 0.66 BL.
+const WEAPON_ART: Dictionary = {
+	&"spear": {"texture": "res://art/sprites/weapons/spear.png", "length": 96.0},
+	&"arrow": {"texture": "res://art/sprites/weapons/arrow.png", "length": 32.0},
+	&"mirror": {"texture": "res://art/sprites/weapons/mirror.png", "length": 32.0},
+	&"shield": {"texture": "res://art/sprites/weapons/shield.png", "length": 42.0},
+}
+## Whip snake sprites (3 variants, drawn tail-left, head-right) and their thickness in
+## the game (px). Each lash line becomes one of these, stretched to the line's length.
+const WHIP_SNAKE_TEXTURES: Array[String] = [
+	"res://art/sprites/whip/snake_0.png",
+	"res://art/sprites/whip/snake_1.png",
+	"res://art/sprites/whip/snake_2.png",
+]
+const WHIP_SNAKE_THICKNESS: float = 9.0
+## Portrait paintings, stage 1 (Defiant) to 5 (Stone).
+const PORTRAIT_TEXTURES: Array[String] = [
+	"res://art/portrait/stage_1.png",
+	"res://art/portrait/stage_2.png",
+	"res://art/portrait/stage_3.png",
+	"res://art/portrait/stage_4.png",
+	"res://art/portrait/stage_5.png",
+]

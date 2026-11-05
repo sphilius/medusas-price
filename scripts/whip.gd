@@ -4,10 +4,14 @@
 ## only enabled during ACTIVE. Each target is hit at most once per lash:
 ## enemies get stagger + knockback away from her (mirror-bearers also lose their
 ## mirror, inside Enemy.whip_hit), statues get Statue.whip_hit().
-## The art is 3 to 5 black lines from her head, posed by `frame` (0-7). An
-## AnimationPlayer animates `frame`, so real art can later replace the lines by
-## swapping what _apply_frame() draws, without touching the timing.
+## The art is 3 to 5 snake sprites from her head (Balance.WHIP_SNAKE_TEXTURES), posed
+## by `frame` (0-7); plain black lines are the fallback if the textures are missing.
+## An AnimationPlayer animates `frame`; frame_changed tells the Player which body
+## pose to show, so body and snakes share this one timeline.
 extends Area2D
+
+## Fired every time the lash frame changes (0-7). The Player's sprite follows it.
+signal frame_changed(new_frame: int)
 
 ## Animation frames: 0 coil, 1 head back, 2 throw, 3 full fan, 4 hold,
 ## 5 retract, 6 retract, 7 neutral. Animated by the AnimationPlayer.
@@ -15,6 +19,7 @@ extends Area2D
 	set(value):
 		frame = clampi(value, 0, Balance.WHIP_FRAME_EXTENT.size() - 1)
 		_apply_frame()
+		frame_changed.emit(frame)
 
 ## Name of the lash animation, built in code from Balance (so tuning stays there).
 const ANIM_NAME: StringName = &"whip"
@@ -25,6 +30,8 @@ var _facing: int = 1
 ## instance ids of everything this lash already hit.
 var _hit_ids: Array[int] = []
 var _lines: Array[Line2D] = []
+## One snake sprite per line; empty if the snake textures failed to load.
+var _snake_sprites: Array[Sprite2D] = []
 
 @onready var _shape: CollisionPolygon2D = $Shape
 @onready var _snakes: Node2D = $Snakes
@@ -42,11 +49,33 @@ func _ready() -> void:
 		line.end_cap_mode = Line2D.LINE_CAP_ROUND
 		_snakes.add_child(line)
 		_lines.append(line)
+	_build_snake_sprites()
 	_build_animation()
 	_apply_frame()
 	body_entered.connect(_on_body_entered)
 	_player = get_parent() as Player
 	_player.whip_phase_changed.connect(_on_phase_changed)
+
+
+## One Sprite2D per lash line, cycling through the 3 snake variants so the fan does
+## not look cloned. Each is drawn from its tail (left edge, vertically centered), so
+## the tail sits on the head and the snake's head lands on the line's tip.
+## If any texture is missing, nothing is built and the black lines stay.
+func _build_snake_sprites() -> void:
+	var textures: Array[Texture2D] = []
+	for path: String in Balance.WHIP_SNAKE_TEXTURES:
+		if not ResourceLoader.exists(path):
+			return
+		textures.append(load(path) as Texture2D)
+	for i in _lines.size():
+		var sprite := Sprite2D.new()
+		sprite.texture = textures[i % textures.size()]
+		sprite.centered = false
+		sprite.offset = Vector2(0.0, -sprite.texture.get_height() * 0.5)
+		sprite.visible = false
+		_snakes.add_child(sprite)
+		_snake_sprites.append(sprite)
+		_lines[i].visible = false
 
 
 ## One value track on `frame`, with a key where each frame begins: anticipation
@@ -131,6 +160,26 @@ func _apply_frame() -> void:
 		var tip := Vector2(reach, Balance.WHIP_TIP_DROOP + across * spread * half_end) * extent
 		tip.x *= _facing
 		_lines[i].points = PackedVector2Array([Vector2.ZERO, tip])
+		if not _snake_sprites.is_empty():
+			_lines[i].visible = false
+			_pose_snake(_snake_sprites[i], tip)
+	# Hide the snake sprites this frame does not use.
+	for i in range(count, _snake_sprites.size()):
+		_snake_sprites[i].visible = false
+
+
+## Stretch and turn one snake sprite so it runs from the head (origin) to `tip`.
+## scale.x sets its length, scale.y its thickness (WHIP_SNAKE_THICKNESS px).
+## Facing left the snake is flipped upside down, so its belly stays underneath.
+func _pose_snake(sprite: Sprite2D, tip: Vector2) -> void:
+	var length: float = tip.length()
+	sprite.visible = length > 1.0
+	if not sprite.visible:
+		return
+	sprite.rotation = tip.angle()
+	sprite.scale = Vector2(length / sprite.texture.get_width(),
+		Balance.WHIP_SNAKE_THICKNESS / sprite.texture.get_height())
+	sprite.flip_v = _facing < 0
 
 
 ## Hit each target once per lash. Enemies are pushed away from Medusa; statues are

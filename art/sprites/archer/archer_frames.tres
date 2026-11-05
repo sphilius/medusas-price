@@ -1,0 +1,21 @@
+[gd_resource type="SpriteFrames" load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_00.png" id="1"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_01.png" id="2"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_02.png" id="3"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_03.png" id="4"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_04.png" id="5"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_05.png" id="6"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_06.png" id="7"]
+[ext_resource type="Texture2D" path="res://art/sprites/archer/enemy_archer_07.png" id="8"]
+
+[resource]
+animations = [
+{"frames": [{"duration": 1.0, "texture": ExtResource("1")}, {"duration": 1.0, "texture": ExtResource("2")}], "loop": true, "name": &"idle", "speed": 2.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("3")}], "loop": false, "name": &"reach", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("4")}], "loop": false, "name": &"nock", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("5")}], "loop": false, "name": &"draw", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("6")}], "loop": false, "name": &"release", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("7")}], "loop": false, "name": &"cooldown", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("8")}], "loop": false, "name": &"stagger", "speed": 1.0}
+]

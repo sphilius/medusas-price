@@ -51,8 +51,14 @@ var _dying: bool = false
 ## as it was at take-off, so a jump keeps the speed it started with.
 var _air_sprint: bool = false
 
-## The child node holding the placeholder art; flipped when facing changes.
+## The child node holding the art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
+## Medusa's animated sprite (made in _ready by SpriteKit), or null if the art is
+## missing, in which case the placeholder polygons stay visible.
+var _sprite: AnimatedSprite2D = null
+## Last kneel / push flags, so the animation only changes when one of them flips.
+var _was_kneeling: bool = false
+var _was_pushing: bool = false
 
 
 func _ready() -> void:
@@ -64,6 +70,10 @@ func _ready() -> void:
 	Events.pool_used.connect(_on_pool_used)
 	Events.player_fell.connect(_on_player_fell)
 	PortraitState.died.connect(_on_portrait_died)
+	_sprite = SpriteKit.attach(_visual, &"medusa")
+	state_changed.connect(func(_old: State, _new: State) -> void: _refresh_animation())
+	($Whip as Node).frame_changed.connect(_on_whip_frame)
+	_refresh_animation()
 
 
 func _physics_process(delta: float) -> void:
@@ -110,6 +120,13 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_update_push(dir, delta)
 	_update_locomotion_state(dir)
+	# Kneel and push are not states, so watch their flags and re-pick the pose when one flips.
+	var kneeling: bool = is_kneeling()
+	var pushing: bool = _push_time > 0.0
+	if kneeling != _was_kneeling or pushing != _was_pushing:
+		_was_kneeling = kneeling
+		_was_pushing = pushing
+		_refresh_animation()
 
 
 ## A hit lands: stun, knock away from the attacker, start the invulnerable window.
@@ -363,3 +380,40 @@ func _process_stub_state(delta: float) -> void:
 		var lashing: bool = state == State.WHIP and whip_phase == WhipPhase.ACTIVE
 		velocity.y += Balance.PLAYER_GRAVITY * (Balance.WHIP_AIR_GRAVITY_MULT if lashing else 1.0) * delta
 	move_and_slide()
+
+
+## Pick the animation that matches what she is doing. Called when the state changes
+## and when the kneel / push flags flip (signals, not a check every frame).
+func _refresh_animation() -> void:
+	if _sprite == null:
+		return
+	match state:
+		State.IDLE:
+			SpriteKit.play(_sprite, &"kneel" if _was_kneeling else &"idle")
+		State.RUN:
+			SpriteKit.play(_sprite, &"push" if _was_pushing else &"run")
+		State.JUMP:
+			SpriteKit.play(_sprite, &"jump")
+		State.FALL:
+			SpriteKit.play(_sprite, &"fall")
+		State.WHIP:
+			# The whip timeline drives the frame (see _on_whip_frame), so hold still here.
+			SpriteKit.play(_sprite, &"whip")
+			_sprite.pause()
+		State.GAZE:
+			SpriteKit.play(_sprite, &"gaze")
+		State.HURT:
+			SpriteKit.play(_sprite, &"hurt")
+		State.DEAD:
+			SpriteKit.play(_sprite, &"death")
+
+
+## The lash moved to frame `whip_frame` (0-7): show the matching body pose.
+## Frames 0-1 are the wind-up, 2-4 the strike, 5-7 the recovery (see build_sprites.py).
+func _on_whip_frame(whip_frame: int) -> void:
+	if _sprite == null or state != State.WHIP:
+		return
+	if _sprite.animation != &"whip":
+		_sprite.play(&"whip")
+		_sprite.pause()
+	_sprite.frame = whip_frame

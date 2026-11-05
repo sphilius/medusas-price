@@ -1,0 +1,79 @@
+{
+  "medusa": {
+    "size": [
+      125,
+      128
+    ],
+    "feet": [
+      60,
+      128
+    ],
+    "figure_height": 115
+  },
+  "hoplite": {
+    "size": [
+      210,
+      218
+    ],
+    "feet": [
+      81,
+      218
+    ],
+    "figure_height": 209
+  },
+  "eye_shading": {
+    "size": [
+      206,
+      217
+    ],
+    "feet": [
+      80,
+      217
+    ],
+    "figure_height": 209
+  },
+  "leaper": {
+    "size": [
+      387,
+      208
+    ],
+    "feet": [
+      130,
+      208
+    ],
+    "figure_height": 203
+  },
+  "archer": {
+    "size": [
+      194,
+      214
+    ],
+    "feet": [
+      103,
+      214
+    ],
+    "figure_height": 207
+  },
+  "mirror_bearer": {
+    "size": [
+      179,
+      211
+    ],
+    "feet": [
+      96,
+      211
+    ],
+    "figure_height": 208
+  },
+  "perseus": {
+    "size": [
+      274,
+      192
+    ],
+    "feet": [
+      153,
+      192
+    ],
+    "figure_height": 192
+  }
+}

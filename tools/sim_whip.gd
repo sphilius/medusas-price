@@ -370,8 +370,11 @@ func _lash_samples(count: int) -> Array:
 	for i in count:
 		await _frames(1)
 		var visible_lines: int = 0
-		for line in _whip.get_node("Snakes").get_children():
-			if (line as Line2D).visible:
+		# Count visible snakes: the sprite versions when the art loaded, else the black lines.
+		var snakes: Array[Node] = _whip.get_node("Snakes").get_children()
+		var use_sprites: bool = snakes.any(func(n: Node) -> bool: return n is Sprite2D)
+		for snake: Node in snakes:
+			if (snake is Sprite2D) == use_sprites and (snake as CanvasItem).visible:
 				visible_lines += 1
 		samples.append({
 			"phase": _player.whip_phase,
