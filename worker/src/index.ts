@@ -10,6 +10,9 @@
 // Endpoints:
 //   POST /test  -> one small black-figure snake image, as base64 in JSON.
 //                  Body {"check_letters": true} also runs the letter check.
+//   POST /vase  -> the end-of-run amphora. Body {"summary": {...}} (RunLedger.summary()).
+//                  Success {"ok":true,"image":"<base64 png>","mime":"image/png"}.
+//                  Reserves COST_TEXT_USD + COST_IMAGE_USD; see src/vase.ts.
 
 import { DEFAULTS, Env, num } from "./env";
 import {
@@ -25,6 +28,7 @@ import {
 } from "./guards";
 import { hasLetters } from "./letter_check";
 import { AIProvider, makeProvider, ProviderError } from "./providers";
+import { isPlainObject, paintVase, sanitizeSummary, vaseCost, VaseSummary } from "./vase";
 
 const TEST_PROMPT =
 	"black-figure Greek pottery style, a single snake, terracotta background, " +
@@ -45,24 +49,43 @@ export async function handleRequest(request: Request, env: Env, provider: AIProv
 	if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
 
 	const url = new URL(request.url);
-	if (request.method !== "POST" || url.pathname !== "/test") return json(FALLBACK, 404, cors);
+	const isVase = url.pathname === "/vase";
+	if (request.method !== "POST" || (url.pathname !== "/test" && !isVase)) return json(FALLBACK, 404, cors);
 
 	// 3. Body size. Parse it as JSON (an empty body counts as {}).
+	// Anything that is not a JSON object (e.g. `null`, `[1]`, `"hi"`) is a bad body.
 	const text = await readBodyLimited(request, maxBodyBytes(env));
 	if (text === null) return json(FALLBACK, 413, cors);
 	let body: Record<string, unknown> = {};
 	try {
-		if (text.trim() !== "") body = JSON.parse(text);
+		if (text.trim() !== "") {
+			const parsed: unknown = JSON.parse(text);
+			if (!isPlainObject(parsed)) return json(FALLBACK, 400, cors);
+			body = parsed;
+		}
 	} catch {
 		return json(FALLBACK, 400, cors);
 	}
 
-	// 4 + 5. Rate limit, then spend cap. Both refuse with 429 {fallback:true}.
-	if (!(await takeRateSlot(request, env))) return json(FALLBACK, 429, cors);
-	if (!(await reserveSpend(env, num(env.COST_IMAGE_USD, DEFAULTS.COST_IMAGE_USD)))) {
-		return json(FALLBACK, 429, cors);
+	// /vase needs {"summary": {...}}. Check the shape now, before a rate slot is used.
+	// `let x: VaseSummary | null` is a union: null until we have a clean summary.
+	let summary: VaseSummary | null = null;
+	if (isVase) {
+		if (!isPlainObject(body.summary)) return json(FALLBACK, 400, cors);
+		summary = sanitizeSummary(body.summary);
 	}
 
+	// 4 + 5. Rate limit, then spend cap. Both refuse with 429 {fallback:true}.
+	// /vase makes a text call and an image, so it reserves both costs at once.
+	if (!(await takeRateSlot(request, env))) return json(FALLBACK, 429, cors);
+	const cost = isVase ? vaseCost(env) : num(env.COST_IMAGE_USD, DEFAULTS.COST_IMAGE_USD);
+	if (!(await reserveSpend(env, cost))) return json(FALLBACK, 429, cors);
+
+	// `summary !== null` is always true for /vase; the check is there so TypeScript
+	// knows summary is a VaseSummary (not null) inside the call.
+	if (isVase && summary !== null) return paintVase(summary, env, provider, cors);
+
+	// Otherwise /test, unchanged.
 	try {
 		const image = await provider.generateImage({ prompt: TEST_PROMPT, width: TEST_SIZE, height: TEST_SIZE });
 		const result: Record<string, unknown> = { ok: true, image: image.base64, mime: image.mime };
