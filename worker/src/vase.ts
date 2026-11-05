@@ -238,12 +238,15 @@ export const VASE_HEIGHT = 1024;
 // The full image prompt. `description` must already be cleaned.
 export function vaseImagePrompt(description: string): string {
 	return (
+		// Colors are named, never written as hex codes: image models tend to paint a code
+		// like "#1A1410" onto the picture as visible text, which the letter check then
+		// (rightly) rejects. Plain bands replace the Greek key, which can read as glyphs.
 		"Front view of a single ancient Greek black-figure amphora, upright and centered, " +
-		"the whole vessel visible, on a flat solid dark background of color #1A1410. " +
-		"The vase body is terracotta orange, color #C8643B, painted with glossy black slip. " +
+		"the whole vessel visible, on a flat solid near-black background. " +
+		"The vase body is warm terracotta orange, painted with glossy black slip. " +
 		`One wide frieze band around the belly shows, in black-figure silhouettes: ${description} ` +
-		"The soldiers turned to stone are painted marble white, color #F2EFE8, frozen mid-pose. " +
-		"Black meander (Greek key) bands run above and below the frieze, simple rays at the foot. " +
+		"The soldiers turned to stone are painted pale marble white, frozen mid-pose. " +
+		"Plain solid black bands run above and below the frieze, simple black rays at the foot. " +
 		"Flat graphic style, crisp edges, no background gradient. " +
 		"Absolutely no text, no letters, no numbers, no inscriptions, no signatures, " +
 		"no watermark, no labels, no captions."

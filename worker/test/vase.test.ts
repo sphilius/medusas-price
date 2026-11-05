@@ -70,7 +70,9 @@ describe("POST /vase", () => {
 		expect(calls.images[0].height).toBe(VASE_HEIGHT);
 		expect(VASE_HEIGHT).toBeGreaterThan(VASE_WIDTH);
 		expect(calls.images[0].prompt).toContain(DESCRIPTION);
-		expect(calls.images[0].prompt).toContain("#1A1410");
+		// No hex codes in the image prompt (models paint them as text).
+		expect(calls.images[0].prompt).not.toMatch(/#[0-9A-Fa-f]{6}/);
+		expect(calls.images[0].prompt).toContain("near-black background");
 		expect(calls.images[0].prompt).toContain("no inscriptions");
 		// The facts the LLM saw came from the summary numbers.
 		expect(calls.texts[0].prompt).toContain("three hoplite spearmen");
