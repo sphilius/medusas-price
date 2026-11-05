@@ -5,8 +5,10 @@
 ## have no hp: they die only by petrify() or falling.
 ## Bodies are solid to Medusa both ways (she masks enemies, enemies mask her), and a
 ## ContactHitbox built in _ready lets subclasses hurt her on touch (check_contact).
-## Expects a child Node2D named "Visual" holding the art. Placeholder art is drawn
-## white so Visual.modulate alone sets its color.
+## Expects a child Node2D named "Visual" holding the art. In _ready the real sprite
+## art (SpriteKit, keyed by enemy_type) is added under it; if that art is missing the
+## white placeholder polygons stay and Visual.modulate sets their color instead.
+## Subclasses override _animate() to pick the animation for their current state.
 class_name Enemy
 extends CharacterBody2D
 
@@ -38,6 +40,9 @@ var _petrified: bool = false
 ## The art. Flipped for facing, tinted for gaze progress, handed to the Statue.
 @onready var visual: Node2D = $Visual
 
+## The animated sprite added by SpriteKit, or null when only placeholders exist.
+var sprite: AnimatedSprite2D = null
+
 ## Touch zone around the body (built in _ready); check_contact() reads it.
 var _contact: Area2D = null
 
@@ -50,16 +55,26 @@ func _ready() -> void:
 	# Medusa stops against her instead of sliding inside her body.
 	collision_mask = Balance.PHYS_WORLD | Balance.PHYS_STATUES | Balance.PHYS_PLAYER
 	gaze_hold_time = Balance.GAZE_HOLD_EYE_SHADING if eye_shading else Balance.GAZE_HOLD
-	visual.modulate = Balance.COLOR_BLACK
+	# Real art: the eye-shading hoplite has its own sheet, everyone else is keyed by type.
+	sprite = SpriteKit.attach(visual, &"eye_shading" if eye_shading else enemy_type)
+	# Sprites carry their own colors (white modulate); placeholders are tinted black.
+	visual.modulate = Color.WHITE if sprite != null else Balance.COLOR_BLACK
 	# Eye-shading soldiers show the "hand over the eyes" pose: a Visual/HandShade node,
-	# hidden for everyone else.
+	# hidden for everyone else. The sprite art already draws the hand.
 	var shade := visual.get_node_or_null("HandShade") as Node2D
 	if shade != null:
-		shade.visible = eye_shading
+		shade.visible = eye_shading and sprite == null
 	var body := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if body and body.shape is RectangleShape2D:
 		half_size = (body.shape as RectangleShape2D).size * 0.5
 	_build_contact_area()
+	_animate()
+
+
+## Override: show the animation for the current state (subclasses call SpriteKit.play
+## from here). Runs on every state change, on stagger start and on stagger end.
+func _animate() -> void:
+	pass
 
 
 ## An Area2D a little bigger than the body. Solid bodies never overlap, so an area the
@@ -106,6 +121,7 @@ func whip_hit(away_dir: int) -> void:
 	_stagger_left = Balance.WHIP_STAGGER
 	velocity.x = away_dir * sqrt(2.0 * Balance.ENEMY_KNOCKBACK_DECEL * Balance.WHIP_KNOCKBACK_BL * Balance.BL)
 	_on_staggered()
+	SpriteKit.play(sprite, &"stagger")
 	if mirror_bearer:
 		knock_mirror(Balance.WHIP_MIRROR_KNOCK)
 
@@ -123,6 +139,8 @@ func tick_stagger(delta: float) -> bool:
 		return false
 	_stagger_left -= delta
 	velocity.x = move_toward(velocity.x, 0.0, Balance.ENEMY_KNOCKBACK_DECEL * delta)
+	if _stagger_left <= 0.0:
+		_animate()  # back on its feet: show the state's animation again
 	return true
 
 

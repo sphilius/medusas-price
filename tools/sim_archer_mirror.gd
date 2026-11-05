@@ -85,7 +85,9 @@ func _test_eye_shading() -> void:
 	var shade: Enemy = _spawn("res://scenes/enemies/eye_shading_hoplite.tscn", Vector2(300, STAND_Y))
 	var plain: Enemy = _spawn("res://scenes/enemies/hoplite.tscn", Vector2(100, STAND_Y))
 	_check("eye-shading gaze_hold_time is 0.7", is_equal_approx(shade.gaze_hold_time, Balance.GAZE_HOLD_EYE_SHADING))
-	_check("eye-shading shows the hand-over-eyes pose", shade.get_node("Visual/HandShade").visible)
+	# The pose is in the eye-shading sprite sheet; without art, the HandShade polygon shows it.
+	var shows_pose: bool = shade.sprite.sprite_frames == load(Balance.SPRITE_ART[&"eye_shading"]["frames"]) 			if shade.sprite != null else shade.get_node("Visual/HandShade").visible
+	_check("eye-shading shows the hand-over-eyes pose", shows_pose)
 	_check("plain hoplite hides it", not plain.get_node("Visual/HandShade").visible)
 
 

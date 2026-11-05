@@ -11,7 +11,12 @@ enum State { IDLE, DRAW, COOLDOWN }
 
 const ARROW_SCENE: PackedScene = preload("res://scenes/projectiles/arrow.tscn")
 
-var state: State = State.IDLE
+## The current behaviour. Assigning it also updates the animation (the setter runs
+## _animate), so every `state = ...` line in this script changes the pose too.
+var state: State = State.IDLE:
+	set(value):
+		state = value
+		_animate()
 ## Seconds left in the current DRAW or COOLDOWN.
 var _timer: float = 0.0
 
@@ -26,6 +31,10 @@ func _ready() -> void:
 	_glint.scale = Vector2.ONE * (Balance.ARCHER_GLINT_SIZE / Balance.ARCHER_GLINT_ART_RADIUS)
 	_glint.visible = false
 	_place_glint()
+	# The bow is part of the sprite art, so the placeholder bow line goes.
+	var bow := visual.get_node_or_null("Bow") as CanvasItem
+	if bow != null and sprite != null:
+		bow.visible = false
 
 
 ## _physics_process runs every physics tick (delta = seconds since the last one). It
@@ -64,6 +73,9 @@ func _draw_bow(delta: float) -> void:
 		return
 	_face(player)
 	_timer -= delta
+	# Reach for an arrow, nock it, then full draw, each a third of the draw time.
+	var drawn: float = 1.0 - _timer / Balance.ARCHER_DRAW_TIME
+	SpriteKit.play(sprite, &"reach" if drawn < 1.0 / 3.0 else (&"nock" if drawn < 2.0 / 3.0 else &"draw"))
 	if _timer <= 0.0:
 		_fire(player)
 		_glint.visible = false
@@ -74,6 +86,9 @@ func _draw_bow(delta: float) -> void:
 ## COOLDOWN: do nothing until the pause between shots is over.
 func _cooldown(delta: float) -> void:
 	_timer -= delta
+	# The open-handed release pose first, then lowering the bow.
+	if Balance.ARCHER_COOLDOWN - _timer >= Balance.ARCHER_RELEASE_POSE_S:
+		SpriteKit.play(sprite, &"cooldown")
 	if _timer <= 0.0:
 		state = State.IDLE
 
@@ -139,3 +154,18 @@ func _fire(player: Player) -> void:
 	get_parent().add_child(arrow)
 	arrow.global_position = from
 	arrow.launch(launch)
+
+
+## Pose for the current state (called by the state setter and by Enemy on stagger).
+## DRAW and COOLDOWN step through their poses in _draw_bow / _cooldown.
+func _animate() -> void:
+	if is_staggered():
+		SpriteKit.play(sprite, &"stagger")
+		return
+	match state:
+		State.IDLE:
+			SpriteKit.play(sprite, &"idle")
+		State.DRAW:
+			SpriteKit.play(sprite, &"reach")
+		State.COOLDOWN:
+			SpriteKit.play(sprite, &"release")

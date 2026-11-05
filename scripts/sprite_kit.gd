@@ -57,8 +57,8 @@ static func play(sprite: AnimatedSprite2D, anim: StringName, speed_scale: float 
 ## Replaces the placeholder polygons under `holder` (e.g. Visual/Spear) with the weapon
 ## sprite `weapon` (a key of Balance.WEAPON_ART). The holder keeps its position, so the
 ## code that slides or swings it keeps working. Returns the sprite, or null on failure.
-## `center` is where the middle of the art sits inside the holder.
-static func weapon(holder: Node2D, weapon_name: StringName, center: Vector2 = Vector2.ZERO) -> Sprite2D:
+## The art's middle goes to the WEAPON_ART "center" point inside the holder.
+static func weapon(holder: Node2D, weapon_name: StringName) -> Sprite2D:
 	var info: Dictionary = Balance.WEAPON_ART.get(weapon_name, {})
 	if info.is_empty() or not ResourceLoader.exists(info["texture"]):
 		return null
@@ -70,7 +70,7 @@ static func weapon(holder: Node2D, weapon_name: StringName, center: Vector2 = Ve
 	sprite.texture = texture
 	var longest: float = maxf(texture.get_width(), texture.get_height())
 	sprite.scale = Vector2.ONE * (float(info["length"]) / longest)
-	sprite.position = center
+	sprite.position = info.get("center", Vector2.ZERO)
 	for child: Node in holder.get_children():
 		if child is Polygon2D or child is Line2D:
 			(child as CanvasItem).visible = false

@@ -602,14 +602,19 @@ const ANIM_FPS: Dictionary = {
 	&"mirror_bearer": {&"walk": 6.0},
 	&"perseus": {&"hover": 6.0},
 }
+## Seconds the leaper shows its takeoff pose before the stretched mid-leap pose.
+const LEAPER_TAKEOFF_POSE_S: float = 0.12
+## Seconds the archer shows the open-handed release pose after a shot.
+const ARCHER_RELEASE_POSE_S: float = 0.2
 ## Walk animation speed multiplier while an enemy chases (it moves faster, so do its legs).
 const ANIM_CHASE_SPEED_SCALE: float = 1.6
-## Detachable weapon sprites (Sprite2D) and how long each should be in the game (px,
-## measured along its longest side). Spear 1.5 BL, arrow 0.5 BL, mirror 0.5 BL, shield 0.66 BL.
+## Detachable weapon sprites (Sprite2D): how long each is in the game (px, along its
+## longest side) and where its middle sits inside its holder node. Sizes match the old
+## placeholder shapes, so the hitboxes and the code that moves them still line up.
 const WEAPON_ART: Dictionary = {
-	&"spear": {"texture": "res://art/sprites/weapons/spear.png", "length": 96.0},
-	&"arrow": {"texture": "res://art/sprites/weapons/arrow.png", "length": 32.0},
-	&"mirror": {"texture": "res://art/sprites/weapons/mirror.png", "length": 32.0},
+	&"spear": {"texture": "res://art/sprites/weapons/spear.png", "length": 66.0, "center": Vector2(19.0, 0.0)},
+	&"arrow": {"texture": "res://art/sprites/weapons/arrow.png", "length": 29.0, "center": Vector2(0.5, 0.0)},
+	&"mirror": {"texture": "res://art/sprites/weapons/mirror.png", "length": 36.0, "center": Vector2(0.0, 4.0)},
 	&"shield": {"texture": "res://art/sprites/weapons/shield.png", "length": 42.0},
 }
 ## Whip snake sprites (3 variants, drawn tail-left, head-right) and their thickness in

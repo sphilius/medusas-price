@@ -12,7 +12,12 @@ extends Enemy
 
 enum State { PATROL, CHASE }
 
-var state: State = State.PATROL
+## The current behaviour. Assigning it also updates the animation (the setter runs
+## _animate), so every `state = ...` line in this script changes the pose too.
+var state: State = State.PATROL:
+	set(value):
+		state = value
+		_animate()
 ## Patrol center (spawn x).
 var _home_x: float = 0.0
 ## Seconds the mirror stays knocked aside (0 = held up).
@@ -37,6 +42,7 @@ func _ready() -> void:
 	_glint.scale = Vector2.ONE * (Balance.MIRROR_GLINT_SIZE / Balance.MIRROR_GLINT_ART_RADIUS)
 	_glint.visible = false
 	_place_mirror()
+	SpriteKit.weapon(_mirror, &"mirror")
 
 
 ## _physics_process runs every physics tick (delta = seconds since the last one):
@@ -106,6 +112,7 @@ func knock_mirror(seconds: float) -> void:
 	_knock_left = maxf(_knock_left, seconds)
 	_glint.visible = false
 	_place_mirror()
+	_animate()
 
 
 ## True while the mirror is held up in front of him.
@@ -120,6 +127,7 @@ func _tick_mirror(delta: float) -> void:
 		_knock_left -= delta
 		if _knock_left <= 0.0:
 			_place_mirror()
+			_animate()
 		return
 	_glint_clock += delta
 	if _glint_clock >= Balance.MIRROR_GLINT_PERIOD:
@@ -185,3 +193,16 @@ func _flash_beam(from: Vector2, to: Vector2) -> void:
 	var fade := beam.create_tween()
 	fade.tween_property(beam, "modulate:a", 0.0, Balance.MIRROR_BEAM_TIME)
 	fade.tween_callback(beam.queue_free)
+
+
+## Pose for the current state (called by the state setter, by Enemy on stagger, and
+## when the mirror is knocked aside or comes back).
+func _animate() -> void:
+	if is_staggered():
+		SpriteKit.play(sprite, &"stagger")
+	elif not mirror_up():
+		SpriteKit.play(sprite, &"knocked")
+	elif state == State.CHASE:
+		SpriteKit.play(sprite, &"walk", Balance.ANIM_CHASE_SPEED_SCALE)
+	else:
+		SpriteKit.play(sprite, &"walk")
