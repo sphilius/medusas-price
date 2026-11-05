@@ -128,3 +128,20 @@ static func frame_uv(sprite: AnimatedSprite2D, global_point: Vector2) -> Vector2
 	var uv: Vector2 = (sprite.to_local(global_point) - top_left) / size
 	return uv.clamp(Vector2.ZERO, Vector2.ONE)
 
+
+## A level prop picture (a key of Balance.PROP_ART) added under `parent`, scaled to
+## its "height" and placed so its "pivot" point sits on the parent's origin.
+## Returns null (adds nothing) if the art is missing; callers keep their polygons then.
+static func prop(parent: Node2D, prop_name: StringName) -> Sprite2D:
+	var info: Dictionary = Balance.PROP_ART.get(prop_name, {})
+	if info.is_empty() or not ResourceLoader.exists(info["texture"]):
+		return null
+	var sprite := Sprite2D.new()
+	sprite.name = "PropArt"
+	sprite.texture = load(info["texture"]) as Texture2D
+	sprite.centered = false
+	var size: Vector2 = sprite.texture.get_size()
+	sprite.offset = -size * (info["pivot"] as Vector2)
+	sprite.scale = Vector2.ONE * (float(info["height"]) / size.y)
+	parent.add_child(sprite)
+	return sprite

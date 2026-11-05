@@ -9,6 +9,9 @@
 ## level, and tells the rest of the game when she reaches the exit. In the STORM
 ## lighting it also flashes lightning every 6 to 12 seconds.
 ## Torchlight levels are dark; place scenes/props/torch.tscn to light them.
+## It also dresses the level from its Lighting: a painted background (Parallax2D),
+## the matching terrain texture, and Greek-key bands along the top and bottom of the
+## screen. Missing art leaves the plain Backdrop and placeholder tiles in place.
 class_name LevelBase
 extends Node2D
 
@@ -26,6 +29,8 @@ const CAMERA_SCENE: PackedScene = preload("res://scenes/game_camera.tscn")
 @onready var _exit_trigger: CollisionShape2D = $LevelExit/Trigger
 @onready var _exit_art: Polygon2D = $LevelExit/Art
 @onready var _tint: CanvasModulate = $Tint
+@onready var _backdrop: CanvasItem = $Backdrop
+@onready var _terrain: TileMapLayer = $Terrain
 
 ## Waits between lightning flashes (storm only).
 var _lightning_timer: Timer
@@ -33,6 +38,7 @@ var _lightning_timer: Timer
 
 func _ready() -> void:
 	_tint.color = _base_color()
+	_build_world_art()
 	_build_exit()
 	_spawn_player()
 	_exit.body_entered.connect(_on_exit_body_entered)
@@ -56,6 +62,65 @@ func _base_color() -> Color:
 	return Balance.LIGHT_NOON
 
 
+## Background, terrain texture and meander bands for this level's Lighting.
+func _build_world_art() -> void:
+	var index: int = int(lighting)
+	var bg: Texture2D = _load_texture(Balance.LEVEL_BACKGROUNDS[index])
+	if bg != null:
+		# The painting is 720 px tall like the screen: it slides sideways a little with
+		# the camera (PARALLAX_BG_SCROLL) and stays put vertically (scroll y = 0).
+		_add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, 1.0, Balance.PARALLAX_BG_Z)
+		_backdrop.visible = false
+	var tiles: Texture2D = _load_texture(Balance.LEVEL_TERRAIN[index])
+	if tiles != null and _terrain.tile_set != null:
+		# Copy the shared TileSet (deep, so the atlas source is copied too) and swap only
+		# its texture: same 32 px tile, same collision, new look.
+		var tile_set := _terrain.tile_set.duplicate(true) as TileSet
+		var source := tile_set.get_source(tile_set.get_source_id(0)) as TileSetAtlasSource
+		if source != null:
+			source.texture = tiles
+			_terrain.tile_set = tile_set
+	var band: Texture2D = _load_texture(Balance.MEANDER_TEXTURE)
+	if band != null:
+		var band_scale: float = Balance.MEANDER_HEIGHT / band.get_height()
+		var screen_h: float = get_viewport_rect().size.y
+		var scroll := Vector2(Balance.MEANDER_SCROLL, 0.0)
+		_add_parallax(band, scroll, Vector2.ZERO, band_scale, Balance.MEANDER_Z)
+		_add_parallax(band, scroll, Vector2(0.0, screen_h - Balance.MEANDER_HEIGHT), band_scale, Balance.MEANDER_Z)
+
+
+## One repeating Parallax2D layer holding `texture` drawn from `top_left` (screen px)
+## at `art_scale`. repeat_size makes it tile left and right forever.
+func _add_parallax(texture: Texture2D, scroll: Vector2, top_left: Vector2, art_scale: float, z: int) -> void:
+	var layer := Parallax2D.new()
+	layer.scroll_scale = scroll
+	layer.repeat_size = Vector2(texture.get_width() * art_scale, 0.0)
+	layer.repeat_times = Balance.PARALLAX_REPEAT_TIMES
+	layer.z_index = z
+	var art := Sprite2D.new()
+	art.texture = texture
+	art.centered = false
+	art.position = top_left
+	art.scale = Vector2.ONE * art_scale
+	# A tile narrower than the screen (the meander) is drawn as one long strip: the
+	# sprite shows a region wider than the screen and texture_repeat tiles it inside.
+	# Parallax2D then only has to wrap the strip by one tile width.
+	var screen_w: float = get_viewport_rect().size.x
+	if texture.get_width() * art_scale < screen_w:
+		art.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		art.region_enabled = true
+		var tiles_across: int = ceili(screen_w / (texture.get_width() * art_scale)) + 2
+		art.region_rect = Rect2(0.0, 0.0, texture.get_width() * tiles_across, texture.get_height())
+	layer.add_child(art)
+	add_child(layer)
+	move_child(layer, 0)  # behind the level's own nodes in tree order
+
+
+## Load a texture if the file exists; null (and no error popup) if it does not.
+func _load_texture(path: String) -> Texture2D:
+	return load(path) as Texture2D if ResourceLoader.exists(path) else null
+
+
 ## Size the exit trigger and draw its door (a marble arch: no words).
 func _build_exit() -> void:
 	_exit.collision_layer = 0
@@ -72,6 +137,9 @@ func _build_exit() -> void:
 			Vector2(-half, 0.0), Vector2(-half, -size.y * 0.8), Vector2(0.0, -size.y),
 			Vector2(half, -size.y * 0.8), Vector2(half, 0.0)])
 	_exit_art.color = Balance.COLOR_MARBLE
+	# The painted temple doorway replaces the marble arch when the art is there.
+	if SpriteKit.prop(_exit, &"exit_door") != null:
+		_exit_art.visible = false
 
 
 ## Put Medusa and her follow camera on the spawn marker.

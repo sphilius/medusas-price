@@ -660,3 +660,64 @@ const MARBLE_CRACK_WIDTH: float = 0.05
 const MEDUSA_EYE_UV: Vector2 = Vector2(0.62, 0.15)
 ## Death veil: how far the gray world is pushed toward marble white at full strength.
 const DEATH_VEIL_MARBLE_MIX: float = 0.45
+
+# ---------------------------------------------------------------------------
+# World art (backgrounds, terrain, meander bands, cards)
+# ---------------------------------------------------------------------------
+## Per level art, indexed by LevelBase.Lighting (NOON = level 1 temple, DUSK = level 2
+## cliffs, TORCHLIGHT = level 3 cave, STORM = the boss at the cave mouth).
+const LEVEL_BACKGROUNDS: Array[String] = [
+	"res://art/bg/level_1_bg.png",
+	"res://art/bg/level_2_bg.png",
+	"res://art/bg/level_3_bg.png",
+	"res://art/bg/level_4_bg.png",
+]
+const LEVEL_TERRAIN: Array[String] = [
+	"res://art/tiles/terrain_temple.png",
+	"res://art/tiles/terrain_cliffs.png",
+	"res://art/tiles/terrain_cave.png",
+	"res://art/tiles/terrain_temple.png",
+]
+## How much the background moves with the camera (0 = glued to the screen, 1 = to the world).
+const PARALLAX_BG_SCROLL: float = 0.3
+## How many extra copies of the background to draw on each side so wide screens never
+## see its edge.
+const PARALLAX_REPEAT_TIMES: int = 2
+## Draw order: the background behind everything, the meander bands in front of the world.
+const PARALLAX_BG_Z: int = -20
+const MEANDER_Z: int = 40
+## The Greek-key band along the top and bottom of the screen: its tile, its height on
+## screen (px) and how fast it slides sideways with the camera.
+const MEANDER_TEXTURE: String = "res://art/tiles/meander.png"
+const MEANDER_HEIGHT: float = 18.0
+const MEANDER_SCROLL: float = 1.0
+## Title and ending cards and the logo (the only allowed text in the game).
+const CARD_TITLE: String = "res://art/cards/title.png"
+const CARD_END: String = "res://art/cards/end.png"
+const CARD_LOGO: String = "res://art/cards/logo.png"
+## Where the logo sits on the title card (center, px) and its width on screen (px).
+const CARD_LOGO_CENTER: Vector2 = Vector2(330.0, 330.0)
+const CARD_LOGO_WIDTH: float = 560.0
+## Victim statue art, one per VictimStatue.Pose (standing, arms raised, crouched,
+## fleeing). Already drawn as white marble, so no shader is needed. All four share the
+## standing figure's scale, which makes the standing one VICTIM_BODY_SIZE.y tall.
+const VICTIM_TEXTURES: Array[String] = [
+	"res://art/sprites/statues/victim_0.png",
+	"res://art/sprites/statues/victim_1.png",
+	"res://art/sprites/statues/victim_2.png",
+	"res://art/sprites/statues/victim_3.png",
+]
+## Level prop art (SpriteKit.prop): the picture, its height in the game (px), and
+## which point of the picture (fractions of its width and height) sits on the prop's
+## origin. Mirror pool: the basin's bottom middle sits POOL_DEPTH below the floor
+## line; torch: the cup sits under the flame; exit: the doorway stands on the floor.
+const PROP_ART: Dictionary = {
+	&"pool": {"texture": "res://art/sprites/props/pool.png", "height": 30.0,
+		"pivot": Vector2(0.5, 0.75)},
+	&"torch_bracket": {"texture": "res://art/sprites/props/torch_bracket.png", "height": 28.0,
+		"pivot": Vector2(0.62, 0.05)},
+	&"exit_door": {"texture": "res://art/sprites/props/exit_door.png", "height": 150.0,
+		"pivot": Vector2(0.5, 1.0)},
+}
+## How much a spent mirror pool darkens (0 = not at all, 1 = black).
+const POOL_SPENT_DARKEN: float = 0.45

@@ -18,6 +18,8 @@ var _spent: bool = false
 @onready var _basin: Polygon2D = $Basin
 @onready var _water: Polygon2D = $Water
 @onready var _glint: Polygon2D = $Glint
+## The painted basin (null if the art is missing; then the polygons draw the pool).
+var _art: Sprite2D = null
 
 
 func _ready() -> void:
@@ -35,6 +37,12 @@ func _ready() -> void:
 	_water.color = Balance.COLOR_MARBLE
 	_glint.polygon = _rect(-half_width * 0.4, 1.0, half_width * 0.1, 3.0)
 	_glint.color = Balance.COLOR_GOLD
+	_art = SpriteKit.prop(self, &"pool")
+	if _art != null:
+		_art.position.y = Balance.POOL_DEPTH
+		_basin.visible = false
+		_water.visible = false
+		move_child(_glint, -1)  # the gold glint stays on top of the painting
 	set_physics_process(false)
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -92,6 +100,8 @@ func _on_player_respawned(center: Vector2) -> void:
 func _apply_visual() -> void:
 	_water.color = Balance.COLOR_MARBLE.darkened(0.45) if _spent else Balance.COLOR_MARBLE
 	_glint.visible = not _spent
+	if _art != null:
+		_art.modulate = Color.WHITE.darkened(Balance.POOL_SPENT_DARKEN) if _spent else Color.WHITE
 
 
 static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:
