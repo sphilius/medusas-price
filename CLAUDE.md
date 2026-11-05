@@ -118,3 +118,7 @@ Autoload `RunLedger` logs events as JSON for the AI features (vase, gallery, Per
 ## Workflow
 
 Small commits per feature, test in a web export before calling anything done, keep the deadline build playable at every commit.
+
+## Playtest guidebook
+
+https://claude.ai/artifact/AXKSYFbGQoDHahbd5SYCJs (page source: `docs/playtest/guidebook.html`). Update it per the playtest-guidebook skill every session: milestones, feedback, decisions, changelog. Design choices are recorded in `docs/DEVLOG.md`.

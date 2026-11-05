@@ -1,0 +1,436 @@
+<title>Medusa's Price Playtest Guidebook</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (max 880px) under a sticky tab bar; each milestone is a lab sheet
+   of short, fillable checks. All content comes from the artifact's db (see the skill's SKILL.md). */
+:root {
+	/* Medusa's Price palette: marble ground, near-black ink, terracotta accent, gold. */
+	--bg: #f2efe8;
+	--surface: #fffdf8;
+	--ink: #1a1410;
+	--muted: #6b5a4e;
+	--line: #e0d6cb;
+	--chip: #ece4da;
+	--accent: #a34e2b;
+	--accent-ink: #ffffff;
+	--gold: #9a6d16;
+	--good: #2f7d4f;
+	--warn: #a3600b;
+	--bad: #b23b3b;
+	--display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+	--body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+	--mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #1a1410; --surface: #241c17; --ink: #f2efe8; --muted: #b8a99b; --line: #3a2e26;
+		--chip: #2e241e; --accent: #e07b4f; --accent-ink: #1a1410; --gold: #e8b547;
+		--good: #63c08a; --warn: #e6a54c; --bad: #f07c7c; color-scheme: dark;
+	}
+}
+:root[data-theme="dark"] {
+	--bg: #1a1410; --surface: #241c17; --ink: #f2efe8; --muted: #b8a99b; --line: #3a2e26;
+	--chip: #2e241e; --accent: #e07b4f; --accent-ink: #1a1410; --gold: #e8b547;
+	--good: #63c08a; --warn: #e6a54c; --bad: #f07c7c; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+	background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body);
+	padding-left: max(16px, env(safe-area-inset-left, 0px));
+	padding-right: max(16px, env(safe-area-inset-right, 0px));
+	padding-block: 0 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.wrap { max-width: 880px; margin: 0 auto; display: grid; gap: 20px; }
+header.top { padding-top: 28px; display: grid; gap: 6px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(26px, 5vw, 36px)/1.1 var(--display); margin: 0; text-wrap: balance; }
+h2 { font: 600 22px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 600 16px/1.3 var(--display); margin: 0; letter-spacing: .01em; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); }
+.banner { border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 10px 14px; font-size: 14px; }
+nav.tabs {
+	position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+	display: flex; gap: 4px; flex-wrap: wrap; padding-block: 10px; border-bottom: 1px solid var(--line);
+}
+nav.tabs button {
+	font: 600 14px/1 var(--display); letter-spacing: .02em; border: 0; background: transparent; color: var(--muted);
+	padding: 9px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; gap: 6px; align-items: center;
+}
+nav.tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); }
+.count { font: 500 11px/1 var(--mono); background: var(--chip); color: var(--ink); border-radius: 99px; padding: 3px 6px; }
+nav.tabs button[aria-selected="true"] .count { background: var(--accent); color: var(--accent-ink); }
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.howto { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+details.howto summary { cursor: pointer; font: 600 15px/1.3 var(--display); }
+details.howto ol { margin: 10px 0 0; padding-left: 22px; display: grid; gap: 6px; }
+.ms-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.ms-chip {
+	flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px;
+	padding: 8px 10px; cursor: pointer; display: grid; gap: 4px; text-align: left; min-width: 92px; font: inherit;
+}
+.ms-chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.ms-chip .code { font: 600 15px/1 var(--display); }
+.bar { height: 4px; background: var(--chip); border-radius: 2px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); }
+.pill { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; padding: 4px 7px; border-radius: 4px; background: var(--chip); color: var(--muted); white-space: nowrap; }
+.pill.done, .pill.decided, .pill.fixed { color: var(--good); }
+.pill.testing, .pill.next, .pill.new, .pill.open { color: var(--accent); }
+.pill.needs-decision, .pill.queued { color: var(--warn); }
+.pill.deferred, .pill.planned { color: var(--muted); }
+.sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 4vw, 28px); display: grid; gap: 22px; }
+.sheet-head { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+.sheet-head .left { display: grid; gap: 4px; min-width: 0; }
+section.block { display: grid; gap: 10px; }
+section.block > h3 { padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+ul.plain, ol.steps { margin: 0; padding-left: 22px; display: grid; gap: 5px; }
+.q { display: grid; gap: 8px; padding: 12px 0; border-top: 1px dashed var(--line); }
+.q:first-of-type { border-top: 0; padding-top: 0; }
+.q-prompt { font-weight: 500; }
+.q-hint { font-size: 13px; color: var(--muted); }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt { display: inline-flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 8px; padding: 7px 11px; cursor: pointer; background: var(--bg); }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--chip); }
+.opt input { accent-color: var(--accent); margin: 0; }
+.scale { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.scale .opts { justify-content: center; }
+.scale .end { font-size: 12px; color: var(--muted); max-width: 120px; }
+input[type="text"], textarea, select {
+	width: 100%; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+	border-radius: 8px; padding: 9px 11px;
+}
+textarea { min-height: 84px; resize: vertical; }
+.save { font: 500 12px/1 var(--mono); color: var(--muted); }
+.save.err { color: var(--bad); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; }
+.card-head { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; flex-wrap: wrap; }
+.choice { display: grid; gap: 2px; }
+.rec { font: 500 11px/1 var(--mono); color: var(--gold); text-transform: uppercase; letter-spacing: .06em; margin-left: 6px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+th { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+td.when { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { font: 600 14px/1 var(--display); letter-spacing: .02em; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: default; }
+.log-group { display: grid; gap: 8px; }
+.log-item { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.log-item .k { font: 500 11px/1.4 var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 18px; text-align: center; }
+@media (max-width: 520px) {
+	.scale { grid-template-columns: 1fr; }
+	.scale .end { max-width: none; }
+	.log-item { grid-template-columns: 1fr; gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+	<header class="top">
+		<span class="eyebrow" id="eyebrow">Playtest guidebook</span>
+		<h1 id="title">Medusa's Price Playtest Guidebook</h1>
+		<p class="muted" id="pitch">Loading the guidebook…</p>
+	</header>
+	<div class="banner" id="offline" hidden>Answers can't be saved in this view. Open the guidebook on claude.ai while signed in to fill it out.</div>
+	<details class="howto" id="howto">
+		<summary>How to playtest (start here)</summary>
+		<ol id="howto-steps">
+			<li>Pick the milestone you're testing in the <b>Playtest</b> tab (the newest one is selected for you).</li>
+			<li>Do the <b>Get set up</b> steps in order, then play.</li>
+			<li>Tick boxes and pick answers as you go. Everything saves by itself; nothing to submit.</li>
+			<li>Answer open design questions in the <b>Decisions</b> tab. Drop any other thought in <b>Feedback</b>.</li>
+			<li>When you're done, tell Claude: "read my playtest answers". Claude updates this guidebook from them.</li>
+		</ol>
+	</details>
+	<nav class="tabs" role="tablist" aria-label="Guidebook sections">
+		<button role="tab" id="tab-playtest" data-tab="playtest" aria-selected="true">Playtest</button>
+		<button role="tab" id="tab-decisions" data-tab="decisions" aria-selected="false">Decisions <span class="count" id="n-decisions">0</span></button>
+		<button role="tab" id="tab-feedback" data-tab="feedback" aria-selected="false">Feedback <span class="count" id="n-feedback">0</span></button>
+		<button role="tab" id="tab-changes" data-tab="changes" aria-selected="false">Changes</button>
+	</nav>
+	<main id="view"></main>
+</div>
+
+<script>
+// ---- State: everything shown comes from the artifact db, so one template serves every project ----
+const S = { db: null, meta: null, milestones: [], answers: {}, decisions: [], feedback: [], changes: [], current: null, tab: "playtest" };
+const TABS = ["playtest", "decisions", "feedback", "changes"];
+const saveTimers = {};     // debounce timers per doc path
+const writeChains = {};    // one write at a time per doc path
+let lastSaved = "";
+
+// Tiny element builder: h("div", {class: "x"}, "text", child). Text always goes in as text, never HTML.
+function h(tag, attrs, ...kids) {
+	const el = document.createElement(tag);
+	for (const [k, v] of Object.entries(attrs || {})) {
+		if (v === false || v == null) continue;
+		if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+		else if (k === "checked" || k === "value") el[k] = v;
+		else el.setAttribute(k, v === true ? "" : v);
+	}
+	for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid instanceof Node ? kid : String(kid));
+	return el;
+}
+const today = () => new Date().toISOString().slice(0, 10);
+const slug = (s) => String(s).replace(/[^A-Za-z0-9_.~:@+-]/g, "-");
+
+// Write to one doc, serialized so two writes to the same doc never overlap.
+function write(path, fn) {
+	const prev = writeChains[path] || Promise.resolve();
+	const next = prev.then(fn).then(() => { lastSaved = new Date(); showSaved(); }, (e) => showSaved(e));
+	writeChains[path] = next.catch(() => {});
+	return next;
+}
+function showSaved(err) {
+	const el = document.getElementById("save-state");
+	if (!el) return;
+	if (err) { el.textContent = err.code === "invalid_argument" ? "Can't save: this view is read-only" : "Not saved, try again"; el.classList.add("err"); return; }
+	el.classList.remove("err");
+	el.textContent = lastSaved ? "Saved " + lastSaved.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Answers save automatically";
+}
+
+// ---- Answers (the part the playtester fills in) ----
+function ans(mid) { return S.answers[mid] || (S.answers[mid] = { values: {}, notes: "" }); }
+function setAnswer(mid, qid, value) {
+	ans(mid).values[qid] = value;
+	queueSave(mid);
+	updateProgress();
+}
+function queueSave(mid) {
+	if (!S.db) return;
+	const path = "answers/" + slug(mid);
+	clearTimeout(saveTimers[path]);
+	saveTimers[path] = setTimeout(() => {
+		const a = ans(mid);
+		const body = { values: a.values, notes: a.notes || "", updatedAt: new Date().toISOString() };
+		write(path, () => S.db.doc(path).set(body));
+	}, 600);
+}
+function answered(m) {
+	const qs = m.questions || [];
+	const vals = (S.answers[m.id] || {}).values || {};
+	let n = 0;
+	for (const q of qs) {
+		const v = vals[q.id];
+		if (Array.isArray(v) ? v.length : (v !== undefined && v !== "" && v !== false)) n++;
+	}
+	return { n, total: qs.length };
+}
+
+// ---- Rendering ----
+function render() {
+	for (const b of document.querySelectorAll("nav.tabs button")) b.setAttribute("aria-selected", String(b.dataset.tab === S.tab));
+	document.getElementById("n-decisions").textContent = S.decisions.filter((d) => d.status !== "decided").length;
+	document.getElementById("n-feedback").textContent = S.feedback.length;
+	const view = document.getElementById("view");
+	view.replaceChildren(({ playtest: viewPlaytest, decisions: viewDecisions, feedback: viewFeedback, changes: viewChanges })[S.tab]());
+	showSaved();
+}
+function renderHeader() {
+	const m = S.meta || {};
+	if (m.name) { document.getElementById("title").textContent = m.name + " Playtest Guidebook"; }
+	document.getElementById("eyebrow").textContent = [m.engine, m.build ? "build " + m.build : null, m.updated ? "updated " + m.updated : null].filter(Boolean).join(" · ") || "Playtest guidebook";
+	document.getElementById("pitch").textContent = m.pitch || "No project details yet. Claude fills this in when it sets the guidebook up.";
+	if (Array.isArray(m.howTo) && m.howTo.length) {
+		document.getElementById("howto-steps").replaceChildren(...m.howTo.map((s) => h("li", {}, s)));
+	}
+}
+
+function viewPlaytest() {
+	if (!S.milestones.length) return h("div", { class: "empty" }, "No milestones yet. Claude adds one per build, with setup steps and checks to fill in.");
+	const m = S.milestones.find((x) => x.id === S.current) || S.milestones[S.milestones.length - 1];
+	S.current = m.id;
+	const strip = h("div", { class: "ms-strip", role: "group", "aria-label": "Milestones" },
+		S.milestones.map((x) => {
+			const p = answered(x);
+			return h("button", { class: "ms-chip", "aria-pressed": String(x.id === m.id), onclick: () => { S.current = x.id; render(); } },
+				h("span", { class: "code" }, x.code || x.id),
+				h("span", { class: "pill " + (x.status || "planned") }, x.status || "planned"),
+				p.total ? h("span", { class: "bar", title: p.n + " of " + p.total + " answered" }, h("i", { style: "width:" + Math.round(100 * p.n / p.total) + "%", "data-ms": x.id })) : null);
+		}));
+	return h("div", { class: "wrap", style: "gap:16px" }, strip, sheet(m));
+}
+
+function sheet(m) {
+	const a = ans(m.id);
+	const p = answered(m);
+	const groups = [];
+	for (const q of m.questions || []) {
+		const g = q.group || "Checks";
+		let grp = groups.find((x) => x.name === g);
+		if (!grp) groups.push(grp = { name: g, qs: [] });
+		grp.qs.push(q);
+	}
+	return h("article", { class: "sheet" },
+		h("div", { class: "sheet-head" },
+			h("div", { class: "left" },
+				h("span", { class: "eyebrow" }, [m.code, m.date].filter(Boolean).join(" · ")),
+				h("h2", {}, m.title || m.id),
+				m.summary ? h("p", { class: "muted" }, m.summary) : null),
+			h("div", { class: "row" }, h("span", { class: "pill " + (m.status || "planned") }, m.status || "planned"),
+				h("span", { class: "save", id: "progress" }, p.total ? p.n + " / " + p.total + " answered" : ""))),
+		m.whatChanged && m.whatChanged.length ? h("section", { class: "block" }, h("h3", {}, "What's new in this build"), h("ul", { class: "plain" }, m.whatChanged.map((s) => h("li", {}, s)))) : null,
+		m.setup && m.setup.length ? h("section", { class: "block" }, h("h3", {}, "Get set up"), h("ol", { class: "steps" }, m.setup.map((s) => h("li", {}, s)))) : null,
+		groups.map((g) => h("section", { class: "block" }, h("h3", {}, g.name), g.qs.map((q) => question(m.id, q, a.values[q.id])))),
+		h("section", { class: "block" }, h("h3", {}, "Anything else?"),
+			h("textarea", { id: "notes-" + slug(m.id), placeholder: "Bugs, surprises, ideas. Short is fine.", value: a.notes || "",
+				oninput: (e) => { a.notes = e.target.value; queueSave(m.id); } })),
+		h("div", { class: "row", style: "justify-content:space-between" }, h("span", { class: "save", id: "save-state" }), null));
+}
+
+// One question. Types: check (one box), multi (several boxes), radio (pick one),
+// scale (1..n with end labels), text (short answer), long (paragraph).
+function question(mid, q, v) {
+	const id = "q-" + slug(mid) + "-" + slug(q.id);
+	const head = [h("span", { class: "q-prompt", id: id + "-label" }, q.prompt), q.hint ? h("span", { class: "q-hint" }, q.hint) : null];
+	const box = h("div", { class: "q", role: "group", "aria-labelledby": id + "-label" });
+	if (q.type === "check") {
+		box.append(h("label", { class: "opt", style: "justify-self:start" },
+			h("input", { type: "checkbox", id, checked: !!v, onchange: (e) => setAnswer(mid, q.id, e.target.checked) }), q.prompt));
+		if (q.hint) box.append(h("span", { class: "q-hint" }, q.hint));
+		return box;
+	}
+	box.append(...head);
+	if (q.type === "multi") {
+		const set = new Set(Array.isArray(v) ? v : []);
+		box.append(h("div", { class: "opts" }, (q.options || []).map((o, i) => h("label", { class: "opt" },
+			h("input", { type: "checkbox", id: id + "-" + i, checked: set.has(o),
+				onchange: (e) => { e.target.checked ? set.add(o) : set.delete(o); setAnswer(mid, q.id, [...set]); } }), o))));
+	} else if (q.type === "radio" || q.type === "scale") {
+		const opts = q.type === "scale" ? Array.from({ length: q.max || 5 }, (_, i) => String(i + 1)) : (q.options || []);
+		const row = h("div", { class: "opts" }, opts.map((o, i) => h("label", { class: "opt" },
+			h("input", { type: "radio", name: id, id: id + "-" + i, checked: v === o, onchange: () => setAnswer(mid, q.id, o) }), o)));
+		box.append(q.type === "scale" ? h("div", { class: "scale" }, h("span", { class: "end" }, q.minLabel || ""), row, h("span", { class: "end", style: "text-align:right" }, q.maxLabel || "")) : row);
+	} else if (q.type === "long") {
+		box.append(h("textarea", { id, value: v || "", oninput: (e) => setAnswer(mid, q.id, e.target.value) }));
+	} else {
+		box.append(h("input", { type: "text", id, maxlength: "280", value: v || "", placeholder: q.placeholder || "", oninput: (e) => setAnswer(mid, q.id, e.target.value) }));
+	}
+	return box;
+}
+// Refresh progress bars and the counter without rebuilding the form (keeps focus while typing).
+function updateProgress() {
+	const m = S.milestones.find((x) => x.id === S.current);
+	if (!m) return;
+	const p = answered(m);
+	const el = document.getElementById("progress");
+	if (el) el.textContent = p.total ? p.n + " / " + p.total + " answered" : "";
+	const bar = document.querySelector('[data-ms="' + CSS.escape(m.id) + '"]');
+	if (bar && p.total) bar.style.width = Math.round(100 * p.n / p.total) + "%";
+}
+
+function viewDecisions() {
+	if (!S.decisions.length) return h("div", { class: "empty" }, "No design decisions yet. When a choice is yours to make, Claude adds it here with a recommendation.");
+	const open = S.decisions.filter((d) => d.status !== "decided");
+	const done = S.decisions.filter((d) => d.status === "decided");
+	const card = (d) => {
+		const id = "d-" + slug(d.id);
+		return h("div", { class: "card" },
+			h("div", { class: "card-head" }, h("h3", {}, d.question), h("span", { class: "pill " + (d.status === "decided" ? "decided" : "open") }, d.status === "decided" ? "decided" : "open")),
+			h("span", { class: "eyebrow" }, [d.milestone, d.date].filter(Boolean).join(" · ")),
+			d.context ? h("p", { class: "muted" }, d.context) : null,
+			h("div", { class: "opts", role: "radiogroup", "aria-label": d.question }, (d.options || []).map((o, i) => h("label", { class: "opt" },
+				h("input", { type: "radio", name: id, id: id + "-" + i, checked: d.choice === o.id,
+					onchange: () => { d.choice = o.id; d.status = "decided"; saveDecision(d); } }),
+				h("span", { class: "choice" }, h("span", {}, o.label, o.id === d.recommended ? h("span", { class: "rec" }, "recommended") : null),
+					o.detail ? h("span", { class: "q-hint" }, o.detail) : null)))),
+			h("input", { type: "text", id: id + "-note", maxlength: "280", placeholder: "Why, or a different idea (optional)", value: d.note || "",
+				oninput: (e) => { d.note = e.target.value; clearTimeout(saveTimers[id]); saveTimers[id] = setTimeout(() => saveDecision(d), 600); } }),
+			d.outcome ? h("p", { class: "q-hint" }, "Outcome: " + d.outcome) : null);
+	};
+	return h("div", { class: "wrap", style: "gap:14px" },
+		open.length ? open.map(card) : h("div", { class: "empty" }, "No open decisions. Nice."),
+		done.length ? h("details", {}, h("summary", { class: "muted", style: "cursor:pointer" }, done.length + " decided"), h("div", { class: "wrap", style: "gap:14px;margin-top:12px" }, done.map(card))) : null,
+		h("span", { class: "save", id: "save-state" }));
+}
+function saveDecision(d) {
+	if (!S.db) return;
+	const path = "decisions/" + slug(d.id);
+	write(path, () => S.db.doc(path).update({ choice: d.choice || null, status: d.status || "open", note: d.note || "", decidedAt: new Date().toISOString() }));
+}
+
+function viewFeedback() {
+	const ms = S.milestones.map((m) => m.code || m.id);
+	const text = h("textarea", { id: "fb-text", placeholder: "A note for Claude: a bug, a feel problem, an idea…" });
+	const which = h("select", { id: "fb-ms", "aria-label": "Milestone" }, ms.map((c) => h("option", { value: c }, c)));
+	which.value = (S.milestones.find((m) => m.id === S.current) || {}).code || ms[ms.length - 1] || "";
+	const add = h("button", { class: "btn", type: "button", disabled: !S.db, onclick: async () => {
+		const t = text.value.trim();
+		if (!t || !S.db) return;
+		add.disabled = true;
+		try { await S.db.collection("feedback").add({ date: today(), milestone: which.value, text: t, status: "new", source: "guidebook" }); text.value = ""; lastSaved = new Date(); showSaved(); }
+		catch (e) { showSaved(e); }
+		add.disabled = false;
+	} }, "Add note");
+	const rows = S.feedback.map((f) => h("tr", {},
+		h("td", { class: "when" }, f.date || ""), h("td", { class: "mono" }, f.milestone || ""),
+		h("td", {}, f.text, f.outcome ? h("div", { class: "q-hint" }, "→ " + f.outcome) : null),
+		h("td", {}, h("span", { class: "pill " + slug(f.status || "new") }, (f.status || "new").replace(/-/g, " ")))));
+	return h("div", { class: "wrap", style: "gap:14px" },
+		h("div", { class: "card" }, h("h3", {}, "Add a note"), text, h("div", { class: "row" }, h("div", { style: "flex:0 1 160px" }, which), add, h("span", { class: "save", id: "save-state" }))),
+		S.feedback.length ? h("div", { class: "table-wrap" }, h("table", {}, h("thead", {}, h("tr", {}, ["When", "Build", "Note", "Status"].map((t) => h("th", {}, t)))), h("tbody", {}, rows)))
+			: h("div", { class: "empty" }, "No feedback logged yet. Notes you send Claude in chat show up here too, with what happened to each."));
+}
+
+function viewChanges() {
+	if (!S.changes.length) return h("div", { class: "empty" }, "No changes logged yet. Claude records each build's changes and design choices here.");
+	const groups = [];
+	for (const c of S.changes) {
+		let g = groups.find((x) => x.ms === c.milestone);
+		if (!g) groups.push(g = { ms: c.milestone, items: [] });
+		g.items.push(c);
+	}
+	return h("div", { class: "wrap", style: "gap:22px" }, groups.map((g) => h("section", { class: "log-group" },
+		h("h3", {}, g.ms || "General"),
+		g.items.map((c) => h("div", { class: "log-item" },
+			h("div", { class: "k" }, (c.kind || "change") + "\n", h("span", { class: "mono" }, c.date || "")),
+			h("div", {}, h("div", { style: "font-weight:500" }, c.title), c.detail ? h("div", { class: "q-hint" }, c.detail) : null))))));
+}
+
+// ---- Tabs (each has a bookmarkable #token) ----
+document.querySelector("nav.tabs").addEventListener("click", (e) => {
+	const b = e.target.closest("button[data-tab]");
+	if (!b) return;
+	S.tab = b.dataset.tab;
+	try { history.replaceState(null, "", "#" + S.tab); } catch (_) {}
+	render();
+});
+const fromHash = location.hash.slice(1);
+if (TABS.includes(fromHash)) S.tab = fromHash;
+render();
+
+// ---- Live data from the db (subscribe once per collection) ----
+(async () => {
+	const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+	if (!db) { document.getElementById("offline").hidden = false; return; }
+	S.db = db;
+	const typing = () => document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+	db.doc("meta/project").onSnapshot((s) => { S.meta = s.exists ? s.data() : null; renderHeader(); if (!S.current && S.meta && S.meta.currentMilestone) S.current = S.meta.currentMilestone; });
+	db.collection("milestones").orderBy("order").onSnapshot((q) => {
+		S.milestones = q.docs.map((d) => ({ id: d.id, ...d.data() }));
+		if (!S.current && S.meta && S.meta.currentMilestone) S.current = S.meta.currentMilestone;
+		if (!typing()) render();
+	});
+	db.collection("answers").onSnapshot((q) => {
+		let changed = false;
+		for (const d of q.docs) {
+			if (d.metadata.hasPendingWrites) continue;   // our own write echoing back
+			const body = d.data();
+			const local = S.answers[d.id];
+			if (!local || JSON.stringify({ v: local.values, n: local.notes || "" }) !== JSON.stringify({ v: body.values || {}, n: body.notes || "" })) {
+				if (local && saveTimers["answers/" + d.id]) continue;   // unsaved local edits win
+				S.answers[d.id] = { values: { ...(body.values || {}) }, notes: body.notes || "" };
+				changed = true;
+			}
+		}
+		if (changed && !typing()) render();
+	});
+	db.collection("decisions").orderBy("date", "desc").onSnapshot((q) => { S.decisions = q.docs.map((d) => ({ id: d.id, ...d.data() })); if (!typing()) render(); });
+	db.collection("feedback").orderBy("date", "desc").onSnapshot((q) => { S.feedback = q.docs.map((d) => ({ id: d.id, ...d.data() })); if (!typing()) render(); });
+	db.collection("changelog").orderBy("date", "desc").onSnapshot((q) => { S.changes = q.docs.map((d) => ({ id: d.id, ...d.data() })); if (!typing()) render(); });
+})();
+</script>
