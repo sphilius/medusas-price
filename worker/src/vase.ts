@@ -196,11 +196,19 @@ export function describePrompt(s: VaseSummary): string {
 	);
 }
 
+// Words that ask the painter for writing (a sign, a scroll, an inscription...).
+// If the LLM uses one anyway, we drop its reply and use fallbackDescription().
+// `\b` in a regex is a word boundary, so "sign" matches but "design" does not;
+// the trailing `s?` also catches plurals; the `i` flag ignores upper/lower case.
+const WRITING_WORDS =
+	/\b(text|texts|letters?|lettering|words?|writing|written|writes?|inscri\w*|signs?|signature\w*|labels?|labell?ed|captions?|banners?|scrolls?|tablets?|plaques?|names?|named|numbers?|numerals?|digits?|glyphs?|symbols?|runes?|alphabet|spells? out|reads?|reading)\b/i;
+
 // Tidy the LLM's reply before it goes into the image prompt:
 // keep letters, spaces and simple punctuation (no digits, quotes or symbols that
 // could invite painted glyphs), collapse spaces, and cut at a word boundary.
-// Returns "" when nothing usable is left.
+// Returns "" when nothing usable is left, or when the reply asks for writing.
 export function cleanDescription(reply: string): string {
+	if (WRITING_WORDS.test(reply)) return "";
 	let text = reply.replace(/[^A-Za-z ,.;'\-]/g, " ").replace(/\s+/g, " ").trim();
 	if (text.length > MAX_DESCRIPTION_CHARS) {
 		text = text.slice(0, MAX_DESCRIPTION_CHARS);

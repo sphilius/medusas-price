@@ -2,7 +2,7 @@
 // the same vars as wrangler.toml, and a fake AI provider that never hits the network.
 
 import { Env } from "../src/env";
-import { AIProvider, ImageData, TextRequest } from "../src/providers";
+import { AIProvider, ImageData, ImageRequest, TextRequest } from "../src/providers";
 
 // Just enough of KVNamespace for our guards: get and put (expiry is ignored).
 export function fakeKV(): KVNamespace {
@@ -46,21 +46,38 @@ export const TINY_PNG: ImageData = {
 
 // Fake provider: counts calls, returns TINY_PNG, and answers text with `textReply`
 // (or throws if `fail` is set).
-export function fakeProvider(textReply = "NO", fail = false) {
+// `textReply` can also be a function of the request, so one fake can answer the
+// /vase description call and the letter check differently (the letter check is
+// the call that has `images`).
+// `fail` can be true (every call throws) or "image" (only the image call throws).
+export function fakeProvider(
+	textReply: string | ((req: TextRequest) => string) = "NO",
+	fail: boolean | "image" = false,
+) {
 	// What the test can inspect afterwards. `TextRequest | undefined` is a union:
-	// empty until the first text call records its request.
-	const calls = { text: 0, image: 0, lastText: undefined as TextRequest | undefined };
+	// empty until the first text call records its request. `texts` and `images`
+	// keep every request in order, so tests can read the prompts that were sent.
+	const calls = {
+		text: 0,
+		image: 0,
+		lastText: undefined as TextRequest | undefined,
+		texts: [] as TextRequest[],
+		images: [] as ImageRequest[],
+	};
 	// Typed as AIProvider, so TypeScript checks it has the same methods as the real one.
 	const provider: AIProvider = {
 		generateText: async (req) => {
 			calls.text++;
 			calls.lastText = req;
-			if (fail) throw new Error("boom");
-			return textReply;
+			calls.texts.push(req);
+			if (fail === true) throw new Error("boom");
+			// `typeof x === "function"` narrows the union to the function case.
+			return typeof textReply === "function" ? textReply(req) : textReply;
 		},
-		generateImage: async () => {
+		generateImage: async (req) => {
 			calls.image++;
-			if (fail) throw new Error("boom");
+			calls.images.push(req);
+			if (fail !== false) throw new Error("boom");
 			return TINY_PNG;
 		},
 	};
