@@ -17,6 +17,11 @@ export interface Env {
 	IMAGE_MODEL: string;
 	MAX_BODY_BYTES: string;
 
+	// Dev only, never in wrangler.toml: `wrangler dev --var DEBUG_REJECTS:1` makes /vase
+	// return an image the letter check rejected (flagged `rejected: true`) so we can look
+	// at it. The deployed Worker never has this var, so it always falls back.
+	DEBUG_REJECTS?: string;
+
 	// Secrets (never in code or wrangler.toml).
 	ANTHROPIC_API_KEY: string;
 	GEMINI_API_KEY: string;

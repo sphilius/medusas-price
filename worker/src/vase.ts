@@ -277,6 +277,8 @@ export async function paintVase(
 			maxTokens: DESCRIBE_MAX_TOKENS,
 		});
 		const description = cleanDescription(reply) || fallbackDescription(summary);
+		// Local debugging only: show why a reply was dropped. Never logged in production.
+		if (env.DEBUG_REJECTS === "1") console.log("vase debug: LLM reply:", reply);
 
 		const image = await provider.generateImage({
 			prompt: vaseImagePrompt(description),
@@ -288,6 +290,10 @@ export async function paintVase(
 		// 502 because the upstream output was unusable, same as a provider failure.
 		if (await hasLetters(provider, image, env)) {
 			console.log("vase: letters found, using fallback");
+			// Local debugging only (see Env.DEBUG_REJECTS): hand back the rejected picture.
+			if (env.DEBUG_REJECTS === "1") {
+				return json({ fallback: true, rejected: true, image: image.base64, mime: image.mime, description }, 502, cors);
+			}
 			return json(FALLBACK, 502, cors);
 		}
 		return json({ ok: true, image: image.base64, mime: image.mime }, 200, cors);

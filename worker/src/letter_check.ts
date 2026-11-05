@@ -14,9 +14,15 @@ const SYSTEM =
 	"You inspect images for a video game that must never show text. " +
 	"Answer with exactly one word: YES or NO.";
 
+// Greek vases are covered in ornament (meander/Greek-key borders, zigzags, rays, dots,
+// palmettes). Asked plainly, the vision model called those "glyphs" and rejected every
+// vase (checked 2026-11-05 on a saved reject: no writing at all, only meander bands).
+// So the question names the ornaments as NOT writing and asks only about readable script.
 const QUESTION =
-	"Does this image contain any letters, numbers, digits, inscriptions, signatures, " +
-	"or glyphs that look like writing, in any alphabet? Answer YES or NO.";
+	"Decorative patterns are not writing: ignore meander or Greek-key borders, zigzags, " +
+	"rays, dots, spirals, palmettes and other repeating ornament. " +
+	"Apart from such ornament, does this image contain any readable letters, words, " +
+	"numbers, digits, inscriptions, signatures or watermarks, in any alphabet? Answer YES or NO.";
 
 // Turn the model's reply into a boolean. Only a clear "NO" means "no letters".
 export function parseLetterAnswer(reply: string): boolean {
