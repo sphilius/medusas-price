@@ -231,13 +231,17 @@ func _plain_jump(late: int) -> Dictionary:
 	return {"jumped": jumped, "reached": reached, "peak_x": peak_x}
 
 
-## Spec: the leaper leaps only when the player is across the gap.
+## Spec: with LEAPER_HOP_ON_FLAT the leaper hops at a player on its own ledge too
+## (a nuisance that keeps coming); without it, it waits for her to cross a gap.
 func _test_leaper_ignores_same_ledge() -> void:
 	await _fresh_room()
 	var leaper: Node = _room.get_node("Leaper")
 	_place_player(Vector2(leaper.global_position.x + 3.0 * Balance.BL, LEDGE_STAND_Y), -1)
 	await _frames(40)
-	_check("leaper ignores a player on its own ledge", leaper.state == leaper.State.WAIT)
+	if Balance.LEAPER_HOP_ON_FLAT:
+		_check("leaper hops at a player on its own ledge", leaper.state != leaper.State.WAIT or leaper.global_position.x > 0.0 and absf(leaper.global_position.x - _player.global_position.x) < 2.0 * Balance.BL)
+	else:
+		_check("leaper ignores a player on its own ledge", leaper.state == leaper.State.WAIT)
 
 
 ## Softlock guard: a pit fall puts her back on a ledge, and a wasted leaper comes

@@ -35,6 +35,8 @@ var half_size: Vector2 = Vector2(Balance.ENEMY_HALF_WIDTH, Balance.ENEMY_HALF_HE
 
 ## Seconds left staggered by a whip hit: the enemy does nothing but slide to a stop.
 var _stagger_left: float = 0.0
+## Seconds-since-start of the last whip hit (-INF = never). Read by spike_hit.
+var _whipped_at: float = -INF
 ## Whip hits left before it dies (set from Balance.ENEMY_WHIP_HP in _ready).
 var hp: int = 5
 ## Seconds left EXPOSED after a parry (0 = not exposed).
@@ -129,6 +131,15 @@ func apply_gravity(delta: float) -> void:
 		queue_free()
 
 
+## A thrusting spike trap calls this for every enemy standing in it. It kills only an
+## enemy Medusa whipped in the last SPIKE_WHIP_WINDOW_S seconds (she lashed it there).
+func spike_hit() -> void:
+	if _petrified or _dying:
+		return
+	if Time.get_ticks_msec() / 1000.0 - _whipped_at <= Balance.SPIKE_WHIP_WINDOW_S:
+		_die()
+
+
 ## The whip landed: stagger and knock back away_dir (-1 / 1, away from Medusa).
 ## Mirror-bearers also lose their mirror for a moment. Not for statues (see Statue.whip_hit).
 func whip_hit(away_dir: int) -> void:
@@ -141,6 +152,7 @@ func whip_hit(away_dir: int) -> void:
 		_parry()
 		return
 	hp -= 1
+	_whipped_at = Time.get_ticks_msec() / 1000.0  # for spike_hit: lashed onto spikes
 	RunLedger.log_event("whip_hit", {"enemy": String(enemy_type), "hp": hp})
 	if hp <= 0:
 		_die()

@@ -24,7 +24,7 @@ var _extend: float = 0.0
 ## Sets up the hurt zone (an Area2D only detects; it never blocks) and starts the cycle.
 func _ready() -> void:
 	collision_layer = 0
-	collision_mask = Balance.PHYS_PLAYER | Balance.PHYS_STATUES
+	collision_mask = Balance.PHYS_PLAYER | Balance.PHYS_STATUES | Balance.PHYS_ENEMIES
 	monitorable = false
 	var zone := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
@@ -73,6 +73,8 @@ func _physics_process(delta: float) -> void:
 						# The player's own hit handling gives the crack, knockback and the
 						# short invulnerability, so standing in it costs one crack, not 60.
 						Events.player_hit.emit(Balance.CRACKS_HIT, &"spear", global_position + Vector2(width_tiles * 16.0, 0.0))
+					elif body.has_method(&"spike_hit"):
+						body.spike_hit()  # an enemy she whipped onto the spikes dies
 	var target: float = 1.0 if state == State.UP else 0.0
 	_extend = move_toward(_extend, target, delta * Balance.SPEAR_THRUST_SPEED)
 	queue_redraw()  # ask for _draw() again next frame

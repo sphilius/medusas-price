@@ -4,9 +4,14 @@
 ## cracks and drops one stage, and the pool becomes her death respawn
 ## (Events.pool_used). Then it is spent for good (dull, no glint): a pool that refilled
 ## when she stepped out made the portrait's aging trivial (playtest, 2026-11-05).
-## A death that respawns her inside it does not give her a free heal.
+## A death that respawns her inside it does not give her a free heal, EXCEPT where
+## refill_on_death is on (the boss arena): there every death restarts the fight and
+## refills the pool, so each new attempt gets one heal (playtest, 2026-11-06).
 ## Place it with its origin at the middle of the basin on the floor surface.
 extends Area2D
+
+## Boss arena: a death refills this pool (set on the instance in boss.tscn).
+@export var refill_on_death: bool = false
 
 ## Medusa while she is inside the zone, else null.
 var _player: Player = null
@@ -88,6 +93,11 @@ func _on_body_exited(body: Node2D) -> void:
 
 ## Getting up inside the pool after dying counts as this visit.
 func _on_player_respawned(center: Vector2) -> void:
+	if refill_on_death:
+		_spent = false  # a fresh attempt at the fight: one more heal
+		_still_time = 0.0
+		_apply_visual()
+		return
 	var local: Vector2 = to_local(center)
 	var zone := _trigger.shape as RectangleShape2D
 	if absf(local.x) <= zone.size.x * 0.5 and local.y <= 0.0 and local.y >= -zone.size.y:

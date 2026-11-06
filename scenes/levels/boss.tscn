@@ -33,6 +33,7 @@ position = Vector2(768, 608)
 [node name="Art" type="Polygon2D" parent="LevelExit" unique_id=817417062]
 
 [node name="MirrorPool" parent="." instance=ExtResource("6_pool")]
+refill_on_death = true
 position = Vector2(256, 608)
 
 [node name="Perseus" parent="." instance=ExtResource("5_perseus")]

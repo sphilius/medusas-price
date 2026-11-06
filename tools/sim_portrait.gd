@@ -131,6 +131,10 @@ func _test_pit() -> void:
 ## The pool: stand 1 s or kneel; it heals ONCE and never refills (2026-11-05 change).
 func _test_pool() -> void:
 	await _fresh_room()
+	# Leapers hop at her now (LEAPER_HOP_ON_FLAT); keep them out of the healing test.
+	for child: Node in _room.get_children():
+		if child is Enemy and (child as Enemy).enemy_type == &"leaper":
+			child.queue_free()
 	PortraitState.add_cracks(6 + 2, &"test")  # stage 2 with 2
 	_place_player(Vector2(POOL_X, STAND_Y))
 	await _frames(30)
@@ -155,6 +159,9 @@ func _test_pool() -> void:
 ## Dying: marble tint, then up at the last pool at stage 2 with 0 cracks.
 func _test_death() -> void:
 	await _fresh_room()
+	for child: Node in _room.get_children():  # leapers hop at her now; keep them out
+		if child is Enemy and (child as Enemy).enemy_type == &"leaper":
+			child.queue_free()
 	_place_player(Vector2(POOL_X, STAND_Y))
 	await _frames(80)  # heals (stage 1, nothing to clear) and becomes the respawn point
 	_place_player(Vector2(300.0, STAND_Y))

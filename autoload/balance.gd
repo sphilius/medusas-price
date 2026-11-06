@@ -240,6 +240,10 @@ const CRACK_SFX_VOLUME_DB: float = -6.0
 # ---------------------------------------------------------------------------
 ## Reach in BL.
 const WHIP_REACH_BL: float = 2.0
+## A spike trap that thrusts into an enemy kills it if Medusa whipped that enemy within
+## the last SPIKE_WHIP_WINDOW_S seconds (lash them onto the spikes). Enemies that just
+## walk over a trap are left alone, so patrols keep working.
+const SPIKE_WHIP_WINDOW_S: float = 1.5
 ## Whip wall-grab (player.gd): lash at a wall or statue in mid-air and her snakes hold on.
 ## REACH_BL: how far the grab ray reaches from her head (body lengths).
 ## HOLD_S: seconds she hangs still; then she slides down at SLIDE_SPEED px/s for at most
@@ -475,6 +479,11 @@ const LEAPER_RANGE_BL: float = 6.0
 const LEAPER_LEVEL_SLACK_BL: float = 2.0
 const LEAPER_MIN_DISTANCE_BL: float = 1.0
 const LEAPER_APEX_BL: float = 1.5
+## True: the leaper also hops at Medusa on its own stretch of floor (and so keeps
+## leaping back and forth after her). False: it leaps only across gaps.
+const LEAPER_HOP_ON_FLAT: bool = true
+## Leaping UP to a higher ledge, the arc's top clears the target by this much (BL).
+const LEAPER_APEX_CLEAR_BL: float = 0.5
 const LEAPER_MAX_SPEED: float = 500.0
 const LEAPER_RECOVERY: float = 0.8
 const LEAPER_MIN_AIR_TIME: float = 0.1
@@ -685,11 +694,11 @@ const PERSEUS_PHASES: int = 3
 ## Gaze hits needed per phase.
 const PERSEUS_GAZE_HITS_PER_PHASE: int = 2
 ## Base shield-down window after each attack (s).
-const SHIELD_WINDOW_BASE: float = 1.0
+const SHIELD_WINDOW_BASE: float = 1.2  # +0.2 s after the 2026-11-06 playtest (was 1.0)
 ## Adapted window = clamp(median reaction + OFFSET, MIN, MAX).
-const SHIELD_WINDOW_ADAPT_OFFSET: float = 0.15
-const SHIELD_WINDOW_MIN: float = 0.45
-const SHIELD_WINDOW_MAX: float = 1.0
+const SHIELD_WINDOW_ADAPT_OFFSET: float = 0.35  # was 0.15
+const SHIELD_WINDOW_MIN: float = 0.65  # was 0.45
+const SHIELD_WINDOW_MAX: float = 1.2  # was 1.0
 ## How many of the player's last gazes the mirror replays in the study beat.
 const PERSEUS_ECHO_COUNT: int = 3
 ## Seconds of gaze on his open chest (shield down) that count as one gaze hit.

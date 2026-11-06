@@ -1,7 +1,8 @@
 ## leaper.gd (root script of scenes/enemies/leaper.tscn)
 ## Purpose: the gap jumper. Crouches at a gap edge; when the player is across a
 ## gap within LEAPER_RANGE_BL it leaps in a ballistic arc that lands where she
-## stood. A player on its own stretch of floor is ignored (contact still hurts).
+## stood. With LEAPER_HOP_ON_FLAT it also hops at her on its own stretch of floor,
+## so after landing it keeps leaping after her (and back across the gap) as a nuisance.
 ## Touching her emits Events.player_hit(1, "leaper"). Rests after landing.
 extends Enemy
 
@@ -41,7 +42,7 @@ func _wait() -> void:
 			or absf(d.y) > Balance.LEAPER_LEVEL_SLACK_BL * Balance.BL:
 		return
 	set_facing(1 if d.x > 0.0 else -1)
-	if absf(d.x) >= Balance.LEAPER_MIN_DISTANCE_BL * Balance.BL and _gap_between(player.global_position.x):
+	if absf(d.x) >= Balance.LEAPER_MIN_DISTANCE_BL * Balance.BL 			and (Balance.LEAPER_HOP_ON_FLAT or _gap_between(player.global_position.x)):
 		_launch(d)
 
 
@@ -56,12 +57,15 @@ func _gap_between(target_x: float) -> bool:
 	return false
 
 
-## Ballistic launch: fixed apex height, horizontal speed chosen so the arc
-## comes down on the target (d = target - self, y down).
+## Ballistic launch: apex LEAPER_APEX_BL high (higher if the target is above, so the
+## arc clears it), horizontal speed chosen so the arc comes down on the target
+## (d = target - self, y down: a negative d.y is a higher ledge).
 func _launch(d: Vector2) -> void:
 	var g: float = Balance.ENEMY_GRAVITY
-	var vy: float = -sqrt(2.0 * g * Balance.LEAPER_APEX_BL * Balance.BL)
-	var t: float = (-vy + sqrt(vy * vy + 2.0 * g * maxf(d.y, 0.0))) / g
+	var apex: float = maxf(Balance.LEAPER_APEX_BL * Balance.BL, -d.y + Balance.LEAPER_APEX_CLEAR_BL * Balance.BL)
+	var vy: float = -sqrt(2.0 * g * apex)
+	# Time until the arc comes back down to the target's height (the later root).
+	var t: float = (-vy + sqrt(maxf(vy * vy + 2.0 * g * d.y, 0.0))) / g
 	velocity = Vector2(clampf(d.x / t, -Balance.LEAPER_MAX_SPEED, Balance.LEAPER_MAX_SPEED), vy)
 	state = State.LEAP
 	_air_time = 0.0

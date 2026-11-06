@@ -262,6 +262,8 @@ func _test_leaper_point_blank() -> void:
 	var leaper: Enemy = LEAPER.instantiate()
 	leaper.position = Vector2(300 + 70, 580)
 	_room.add_child(leaper)
+	leaper.set("state", 2)  # RECOVER: resting, so it does not hop at her (LEAPER_HOP_ON_FLAT)
+	leaper.set("_timer", 5.0)
 	await _frames(5)
 	_tap("whip")
 	await _frames(20)

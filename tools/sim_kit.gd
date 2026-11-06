@@ -16,6 +16,7 @@ const GATE: PackedScene = preload("res://scenes/props/gate.tscn")
 const PLATE: PackedScene = preload("res://scenes/props/pressure_plate.tscn")
 const SHARD: PackedScene = preload("res://scenes/props/shard.tscn")
 const VICTIM: PackedScene = preload("res://scenes/props/victim_statue.tscn")
+const HOPLITE: PackedScene = preload("res://scenes/enemies/hoplite.tscn")
 
 var _failures: int = 0
 
@@ -26,6 +27,7 @@ func _ready() -> void:
 	await _test_crumble()
 	await _test_column()
 	await _test_spears()
+	await _test_spike_kill()
 	await _test_gate()
 	await _test_shard()
 	print("sim_kit: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
@@ -146,6 +148,30 @@ func _test_spears() -> void:
 	_check(trap.is_jammed(), "a statue resting in the trap jams it")
 	await _wait(Balance.SPEAR_DOWN_S + Balance.SPEAR_WARN_S + Balance.SPEAR_UP_S)
 	_check(trap.state == SpearTrap.State.DOWN, "a jammed trap stays down")
+	level.free()
+	await get_tree().physics_frame
+
+
+## An enemy standing in a trap: left alone if it just walked in, killed when the trap
+## thrusts if Medusa whipped it within SPIKE_WHIP_WINDOW_S (lashed onto the spikes).
+func _test_spike_kill() -> void:
+	var trap: SpearTrap = SPEARS.instantiate()
+	trap.width_tiles = 2
+	var got: Array = await _level_with(trap, Vector2(700.0, 608.0))
+	var level: Node = got[0]
+	var player: Player = got[1]
+	player.global_position = Vector2(300.0, 576.0)  # well away from the trap
+	var calm: Enemy = HOPLITE.instantiate()
+	var lashed: Enemy = HOPLITE.instantiate()
+	for e: Enemy in [calm, lashed]:
+		e.position = Vector2(716.0 if e == calm else 748.0, 580.0)
+		level.add_child(e)
+		e.set_physics_process(false)  # stand still in the trap (no walking off)
+	await get_tree().physics_frame
+	lashed._whipped_at = Time.get_ticks_msec() / 1000.0 + Balance.SPEAR_DOWN_S + Balance.SPEAR_WARN_S
+	await _wait(Balance.SPEAR_DOWN_S + Balance.SPEAR_WARN_S + 0.3)
+	_check(lashed._dying, "a trap kills an enemy whipped onto it")
+	_check(not calm._dying, "a trap leaves an enemy that just walked in alone")
 	level.free()
 	await get_tree().physics_frame
 

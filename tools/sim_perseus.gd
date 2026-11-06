@@ -28,9 +28,9 @@ func _test_rules() -> void:
 	var mid: Array[float] = [0.5, 0.7]
 	var slow: Array[float] = [2.0]
 	var none: Array[float] = []
-	_check("fast reactions clamp the window to 0.45", is_equal_approx(P.adapted_window(fast, true), 0.45))
-	_check("median 0.6 gives a 0.75 window", is_equal_approx(P.adapted_window(mid, true), 0.75))
-	_check("slow reactions clamp the window to 1.0", is_equal_approx(P.adapted_window(slow, true), 1.0))
+	_check("fast reactions clamp the window to SHIELD_WINDOW_MIN", is_equal_approx(P.adapted_window(fast, true), Balance.SHIELD_WINDOW_MIN))
+	_check("median 0.6 gives a 0.6 + offset window", is_equal_approx(P.adapted_window(mid, true), 0.6 + Balance.SHIELD_WINDOW_ADAPT_OFFSET))
+	_check("slow reactions clamp the window to SHIELD_WINDOW_MAX", is_equal_approx(P.adapted_window(slow, true), Balance.SHIELD_WINDOW_MAX))
 	_check("no data: base window", is_equal_approx(P.adapted_window(none, true), Balance.SHIELD_WINDOW_BASE))
 	_check("adaptation off: base window", is_equal_approx(P.adapted_window(fast, false), Balance.SHIELD_WINDOW_BASE))
 	_check("faces right more -> attacks from her left", P.least_guarded_side({-1: 2.0, 1: 9.0}, 1, true) == -1)
