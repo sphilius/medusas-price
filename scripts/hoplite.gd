@@ -8,7 +8,12 @@ extends Enemy
 
 enum State { PATROL, CHASE, WINDUP, THRUST, RECOVER }
 
-var state: State = State.PATROL
+## The current behaviour. Assigning it also updates the animation (the setter runs
+## _animate), so every `state = ...` line below changes the pose too.
+var state: State = State.PATROL:
+	set(value):
+		state = value
+		_animate()
 ## Patrol center (spawn x).
 var _home_x: float = 0.0
 ## Seconds left in the current WINDUP / THRUST / RECOVER.
@@ -27,12 +32,14 @@ var _spear_offset: float = 0.0
 func _ready() -> void:
 	super._ready()
 	_home_x = position.x
-	_glint.color = Balance.COLOR_GOLD
+	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
+	_glint.polygon = SpriteKit.sparkle(Balance.HOPLITE_GLINT_ART_RADIUS)
 	_glint.scale = Vector2.ONE * (Balance.HOPLITE_GLINT_SIZE / Balance.HOPLITE_GLINT_ART_RADIUS)
 	_glint.visible = false
 	var shape := RectangleShape2D.new()
 	shape.size = Vector2(_reach() - Balance.ENEMY_HALF_WIDTH, Balance.HOPLITE_HITBOX_THICKNESS)
 	_hitbox_shape.shape = shape
+	SpriteKit.weapon(_spear, &"spear")
 	_hitbox.position.x = facing * (Balance.ENEMY_HALF_WIDTH + shape.size.x * 0.5)
 	_place_spear(0.0)
 
@@ -121,6 +128,11 @@ func _recover(delta: float) -> void:
 
 ## A whip hit breaks the attack: no glint, spear back at rest, and once the
 ## stagger ends he goes back to chasing (a wind-up has to start over).
+## Parry window: the spear is drawn back (the gold glint is showing).
+func is_telegraphing() -> bool:
+	return state == State.WINDUP
+
+
 func _on_staggered() -> void:
 	if state in [State.WINDUP, State.THRUST, State.RECOVER]:
 		state = State.CHASE
@@ -155,3 +167,22 @@ func set_facing(dir: int) -> void:
 	_hitbox.position.x = dir * absf(_hitbox.position.x)
 	if _glint != null:
 		_place_spear(_spear_offset)
+
+
+## Pose for the current state (called by the state setter and by Enemy on stagger).
+## Chasing plays the walk faster, because he moves faster.
+func _animate() -> void:
+	if is_staggered():
+		SpriteKit.play(sprite, &"stagger")
+		return
+	match state:
+		State.PATROL:
+			SpriteKit.play(sprite, &"walk")
+		State.CHASE:
+			SpriteKit.play(sprite, &"walk", Balance.ANIM_CHASE_SPEED_SCALE)
+		State.WINDUP:
+			SpriteKit.play(sprite, &"windup")
+		State.THRUST:
+			SpriteKit.play(sprite, &"thrust")
+		State.RECOVER:
+			SpriteKit.play(sprite, &"recover")

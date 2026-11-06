@@ -1,0 +1,31 @@
+[gd_resource type="SpriteFrames" load_steps=16 format=3]
+
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_00.png" id="1"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_01.png" id="2"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_02.png" id="3"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_04.png" id="4"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_05.png" id="5"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_06.png" id="6"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_a_07.png" id="7"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_00.png" id="8"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_01.png" id="9"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_02.png" id="10"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_03.png" id="11"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_04.png" id="12"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_05.png" id="13"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_06.png" id="14"]
+[ext_resource type="Texture2D" path="res://art/sprites/medusa/medusa_b_07.png" id="15"]
+
+[resource]
+animations = [
+{"frames": [{"duration": 1.0, "texture": ExtResource("1")}, {"duration": 1.0, "texture": ExtResource("2")}], "loop": true, "name": &"idle", "speed": 2.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("3")}, {"duration": 1.0, "texture": ExtResource("4")}, {"duration": 1.0, "texture": ExtResource("5")}, {"duration": 1.0, "texture": ExtResource("4")}], "loop": true, "name": &"run", "speed": 10.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("6")}], "loop": false, "name": &"jump", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("7")}], "loop": false, "name": &"fall", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("8")}, {"duration": 1.0, "texture": ExtResource("8")}, {"duration": 1.0, "texture": ExtResource("9")}, {"duration": 1.0, "texture": ExtResource("9")}, {"duration": 1.0, "texture": ExtResource("9")}, {"duration": 1.0, "texture": ExtResource("10")}, {"duration": 1.0, "texture": ExtResource("10")}, {"duration": 1.0, "texture": ExtResource("10")}], "loop": false, "name": &"whip", "speed": 0.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("11")}], "loop": false, "name": &"gaze", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("12")}], "loop": false, "name": &"hurt", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("13")}], "loop": false, "name": &"push", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("14")}], "loop": false, "name": &"kneel", "speed": 1.0},
+{"frames": [{"duration": 1.0, "texture": ExtResource("15")}], "loop": false, "name": &"death", "speed": 1.0}
+]

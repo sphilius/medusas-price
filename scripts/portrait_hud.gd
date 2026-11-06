@@ -47,6 +47,13 @@ func _ready() -> void:
 	_painting.size = Vector2(size, size)
 	_painting.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_painting.stretch_mode = TextureRect.STRETCH_SCALE
+	# Craquelure: the damage is painted into the portrait (shaders/portrait_crack.gdshader).
+	if ResourceLoader.exists(Balance.PORTRAIT_CRACK_SHADER):
+		var crack_mat := ShaderMaterial.new()
+		crack_mat.shader = load(Balance.PORTRAIT_CRACK_SHADER)
+		crack_mat.set_shader_parameter(&"crack_color", Balance.COLOR_BLACK)
+		crack_mat.set_shader_parameter(&"flake_color", Balance.COLOR_MARBLE)
+		_painting.material = crack_mat
 	var center := Vector2(size, size) * 0.5
 	_frame.points = _circle(center, size * 0.5 - Balance.HUD_FRAME_WIDTH * 0.5)
 	_frame.closed = true
@@ -65,13 +72,18 @@ func _ready() -> void:
 	_glow.visible = false
 	_veil.material = _make_veil_material()
 	_veil.visible = false
-	for color in Balance.PORTRAIT_STAGE_COLORS:
-		_stage_textures.append(_make_painting(color))
+	# The five painted stages (Defiant .. Stone). If a painting is missing, that stage
+	# silently falls back to the old flat colored disc.
+	for i in Balance.PORTRAIT_STAGE_COLORS.size():
+		var path: String = Balance.PORTRAIT_TEXTURES[i] if i < Balance.PORTRAIT_TEXTURES.size() else ""
+		var painting: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
+		_stage_textures.append(painting if painting != null else _make_painting(Balance.PORTRAIT_STAGE_COLORS[i]))
 	_show_stage(PortraitState.stage)
 	_sync_cracks(PortraitState.cracks_in_stage)
 	_last_total = PortraitState.total_cracks()
 	PortraitState.stage_changed.connect(_on_stage_changed)
 	PortraitState.cracked.connect(_on_cracked)
+	Events.shard_collected.connect(_on_shard_collected)
 	PortraitState.healed.connect(_on_healed)
 	Events.player_died.connect(_on_player_died)
 	Events.player_respawned.connect(_on_player_respawned)
@@ -136,6 +148,14 @@ func _set_veil(amount: float) -> void:
 
 ## Add or remove hairlines until exactly n are drawn.
 func _sync_cracks(n: int) -> void:
+	# The craquelure shader on the painting shows the damage; the old overlay lines are
+	# only kept as a fallback if the shader is missing.
+	var crack_mat := _painting.material as ShaderMaterial
+	if crack_mat != null:
+		var need: float = float(PortraitState.threshold(PortraitState.stage))
+		crack_mat.set_shader_parameter(&"amount", clampf(n / maxf(need, 1.0), 0.0, 1.0))
+		crack_mat.set_shader_parameter(&"wear", float(PortraitState.stage - 1) / float(maxi(Balance.PORTRAIT_STAGE_COUNT - 1, 1)))
+		return
 	while _lines.size() > n:
 		_lines.pop_back().queue_free()
 	while _lines.size() < n:
@@ -192,6 +212,27 @@ func _flinch() -> void:
 	_pulse_tween = create_tween()
 	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.HUD_FLINCH_SCALE, Balance.HUD_FLINCH_TIME * 0.3)
 	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, Balance.HUD_FLINCH_TIME * 0.7)
+
+
+## A shard was picked up: a gold sparkle flies from where it was (converted from world
+## to screen position with the viewport's canvas transform) into the portrait, which
+## then swells gently, so the player sees that shards mend the painting.
+func _on_shard_collected(world_pos: Vector2) -> void:
+	var sparkle := Polygon2D.new()
+	sparkle.polygon = SpriteKit.sparkle(Balance.SHARD_FLY_SIZE)
+	sparkle.color = Balance.COLOR_GOLD
+	sparkle.position = get_viewport().get_canvas_transform() * world_pos
+	add_child(sparkle)
+	var target: Vector2 = _shield.global_position + Vector2.ONE * Balance.HUD_SIZE * 0.5
+	var fly := create_tween()
+	fly.tween_property(sparkle, "position", target, Balance.SHARD_FLY_S).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fly.parallel().tween_property(sparkle, "rotation", TAU, Balance.SHARD_FLY_S)
+	fly.tween_callback(sparkle.queue_free)
+	fly.tween_callback(func() -> void:
+		_rest()
+		_pulse_tween = create_tween()
+		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.SHARD_PULSE_SCALE, 0.12)
+		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, 0.3))
 
 
 ## A petrify: a crisp pop outward and back, like a stone snapping into place.
@@ -256,4 +297,6 @@ func _make_veil_material() -> ShaderMaterial:
 	var material := ShaderMaterial.new()
 	material.shader = DESATURATE
 	material.set_shader_parameter("amount", 0.0)
+	material.set_shader_parameter("marble_color", Balance.COLOR_MARBLE)
+	material.set_shader_parameter("marble_mix", Balance.DEATH_VEIL_MARBLE_MIX)
 	return material

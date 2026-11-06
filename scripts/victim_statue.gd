@@ -40,6 +40,7 @@ func _ready() -> void:
 	_grind = AudioStreamPlayer2D.new()
 	_grind.stream = Fx.grind_stream
 	_grind.volume_db = Balance.GRIND_SFX_VOLUME_DB
+	_grind.attenuation = Balance.GRIND_SFX_ATTENUATION
 	add_child(_grind)
 
 
@@ -61,6 +62,9 @@ func _build_art() -> void:
 	_art = Node2D.new()
 	_art.name = "Art"
 	add_child(_art)
+	_art.scale.x = 1.0 if faces_right else -1.0
+	if _add_sprite():
+		return
 	match pose:
 		Pose.STANDING:
 			_part([[-9, -32], [9, -32], [9, -14], [-9, -14]])      # head
@@ -84,6 +88,30 @@ func _build_art() -> void:
 			_part([[-8, -10], [-2, -6], [-26, -2], [-30, -8]])     # arm flung back
 	_art.scale.x = 1.0 if faces_right else -1.0
 	_art.modulate = Balance.COLOR_MARBLE
+
+
+## The painted marble figure for this pose, standing on the feet line. Returns false
+## (and adds nothing) if the art is missing, so the polygon figure is built instead.
+func _add_sprite() -> bool:
+	var path: String = Balance.VICTIM_TEXTURES[int(pose)]
+	var standing_path: String = Balance.VICTIM_TEXTURES[0]
+	if not ResourceLoader.exists(path) or not ResourceLoader.exists(standing_path):
+		return false
+	var texture := load(path) as Texture2D
+	var standing := load(standing_path) as Texture2D
+	var sprite := Sprite2D.new()
+	sprite.texture = texture
+	# Bottom-center of the picture on the feet line.
+	sprite.offset = Vector2(0.0, -texture.get_height() * 0.5)
+	sprite.position = Vector2(0.0, FEET_Y)
+	sprite.scale = Vector2.ONE * (Balance.VICTIM_BODY_SIZE.y / standing.get_height())
+	_art.add_child(sprite)
+	# The marble shader (without recolouring: the art is already painted marble) so a
+	# crack shows as fine hairlines on the stone, not as overlay lines.
+	_marble = SpriteKit.marble_material()
+	_marble.set_shader_parameter(&"recolor", false)
+	sprite.material = _marble
+	return true
 
 
 ## Add one polygon (list of [x, y] points) to the art.

@@ -51,8 +51,18 @@ var _dying: bool = false
 ## as it was at take-off, so a jump keeps the speed it started with.
 var _air_sprint: bool = false
 
-## The child node holding the placeholder art; flipped when facing changes.
+## The child node holding the art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
+## Squash and stretch: a scale on top of the facing flip that eases back to (1, 1).
+var _squash: Vector2 = Vector2.ONE
+## Seconds until the next puff of run dust.
+var _run_dust_left: float = 0.0
+## Medusa's animated sprite (made in _ready by SpriteKit), or null if the art is
+## missing, in which case the placeholder polygons stay visible.
+var _sprite: AnimatedSprite2D = null
+## Last kneel / push flags, so the animation only changes when one of them flips.
+var _was_kneeling: bool = false
+var _was_pushing: bool = false
 
 
 func _ready() -> void:
@@ -64,6 +74,13 @@ func _ready() -> void:
 	Events.pool_used.connect(_on_pool_used)
 	Events.player_fell.connect(_on_player_fell)
 	PortraitState.died.connect(_on_portrait_died)
+	# Placeholder colors (seen only if the sprite art is missing) come from the color code.
+	($Visual/Body as Polygon2D).color = Balance.COLOR_BLACK
+	($Visual/FacingMark as Polygon2D).color = Balance.COLOR_GOLD
+	_sprite = SpriteKit.attach(_visual, &"medusa")
+	state_changed.connect(func(_old: State, _new: State) -> void: _refresh_animation())
+	($Whip as Node).frame_changed.connect(_on_whip_frame)
+	_refresh_animation()
 
 
 func _physics_process(delta: float) -> void:
@@ -100,6 +117,7 @@ func _physics_process(delta: float) -> void:
 	# Jump if a press is buffered and we are (or just were) on the ground.
 	if _buffer_left > 0.0 and _coyote_left > 0.0:
 		velocity.y = Balance.PLAYER_JUMP_VELOCITY
+		_squash = Balance.JUICE_JUMP_STRETCH  # tall and thin as she springs up
 		_buffer_left = 0.0
 		_coyote_left = 0.0  # spend coyote time so we cannot double jump
 
@@ -107,9 +125,38 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= Balance.PLAYER_JUMP_CUT
 
+	# Remember the fall speed and floor contact from before the move, to spot a landing.
+	var was_on_floor: bool = is_on_floor()
+	var fall_speed: float = velocity.y
 	move_and_slide()
+	_juice(was_on_floor, fall_speed, delta)
 	_update_push(dir, delta)
 	_update_locomotion_state(dir)
+	# Kneel and push are not states, so watch their flags and re-pick the pose when one flips.
+	var kneeling: bool = is_kneeling()
+	var pushing: bool = _push_time > 0.0
+	if kneeling != _was_kneeling or pushing != _was_pushing:
+		_was_kneeling = kneeling
+		_was_pushing = pushing
+		_refresh_animation()
+
+
+## Feel: a squash and a dust puff on landing, dust every few strides while running,
+## and the squash easing back to normal. The squash scales around her feet (the
+## Visual moves down as it shrinks), so she never floats or sinks.
+func _juice(was_on_floor: bool, fall_speed: float, delta: float) -> void:
+	var feet := global_position + Vector2(0.0, Balance.SPRITE_ART[&"medusa"]["feet_y"])
+	if not was_on_floor and is_on_floor() and fall_speed > Balance.JUICE_LAND_MIN_SPEED:
+		_squash = Balance.JUICE_LAND_SQUASH
+		Fx.dust(feet, Balance.JUICE_LAND_DUST)
+	if is_on_floor() and absf(velocity.x) > Balance.JUICE_RUN_DUST_SPEED:
+		_run_dust_left -= delta
+		if _run_dust_left <= 0.0:
+			_run_dust_left = Balance.JUICE_RUN_DUST_EVERY
+			Fx.dust(feet, Balance.JUICE_RUN_DUST)
+	_squash = _squash.lerp(Vector2.ONE, minf(Balance.JUICE_SQUASH_RETURN * delta, 1.0))
+	_visual.scale = Vector2(facing * _squash.x, _squash.y)
+	_visual.position.y = Balance.SPRITE_ART[&"medusa"]["feet_y"] * (1.0 - _squash.y)
 
 
 ## A hit lands: stun, knock away from the attacker, start the invulnerable window.
@@ -162,7 +209,7 @@ func _on_player_fell(_where: Vector2) -> void:
 	_update_locomotion_state(0.0)
 
 
-## The portrait ran out: turn to marble (art tinted over DEATH_STONE_TIME while the
+## The portrait ran out: turn to marble (stone spreads over DEATH_STONE_TIME while the
 ## screen desaturates), hold, then get up at the last pool at the respawn stage.
 func _on_portrait_died() -> void:
 	if _dying:
@@ -176,12 +223,22 @@ func _on_portrait_died() -> void:
 		"level": RunLedger.level,
 	})
 	Events.player_died.emit(global_position)
+	# Stone spreads over her from her own eyes (petrify.gdshader on her sprite). Without
+	# sprite art the placeholder polygons are lerped to marble instead.
 	var polygons: Array[Polygon2D] = []
 	var base_colors: Array[Color] = []
-	for node: Node in _visual.find_children("*", "Polygon2D", true, false):
-		polygons.append(node as Polygon2D)
-		base_colors.append((node as Polygon2D).color)
+	var stone: ShaderMaterial = null
+	if _sprite != null:
+		stone = SpriteKit.petrify_material()
+		stone.set_shader_parameter(&"origin", Balance.MEDUSA_EYE_UV)
+		_sprite.material = stone
+	else:
+		for node: Node in _visual.find_children("*", "Polygon2D", true, false):
+			polygons.append(node as Polygon2D)
+			base_colors.append((node as Polygon2D).color)
 	var tint := func(t: float) -> void:
+		if stone != null:
+			stone.set_shader_parameter(&"progress", t)
 		for i in polygons.size():
 			polygons[i].color = base_colors[i].lerp(Balance.COLOR_MARBLE, t)
 	var tween: Tween = create_tween()
@@ -191,6 +248,8 @@ func _on_portrait_died() -> void:
 	PortraitState.reset_after_death()
 	for i in polygons.size():
 		polygons[i].color = base_colors[i]
+	if _sprite != null:
+		_sprite.material = null  # flesh again
 	_visual.modulate.a = 1.0
 	_teleport(_pool_point)
 	_invuln_left = Balance.PLAYER_INVULN_TIME
@@ -363,3 +422,40 @@ func _process_stub_state(delta: float) -> void:
 		var lashing: bool = state == State.WHIP and whip_phase == WhipPhase.ACTIVE
 		velocity.y += Balance.PLAYER_GRAVITY * (Balance.WHIP_AIR_GRAVITY_MULT if lashing else 1.0) * delta
 	move_and_slide()
+
+
+## Pick the animation that matches what she is doing. Called when the state changes
+## and when the kneel / push flags flip (signals, not a check every frame).
+func _refresh_animation() -> void:
+	if _sprite == null:
+		return
+	match state:
+		State.IDLE:
+			SpriteKit.play(_sprite, &"kneel" if _was_kneeling else &"idle")
+		State.RUN:
+			SpriteKit.play(_sprite, &"push" if _was_pushing else &"run")
+		State.JUMP:
+			SpriteKit.play(_sprite, &"jump")
+		State.FALL:
+			SpriteKit.play(_sprite, &"fall")
+		State.WHIP:
+			# The whip timeline drives the frame (see _on_whip_frame), so hold still here.
+			SpriteKit.play(_sprite, &"whip")
+			_sprite.pause()
+		State.GAZE:
+			SpriteKit.play(_sprite, &"gaze")
+		State.HURT:
+			SpriteKit.play(_sprite, &"hurt")
+		State.DEAD:
+			SpriteKit.play(_sprite, &"death")
+
+
+## The lash moved to frame `whip_frame` (0-7): show the matching body pose.
+## Frames 0-1 are the wind-up, 2-4 the strike, 5-7 the recovery (see build_sprites.py).
+func _on_whip_frame(whip_frame: int) -> void:
+	if _sprite == null or state != State.WHIP:
+		return
+	if _sprite.animation != &"whip":
+		_sprite.play(&"whip")
+		_sprite.pause()
+	_sprite.frame = whip_frame

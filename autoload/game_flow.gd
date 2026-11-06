@@ -10,17 +10,18 @@
 extends Node
 
 ## The game, in order. The position in this list is the level number RunLedger uses
-## (intro 0, temple 1, cliffs 2, cave 3, boss 4, ending 5).
+## (intro 0, temple 1, cliffs 2, cave 3, boss 4, vase 5, ending 6).
 const ORDER: Array[String] = [
 	"res://scenes/flow/intro.tscn",
 	"res://scenes/levels/level_1_temple.tscn",
 	"res://scenes/levels/level_2_cliffs.tscn",
 	"res://scenes/levels/level_3_cave.tscn",
 	"res://scenes/levels/boss.tscn",
+	"res://scenes/flow/vase.tscn",
 	"res://scenes/flow/ending.tscn",
 ]
 ## Names for the ledger (same order as ORDER).
-const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "ending"]
+const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "vase", "ending"]
 
 ## Index in ORDER of the scene we are in, or -1 for a scene that is not in the list.
 var current_index: int = -1
@@ -40,7 +41,7 @@ func _ready() -> void:
 	layer.layer = 200
 	add_child(layer)
 	_fade = ColorRect.new()
-	_fade.color = Color.BLACK
+	_fade.color = Balance.COLOR_BLACK
 	_fade.modulate.a = 0.0
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -50,8 +51,28 @@ func _ready() -> void:
 	Events.level_exit_reached.connect(next_level)
 	# Debug-only level skip. Release builds never listen for the number keys.
 	set_process_unhandled_input(OS.is_debug_build())
+	# Debug-only performance log: frames per second to the browser console once a
+	# second (never on screen). Release builds skip _process entirely.
+	set_process(OS.is_debug_build())
 	# The first scene is loaded after the autoloads, so look at it next frame.
 	_adopt_current_scene.call_deferred()
+
+
+## Seconds since the last FPS log line (debug builds only).
+var _fps_clock: float = 0.0
+
+
+## Debug builds: print the frame rate, the scene and the music track (with how far into
+## it the music is, in seconds) once a second. Console only, never on screen.
+func _process(delta: float) -> void:
+	_fps_clock += delta
+	if _fps_clock >= 1.0:
+		_fps_clock = 0.0
+		var track: AudioStreamPlayer = Music.current()
+		var music: String = "none"
+		if track != null and track.playing:
+			music = "%s %.0fs" % [track.stream.resource_path.get_file(), track.get_playback_position()]
+		print("fps %d scene %d music %s" % [Engine.get_frames_per_second(), current_index, music])
 
 
 ## Go to the next scene in ORDER (after the last one, back to the intro).
@@ -75,6 +96,10 @@ func go_to(index: int) -> void:
 	var out: Tween = create_tween()
 	out.tween_property(_fade, "modulate:a", 1.0, Balance.FADE_OUT_S)
 	await out.finished
+	# Between levels: the next level's painting rises out of the dark and drifts,
+	# then sinks back, before the level itself fades in (wordless "chapter" beat).
+	if Balance.TRANSITION_PANELS.has(index):
+		await _transition_panel(Balance.TRANSITION_PANELS[index])
 	get_tree().change_scene_to_file(ORDER[index])
 	# The new scene is in the tree a frame later.
 	await get_tree().process_frame
@@ -86,7 +111,30 @@ func go_to(index: int) -> void:
 	_changing = false
 
 
-## Debug builds: keys 1 to 5 jump to the temple, cliffs, cave, boss and ending.
+## Show one painting over the black fade: fade up, slow push-in, fade down. `await`
+## on the tween's `finished` signal waits for it without freezing the game.
+func _transition_panel(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var panel := TextureRect.new()
+	panel.texture = load(path)
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	panel.size = get_viewport().get_visible_rect().size
+	panel.pivot_offset = panel.size * 0.5
+	panel.modulate.a = 0.0
+	_fade.get_parent().add_child(panel)  # on the fade's layer, above the black
+	var drift := create_tween()
+	drift.tween_property(panel, "scale", Vector2.ONE * Balance.TRANSITION_ZOOM, Balance.TRANSITION_S)
+	var show := create_tween()
+	show.tween_property(panel, "modulate:a", 1.0, Balance.STORY_FADE_S)
+	show.tween_interval(Balance.TRANSITION_S - Balance.STORY_FADE_S * 2.0)
+	show.tween_property(panel, "modulate:a", 0.0, Balance.STORY_FADE_S)
+	await show.finished
+	panel.queue_free()
+
+
+## Debug builds: keys 1 to 5 jump to the temple, cliffs, cave, boss and run vase.
 func _unhandled_input(event: InputEvent) -> void:
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
@@ -109,6 +157,7 @@ func _adopt_current_scene() -> void:
 ## A scene in ORDER is now showing: remember it and log it.
 func _begin_level(index: int) -> void:
 	current_index = index
+	Events.level_started.emit(index)
 	_level_start_ms = Time.get_ticks_msec()
 	if index == 0:
 		RunLedger.start_run()  # a new run begins at the intro

@@ -10,7 +10,8 @@ A Cloudflare Worker that sits between the game and the AI providers. It is the *
 | File | What it does |
 |---|---|
 | `wrangler.toml` | Plain settings: allowed origins, rate limit, daily cap, cost estimates, models. **No secrets.** |
-| `src/index.ts` | Router and guard order. Endpoint `POST /test`. |
+| `src/index.ts` | Router and guard order. Endpoints `POST /test` and `POST /vase`. |
+| `src/vase.ts` | `/vase`: sanitizes the run summary, asks the LLM for one frieze description, paints the amphora. |
 | `src/guards.ts` | Origin allowlist, CORS, 16 KB body limit, per-IP rate limit, daily spend cap. |
 | `src/providers.ts` | **The only file that calls providers.** Swap a provider by editing this file alone. |
 | `src/letter_check.ts` | Asks the vision model "does this image contain any writing?" Returns `true` when unsure. |
@@ -87,6 +88,24 @@ curl -X POST http://localhost:8787/test -H "Origin: http://localhost" -H "Conten
 
 Success looks like `{"ok":true,"image":"<base64>","mime":"image/png"}` (plus `"letters":false` when checked). In-game, press **F10** in a debug build of the test room to call `/test` and see the image.
 
+## 4b. `/vase`: the end-of-run amphora 🏺
+
+The game sends `RunLedger.summary()` and gets back a black-figure amphora painted with the story of the run.
+
+```bash
+curl -X POST http://localhost:8787/vase -H "Origin: http://localhost" -H "Content-Type: application/json" -d "{\"summary\": {\"petrified_by_enemy\": {\"hoplite\": 3, \"leaper\": 1}, \"deaths\": 1, \"pools_used\": 2, \"level\": 2}}"
+```
+
+Success is `{"ok":true,"image":"<base64 png>","mime":"image/png"}`, a 768x1024 portrait image. What happens inside:
+
+1. **Sanitize.** Only these fields are read, as whole numbers clamped to 0..99: `petrified_by_enemy.{hoplite, leaper, archer, mirror_bearer, perseus}` (or the `petrified` list if that is missing), `deaths`, `pools_used`, `level` (1..4), `counts.{hit, pit, reflect, statue_shattered}`. Everything else, including every string, is ignored. A body without a `summary` object gets 400 before a rate slot is used.
+2. **Facts.** The numbers become short sentences made only of the Worker's own words ("Medusa turned three hoplite spearmen to stone. She fell once and rose again.").
+3. **Text call.** The LLM turns the facts into one frieze description (at most about 50 words). Its system prompt forbids text, letters, numbers or inscriptions. The reply is stripped of digits and symbols and capped at 320 characters. If it is unusable or mentions writing (a sign, scroll, inscription, label...), a built-in description is used instead.
+4. **Image call.** The image model paints the amphora: dark `#1A1410` background, terracotta `#C8643B` body, one frieze band of black-figure silhouettes, marble-white `#F2EFE8` statues, meander bands, no text.
+5. **Letter check.** If the vision model sees any writing, the image is thrown away.
+
+Cost reserved up front: `COST_TEXT_USD + COST_IMAGE_USD` ($0.072), plus `COST_VISION_USD` for the letter check. Any refusal or failure returns `{fallback:true}` (400, 413, 429 or 502), and the game shows its pre-made vase.
+
 ## 5. Change the cap, limit or costs 💰
 
 Edit `[vars]` in `wrangler.toml`, then run `npx wrangler deploy` again.
@@ -97,7 +116,7 @@ Edit `[vars]` in `wrangler.toml`, then run `npx wrangler deploy` again.
 | `RATE_LIMIT_PER_HOUR` | `3` | Generation requests per IP per clock hour. |
 | `COST_IMAGE_USD` | `0.07` | Estimate charged per image. |
 | `COST_VISION_USD` | `0.002` | Estimate charged per letter check. |
-| `COST_TEXT_USD` | `0.002` | Estimate charged per text call (used by /vase later). |
+| `COST_TEXT_USD` | `0.002` | Estimate charged per text call (the /vase description). |
 | `ALLOWED_ORIGINS` | `https://*.itch.zone` | Comma-separated. `*.` allows any subdomain. |
 | `LLM_MODEL`, `IMAGE_MODEL` | see file | Model IDs. |
 | `MAX_BODY_BYTES` | `16384` | Largest accepted request body. |
@@ -128,7 +147,7 @@ Every request goes through these steps, in this order:
 4. **Per-IP rate limit.** The KV key is `rl:<hashed IP>:<hour>`. The IP is SHA-256 hashed, so raw addresses are never stored. Keys expire after 2 hours.
 5. **Daily spend cap.** The estimated cost is added to `spend:<date>` **before** the provider call. A failed call stays counted, which errs on the safe side.
 
-Every refusal or failure returns JSON `{fallback:true}`: 429 for the limit or cap, 403, 413, or 502 for a provider error. The game treats all of them as "use the non-AI fallback."
+Every refusal or failure returns JSON `{fallback:true}`: 429 for the limit or cap, 403, 400 for a bad body, 413, or 502 for a provider error or an image with letters. The game treats all of them as "use the non-AI fallback."
 
 **Caveats**
 

@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/perseus.gd" id="1_perseus"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(40, 80)
+
+[node name="Perseus" type="CharacterBody2D"]
+script = ExtResource("1_perseus")
+enemy_type = &"perseus"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="Shield" type="Node2D" parent="Visual"]
+
+[node name="Glint" type="Polygon2D" parent="."]

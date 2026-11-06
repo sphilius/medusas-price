@@ -30,3 +30,11 @@ signal player_died(position: Vector2)
 signal player_respawned(position: Vector2)
 ## Medusa reached the level exit. GameFlow answers by loading the next level.
 signal level_exit_reached
+## A scene in GameFlow.ORDER has started (its index: intro 0 ... ending 6).
+signal level_started(index: int)
+## Perseus has turned to stone (opens the boss arena's exit).
+signal boss_defeated
+## An enemy was killed by the whip (lashes or the snake finisher), not petrified.
+signal enemy_slain(enemy_type: StringName, position: Vector2)
+## Medusa picked up a shard at this world position (the portrait shows it arriving).
+signal shard_collected(position: Vector2)

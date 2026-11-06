@@ -16,3 +16,7 @@ Thumbs.db
 # Design/reference PDFs live outside version control
 *.pdf
 *.PDF
+
+# Full-quality music masters (about 200 MB); the game uses the OGGs that
+# tools/build_music.py makes from them in audio/music/
+audio/music_src/*.wav

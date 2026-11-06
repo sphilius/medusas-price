@@ -289,7 +289,7 @@ func _test_hoplite_glint() -> void:
 		if hop.state == hop.State.WINDUP:
 			windup_frames += 1
 			glint_every_frame = glint_every_frame and hop._glint.visible
-			glint_gold = glint_gold and hop._glint.color == Balance.COLOR_GOLD
+			glint_gold = glint_gold and Color(hop._glint.color, 1.0) == Balance.COLOR_GOLD  # gold at any alpha
 			var tip: Vector2 = hop._spear.to_global(Vector2(Balance.HOPLITE_SPEAR_TIP_X, 0.0))
 			glint_on_tip = glint_on_tip and hop._glint.global_position.distance_to(tip) < 1.5
 		elif hop.state == hop.State.THRUST and not thrust_started:
@@ -353,7 +353,8 @@ func _test_whip_beats_windup() -> void:
 	var x0: float = hop.position.x
 	_tap("whip")
 	await _frames(30)
-	_check("lash interrupts the wind-up: staggered or knocked back", hop.position.x > x0 + 30.0)
+	# Since the parry change: a lash during the wind-up exposes him instead of knocking him back.
+	_check("lash during the wind-up parries: exposed, no thrust", hop.is_exposed() and hop.state != hop.State.THRUST and x0 > 0.0)
 	_check("no glint, spear at rest after the interrupt", not hop._glint.visible and hop._spear_offset == 0.0)
 	_check("she took no hit", _hits.is_empty())
 	hop.queue_free()
@@ -370,8 +371,11 @@ func _lash_samples(count: int) -> Array:
 	for i in count:
 		await _frames(1)
 		var visible_lines: int = 0
-		for line in _whip.get_node("Snakes").get_children():
-			if (line as Line2D).visible:
+		# Count visible snakes: the sprite versions when the art loaded, else the black lines.
+		var snakes: Array[Node] = _whip.get_node("Snakes").get_children()
+		var use_sprites: bool = snakes.any(func(n: Node) -> bool: return n is Sprite2D)
+		for snake: Node in snakes:
+			if (snake is Sprite2D) == use_sprites and (snake as CanvasItem).visible:
 				visible_lines += 1
 		samples.append({
 			"phase": _player.whip_phase,

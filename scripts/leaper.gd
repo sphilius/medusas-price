@@ -7,7 +7,12 @@ extends Enemy
 
 enum State { WAIT, LEAP, RECOVER }
 
-var state: State = State.WAIT
+## The current behaviour. Assigning it also updates the animation (the setter runs
+## _animate), so every `state = ...` line in this script changes the pose too.
+var state: State = State.WAIT:
+	set(value):
+		state = value
+		_animate()
 var _timer: float = 0.0
 ## Seconds airborne in the current leap (landing only counts after a minimum).
 var _air_time: float = 0.0
@@ -64,6 +69,9 @@ func _launch(d: Vector2) -> void:
 
 func _leap(delta: float) -> void:
 	_air_time += delta
+	# Takeoff pose first, then the stretched-out mid-leap pose.
+	if _air_time >= Balance.LEAPER_TAKEOFF_POSE_S:
+		SpriteKit.play(sprite, &"leap")
 	if _air_time >= Balance.LEAPER_MIN_AIR_TIME and is_on_floor():
 		velocity.x = 0.0
 		state = State.RECOVER
@@ -78,8 +86,26 @@ func _recover(delta: float) -> void:
 
 
 ## A whip hit cancels a leap in progress; after the stagger it rests, then looks again.
+## Parry window: mid-leap, as it is about to land on her.
+func is_telegraphing() -> bool:
+	return state == State.LEAP
+
+
 func _on_staggered() -> void:
 	if state == State.LEAP:
 		state = State.RECOVER
 		_timer = Balance.LEAPER_RECOVERY
 
+
+## Pose for the current state (called by the state setter and by Enemy on stagger).
+func _animate() -> void:
+	if is_staggered():
+		SpriteKit.play(sprite, &"stagger")
+		return
+	match state:
+		State.WAIT:
+			SpriteKit.play(sprite, &"wait")
+		State.LEAP:
+			SpriteKit.play(sprite, &"takeoff")
+		State.RECOVER:
+			SpriteKit.play(sprite, &"land")

@@ -1,6 +1,6 @@
 ## statue.gd (built in code by Statue.from_enemy; no scene)
-## Purpose: a petrified enemy, frozen in the enemy's last pose and tinted marble
-## white, on the statues layer. It has no gravity of its own: a statue frozen
+## Purpose: a petrified enemy, frozen in the enemy's last pose and painted marble
+## white (marble.gdshader for sprite art, a plain tint for placeholders), on the statues layer. It has no gravity of its own: a statue frozen
 ## mid-air hangs there as a platform until it is pushed. Pushed, it slides; with
 ## nothing under it, it falls until it lands (thud).
 ## The whip, and only the whip, breaks it: whip_hit() cracks an intact statue
@@ -38,6 +38,9 @@ var _grind: AudioStreamPlayer2D
 ## it once cracked (null until then).
 var _art: Node2D
 var _cracks: Node2D
+## The marble shader on the art when the enemy had real sprite art (null for the
+## placeholder polygons, which are tinted marble and get Line2D cracks instead).
+var _marble: ShaderMaterial = null
 
 
 ## Build a statue in `enemy`'s place and add it beside the enemy. The enemy's
@@ -62,6 +65,7 @@ static func from_enemy(enemy: Enemy) -> Statue:
 	statue._grind = AudioStreamPlayer2D.new()
 	statue._grind.stream = Fx.grind_stream
 	statue._grind.volume_db = Balance.GRIND_SFX_VOLUME_DB
+	statue._grind.attenuation = Balance.GRIND_SFX_ATTENUATION
 	statue.add_child(statue._grind)
 
 	enemy.get_parent().add_child(statue)
@@ -70,9 +74,22 @@ static func from_enemy(enemy: Enemy) -> Statue:
 	var art: Node2D = enemy.visual
 	statue._art = art
 	art.reparent(statue, false)
-	for sprite in art.find_children("*", "AnimatedSprite2D", true, false):
+	var sprites: Array[Node] = art.find_children("*", "AnimatedSprite2D", true, false)
+	for sprite in sprites:
 		(sprite as AnimatedSprite2D).pause()
-	art.modulate = Balance.COLOR_MARBLE
+	if sprites.is_empty():
+		# Placeholder polygons are white, so a marble tint is enough.
+		art.modulate = Balance.COLOR_MARBLE
+		return statue
+	# Real art is black and terracotta: tinting it would stay dark, so the marble shader
+	# repaints it instead. It sits on Visual, and every drawn child (body, spear, mirror)
+	# borrows it with use_parent_material, replacing the petrify shader on the body.
+	art.modulate = Color.WHITE
+	statue._marble = SpriteKit.marble_material()
+	art.material = statue._marble
+	for item in art.find_children("*", "CanvasItem", true, false):
+		(item as CanvasItem).material = null
+		(item as CanvasItem).use_parent_material = true
 	return statue
 
 
@@ -164,12 +181,25 @@ func _start_fall() -> void:
 func _crack() -> void:
 	state = State.CRACKED
 	var rect: Rect2 = _body_rect()
-	_build_cracks(rect)
+	if _marble != null:
+		# Cracks start on the side the whip came from (Medusa's side), at chest height.
+		var player := get_tree().get_first_node_in_group(&"player") as Node2D
+		var from_left: bool = player != null and player.global_position.x < global_position.x
+		_marble.set_shader_parameter(&"crack_origin", Vector2(0.25 if from_left else 0.75, 0.35))
+		_marble.set_shader_parameter(&"cracked", true)  # cracks drawn by marble.gdshader
+	else:
+		_build_cracks(rect)
 	var chips: CPUParticles2D = _burst(rect, Balance.STATUE_CHIP_COUNT, Balance.STATUE_CHIP_LIFETIME,
 			Balance.STATUE_CHIP_SPREAD_DEG, Balance.STATUE_CHIP_SPEED_MIN, Balance.STATUE_CHIP_SPEED_MAX,
 			Balance.STATUE_CHIP_SIZE_MIN, Balance.STATUE_CHIP_SIZE_MAX)
 	chips.finished.connect(chips.queue_free)
 	Events.statue_cracked.emit(enemy_type, global_position)
+
+
+## Break this statue at once, whatever its state (Perseus's shield-bash does this).
+func shatter() -> void:
+	if state != State.SHATTERED:
+		_shatter()
 
 
 ## CRACKED -> SHATTERED: the statue turns into a rubble burst. It stops moving, stops
@@ -188,7 +218,8 @@ func _shatter() -> void:
 		if child is CollisionShape2D or child is CollisionPolygon2D:
 			child.set_deferred("disabled", true)
 	_art.hide()
-	_cracks.hide()
+	if _cracks != null:
+		_cracks.hide()
 	var rubble: CPUParticles2D = _burst(_body_rect(), Balance.STATUE_RUBBLE_COUNT, Balance.STATUE_RUBBLE_LIFETIME,
 			Balance.STATUE_RUBBLE_SPREAD_DEG, Balance.STATUE_RUBBLE_SPEED_MIN, Balance.STATUE_RUBBLE_SPEED_MAX,
 			Balance.STATUE_RUBBLE_SIZE_MIN, Balance.STATUE_RUBBLE_SIZE_MAX)

@@ -18,6 +18,7 @@ var _failures: int = 0
 func _ready() -> void:
 	await _test_levels()
 	await _test_victim_statue()
+	await _test_cave_plate_door()
 	await _test_flow()
 	print("sim_levels: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
@@ -43,12 +44,37 @@ func _test_levels() -> void:
 		await get_tree().physics_frame
 
 
+## The cave door: shut and dark at the start, open while the plate is pressed, shut
+## again on release. The plate's signals are wired in the .tscn by build_levels.gd.
+func _test_cave_plate_door() -> void:
+	var level: LevelBase = (load("res://scenes/levels/level_3_cave.tscn") as PackedScene).instantiate()
+	add_child(level)
+	# `await get_tree().physics_frame` pauses this function until the next physics step,
+	# so the level's _ready and its deferred calls (set_deferred "monitoring") have run.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var door: Area2D = level.get_node("LevelExit")
+	var plate: Node = level.get_node("Plate")
+	# `monitoring` is whether the Area2D notices bodies entering it: false = door shut.
+	_check(door.visible and not door.monitoring and door.modulate == Balance.EXIT_LOCKED_TINT, "cave door starts shut and dark")
+	# Fire the plate's signal by hand, as if a statue had settled on it. Every method
+	# connected to it (here unlock_exit, wired in the .tscn) runs right away.
+	plate.emit_signal(&"pressed")
+	await get_tree().physics_frame
+	_check(door.monitoring and door.modulate == Color.WHITE, "plate pressed opens the cave door")
+	plate.emit_signal(&"released")
+	await get_tree().physics_frame
+	_check(not door.monitoring, "plate released shuts the cave door")
+	level.free()
+	await get_tree().physics_frame
+
+
 ## The pre-placed victim: first whip cracks, second shatters.
 func _test_victim_statue() -> void:
 	var level: LevelBase = (load("res://scenes/levels/level_1_temple.tscn") as PackedScene).instantiate()
 	add_child(level)
 	await get_tree().physics_frame
-	var victim: Statue = level.get_node("VictimStatue")
+	var victim: Statue = level.get_node("VictimPush")  # the forecourt statue (build_levels.gd)
 	_check(victim.is_in_group(&"statues") and victim.state == Statue.State.INTACT, "victim starts intact, in statues group")
 	victim.whip_hit()
 	_check(victim.state == Statue.State.CRACKED, "victim cracks on first hit")
@@ -72,7 +98,8 @@ func _test_flow() -> void:
 	_check(GameFlow.current_index == 1 and RunLedger.level == 1, "flow index and ledger level = 1")
 
 	Events.level_exit_reached.emit()
-	await get_tree().create_timer(1.5).timeout
+	# The cliffs have a painted transition panel first (Balance.TRANSITION_S).
+	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout
 	_check(GameFlow.current_index == 2, "exit signal moves on to the cliffs")
 	var ends: Array = RunLedger.events_of("level_end")
 	_check(ends.size() == 1 and ends[0]["data"]["name"] == "level_1_temple" and ends[0]["data"]["seconds"] >= 0.0, "level_end logged with time")
@@ -83,7 +110,7 @@ func _test_flow() -> void:
 	key.keycode = KEY_4
 	key.pressed = true
 	GameFlow._unhandled_input(key)
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout  # the boss has a panel too
 	_check(GameFlow.current_index == 4, "key 4 skips to the boss")
 
 	# Intro resets the ledger (start_run).

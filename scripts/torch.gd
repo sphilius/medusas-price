@@ -28,6 +28,10 @@ func _ready() -> void:
 	_light.energy = Balance.TORCH_ENERGY
 	_flame.color = Balance.COLOR_GOLD
 	_flame.polygon = PackedVector2Array([Vector2(-5.0, 0.0), Vector2(0.0, -16.0), Vector2(5.0, 0.0)])
+	# The iron bracket and cup under the flame (drawn behind it).
+	var bracket: Sprite2D = SpriteKit.prop(self, &"torch_bracket")
+	if bracket != null:
+		move_child(bracket, 0)
 
 
 func _process(delta: float) -> void:

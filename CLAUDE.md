@@ -2,7 +2,7 @@
 
 **Game:** *Medusa's Price*. You play Medusa, hunted by heroes. Your gaze turns enemies to marble statues that become platforms, and every petrification ages your portrait, which is your health.
 
-**Jam:** Jamference AI Game Jam Hack 3, theme *Great Works of Art*. Submission is a browser build on itch.io. **Deadline: upload by 9 PM ET Thu Nov 5, 2026.**
+**Jam:** Jamference AI Game Jam Hack 3, theme *Great Works of Art*. Submission is a browser build on itch.io. **Deadline: upload by 3 AM ET Fri Nov 6, 2026.** Build until 9 PM Thu, polish and itch page 9 to 11 PM, check-in at 12 AM.
 
 ## HARD RULE: NO TEXT
 
@@ -118,3 +118,7 @@ Autoload `RunLedger` logs events as JSON for the AI features (vase, gallery, Per
 ## Workflow
 
 Small commits per feature, test in a web export before calling anything done, keep the deadline build playable at every commit.
+
+## Playtest guidebook
+
+https://claude.ai/artifact/AXKSYFbGQoDHahbd5SYCJs (page source: `docs/playtest/guidebook.html`). Update it per the playtest-guidebook skill every session: milestones, feedback, decisions, changelog. Design choices are recorded in `docs/DEVLOG.md`.

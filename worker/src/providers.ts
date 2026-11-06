@@ -72,6 +72,13 @@ async function anthropicText(env: Env, req: TextRequest): Promise<string> {
 		body: JSON.stringify({
 			model: env.LLM_MODEL,
 			max_tokens: req.maxTokens ?? 512,
+			// Claude Haiku 5.5 thinks by default, and thinking spends max_tokens first. With
+			// our tiny budgets (5 tokens for the YES/NO letter check, 120 for the frieze) the
+			// thinking used them all, so the reply had no text: the frieze fell back to the
+			// plain description and the empty YES/NO counted as "has letters" (every vase
+			// rejected, found 2026-11-05). These calls are simple, so thinking stays off.
+			// ("disabled" is accepted on Haiku 5.5 at its default effort, medium.)
+			thinking: { type: "disabled" },
 			...(req.system ? { system: req.system } : {}),
 			messages: [{ role: "user", content }],
 		}),

@@ -1,8 +1,9 @@
 ## mirror_pool.gd (root script of scenes/props/mirror_pool.tscn)
-## Purpose: a still pool that heals Medusa once per visit. Kneel in it (hold down) or
-## simply stand still in it for Balance.POOL_STAND_TIME: the portrait clears this
-## stage's cracks and drops one stage, and the pool becomes her death respawn
-## (Events.pool_used). It is spent until she leaves and comes back.
+## Purpose: a still pool that heals Medusa ONCE. Kneel in it (hold down) or simply
+## stand still in it for Balance.POOL_STAND_TIME: the portrait clears this stage's
+## cracks and drops one stage, and the pool becomes her death respawn
+## (Events.pool_used). Then it is spent for good (dull, no glint): a pool that refilled
+## when she stepped out made the portrait's aging trivial (playtest, 2026-11-05).
 ## A death that respawns her inside it does not give her a free heal.
 ## Place it with its origin at the middle of the basin on the floor surface.
 extends Area2D
@@ -11,13 +12,15 @@ extends Area2D
 var _player: Player = null
 ## Seconds she has stood still on the floor inside the zone.
 var _still_time: float = 0.0
-## True once healed on this visit.
+## True once it has healed her (it never refills).
 var _spent: bool = false
 
 @onready var _trigger: CollisionShape2D = $Trigger
 @onready var _basin: Polygon2D = $Basin
 @onready var _water: Polygon2D = $Water
 @onready var _glint: Polygon2D = $Glint
+## The painted basin (null if the art is missing; then the polygons draw the pool).
+var _art: Sprite2D = null
 
 
 func _ready() -> void:
@@ -35,6 +38,12 @@ func _ready() -> void:
 	_water.color = Balance.COLOR_MARBLE
 	_glint.polygon = _rect(-half_width * 0.4, 1.0, half_width * 0.1, 3.0)
 	_glint.color = Balance.COLOR_GOLD
+	_art = SpriteKit.prop(self, &"pool")
+	if _art != null:
+		_art.position.y = Balance.POOL_DEPTH
+		_basin.visible = false
+		_water.visible = false
+		move_child(_glint, -1)  # the gold glint stays on top of the painting
 	set_physics_process(false)
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -69,14 +78,12 @@ func _on_body_entered(body: Node2D) -> void:
 		set_physics_process(true)
 
 
-## Leaving recharges the pool.
+## Leaving stops the stand-still count. It does NOT refill the pool.
 func _on_body_exited(body: Node2D) -> void:
 	if body is Player:
 		_player = null
 		_still_time = 0.0
-		_spent = false
 		set_physics_process(false)
-		_apply_visual()
 
 
 ## Getting up inside the pool after dying counts as this visit.
@@ -92,6 +99,8 @@ func _on_player_respawned(center: Vector2) -> void:
 func _apply_visual() -> void:
 	_water.color = Balance.COLOR_MARBLE.darkened(0.45) if _spent else Balance.COLOR_MARBLE
 	_glint.visible = not _spent
+	if _art != null:
+		_art.modulate = Color.WHITE.darkened(Balance.POOL_SPENT_DARKEN) if _spent else Color.WHITE
 
 
 static func _rect(x0: float, y0: float, x1: float, y1: float) -> PackedVector2Array:

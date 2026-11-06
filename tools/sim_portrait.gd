@@ -127,7 +127,7 @@ func _test_pit() -> void:
 			and _player.global_position.y < Balance.PLAYER_PIT_Y)
 
 
-## The pool: stand 1 s or kneel, once per visit, recharged by leaving.
+## The pool: stand 1 s or kneel; it heals ONCE and never refills (2026-11-05 change).
 func _test_pool() -> void:
 	await _fresh_room()
 	PortraitState.add_cracks(6 + 2, &"test")  # stage 2 with 2
@@ -147,8 +147,8 @@ func _test_pool() -> void:
 	Input.action_press("move_down")
 	await _frames(5)
 	Input.action_release("move_down")
-	_check("leaving and returning recharges; kneeling heals at once", PortraitState.cracks_in_stage == 0 \
-			and RunLedger.events_of("pool").size() == 2)
+	_check("leaving and returning does NOT refill it (kneeling does nothing)",
+			PortraitState.cracks_in_stage == 2 and RunLedger.events_of("pool").size() == 1)
 
 
 ## Dying: marble tint, then up at the last pool at stage 2 with 0 cracks.
@@ -163,32 +163,45 @@ func _test_death() -> void:
 	_check("the last crack kills", PortraitState.is_dead and _player.state == Player.State.DEAD)
 	_check("death is logged", RunLedger.events_of("death").size() == 1)
 	await _frames(int(Balance.DEATH_STONE_TIME * 60.0 * 0.5))
-	var body: Polygon2D = _player.get_node("Visual/Body")
-	_check("she is turning to marble (body color %s)" % str(body.color), body.color.r > 0.3)
+	# With sprite art the petrify shader's progress shows it; without, the body polygon's color.
+	var sprite := _player.get_node_or_null("Visual/Sprite") as AnimatedSprite2D
+	if sprite != null:
+		var mat := sprite.material as ShaderMaterial
+		var progress: float = mat.get_shader_parameter(&"progress") if mat != null else 0.0
+		_check("she is turning to marble (stone progress %.2f)" % progress, progress > 0.3)
+	else:
+		var body: Polygon2D = _player.get_node("Visual/Body")
+		_check("she is turning to marble (body color %s)" % str(body.color), body.color.r > 0.3)
 	await _frames(int((Balance.DEATH_STONE_TIME + Balance.DEATH_HOLD_TIME) * 60.0 * 0.5) + 20)
 	_check("up again: stage %d with 0 cracks" % Balance.DEATH_RESPAWN_STAGE, not PortraitState.is_dead \
 			and PortraitState.stage == Balance.DEATH_RESPAWN_STAGE and PortraitState.cracks_in_stage == 0)
 	_check("respawned at the last pool (at %s)" % str(_player.global_position), \
 			absf(_player.global_position.x - POOL_X) < 4.0 and _player.state != Player.State.DEAD)
-	_check("her art is back to black", body.color.is_equal_approx(Balance.COLOR_BLACK))
+	if sprite != null:
+		_check("her art is flesh again (no stone shader)", sprite.material == null)
+	else:
+		var body: Polygon2D = _player.get_node("Visual/Body")
+		_check("her art is back to black", body.color.is_equal_approx(Balance.COLOR_BLACK))
 	await _frames(200)
 	_check("standing in the pool after a death gives no free heal", PortraitState.stage == Balance.DEATH_RESPAWN_STAGE)
 
 
-## The shield: one hairline per crack, cleared on a stage change, never any text.
+## The shield: the craquelure shader's `amount` follows this stage's cracks, clears on a
+## stage change while `wear` grows, and the HUD never has text.
 func _test_hud() -> void:
 	await _fresh_room()
-	var cracks: Node = _room.get_node("PortraitHud/Shield/Cracks")
+	var painting: TextureRect = _room.get_node("PortraitHud/Shield/Painting")
+	var mat := painting.material as ShaderMaterial
 	PortraitState.add_cracks(3, &"test")
 	await _frames(2)
-	_check("3 cracks draw 3 hairlines", _count_lines(cracks) == 3)
+	_check("3 of 6 cracks: craquelure amount 0.5", mat != null and is_equal_approx(float(mat.get_shader_parameter(&"amount")), 0.5))
 	PortraitState.add_cracks(3, &"test")  # fills stage 1 (6)
 	await _frames(2)
-	_check("a stage change clears the overlay", _count_lines(cracks) == 0)
+	_check("a stage change clears the craquelure, wear grows",
+			is_zero_approx(float(mat.get_shader_parameter(&"amount"))) and float(mat.get_shader_parameter(&"wear")) > 0.0)
 	PortraitState.add_cracks(2, &"test")
 	await _frames(2)
-	_check("2 cracks in stage 2 draw 2 hairlines", _count_lines(cracks) == 2)
-	var painting: TextureRect = _room.get_node("PortraitHud/Shield/Painting")
+	_check("2 of 5 cracks in stage 2: amount 0.4", is_equal_approx(float(mat.get_shader_parameter(&"amount")), 0.4))
 	var before: Texture2D = painting.texture
 	PortraitState.add_cracks(3, &"test")  # 2 + 3 = 5 fills stage 2
 	await _frames(2)
