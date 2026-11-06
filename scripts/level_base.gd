@@ -79,21 +79,7 @@ func _base_color() -> Color:
 ## Background, terrain texture and meander bands for this level's Lighting.
 func _build_world_art() -> void:
 	var index: int = int(lighting)
-	var bg: Texture2D = _load_texture(Balance.LEVEL_BACKGROUNDS[index])
-	if bg != null:
-		# The painting is 720 px tall like the screen: it slides sideways a little with
-		# the camera (PARALLAX_BG_SCROLL) and stays put vertically (scroll y = 0).
-		# It is drawn at 1 / CAMERA_ZOOM so it keeps its on-screen size while the
-		# camera zooms in on the characters: the scenery reads as far away, not huge.
-		var unzoom: float = 1.0 / Balance.CAMERA_ZOOM
-		var bg_art: Sprite2D = _add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, unzoom, Balance.PARALLAX_BG_Z)
-		# Haze pushes the painting back so the characters and terrain read in front.
-		var haze := ShaderMaterial.new()
-		haze.shader = load("res://shaders/haze.gdshader")
-		haze.set_shader_parameter("haze_color", Balance.LEVEL_HAZE_COLOR[index])
-		haze.set_shader_parameter("amount", Balance.LEVEL_HAZE_AMOUNT[index])
-		bg_art.material = haze
-		_backdrop.visible = false
+	_build_background(index)
 	_build_terrain_art(index)
 	var band: Texture2D = _load_texture(Balance.MEANDER_TEXTURE)
 	if band != null:
@@ -119,6 +105,49 @@ func _add_meander_bands(band: Texture2D) -> void:
 		rect.scale = Vector2.ONE * band_scale
 		rect.position = Vector2(0.0, 0.0 if top else screen.y - Balance.MEANDER_HEIGHT)
 		layer.add_child(rect)
+
+
+## The background, all in SCREEN space on a CanvasLayer behind the world (so camera
+## zoom and height can never show a gap under it), back to front:
+##   a sky-coloured fill; the painting (bands trimmed, hazed) drifting at
+##   BG_PAINTING_SCROLL; two silhouette bands (hills by day, rock spires in the cave
+##   and storm) at BG_BAND_SCROLLS, each darker and nearer. Different speeds = depth.
+func _build_background(index: int) -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = Balance.BG_CANVAS_LAYER
+	add_child(layer)
+	var sky := ColorRect.new()
+	sky.color = Balance.LEVEL_HAZE_COLOR[index]
+	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sky.set_anchors_preset(Control.PRESET_FULL_RECT)
+	sky.size = get_viewport_rect().size
+	layer.add_child(sky)
+	var bg: Texture2D = _load_texture(Balance.LEVEL_BACKGROUNDS[index])
+	if bg != null:
+		var painting := ScreenParallax.new()
+		painting.kind = ScreenParallax.Kind.PAINTING
+		painting.texture = bg
+		painting.scroll = Balance.BG_PAINTING_SCROLL
+		var top: float = bg.get_height() * Balance.BG_TRIM_TOP
+		var bottom: float = bg.get_height() * (1.0 - Balance.BG_TRIM_BOTTOM)
+		painting.region = Rect2(0.0, top, bg.get_width(), bottom - top)
+		var haze := ShaderMaterial.new()
+		haze.shader = load("res://shaders/haze.gdshader")
+		haze.set_shader_parameter("haze_color", Balance.LEVEL_HAZE_COLOR[index])
+		haze.set_shader_parameter("amount", Balance.LEVEL_HAZE_AMOUNT[index])
+		painting.material = haze
+		layer.add_child(painting)
+	var spiky: bool = lighting == Lighting.TORCHLIGHT or lighting == Lighting.STORM
+	for i in Balance.BG_BAND_SCROLLS.size():
+		var band := ScreenParallax.new()
+		band.kind = ScreenParallax.Kind.SPIRES if spiky else ScreenParallax.Kind.HILLS
+		band.scroll = Balance.BG_BAND_SCROLLS[i]
+		band.height = Balance.BG_BAND_HEIGHTS[i]
+		band.seed_value = index * 10 + i
+		# Nearer bands are darker: mix the haze colour toward the deep terrain colour.
+		band.color = Balance.LEVEL_HAZE_COLOR[index].lerp(Balance.TERRAIN_DEEP_COLOR[index], Balance.BG_BAND_DARKEN[i])
+		layer.add_child(band)
+	_backdrop.visible = false
 
 
 ## One repeating Parallax2D layer holding `texture` drawn from `top_left` (screen px)

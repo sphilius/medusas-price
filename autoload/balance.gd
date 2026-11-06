@@ -723,17 +723,17 @@ const EXIT_LOCKED_TINT: Color = Color(0.35, 0.3, 0.28, 1.0)
 
 # --- Key hints (scripts/key_hint.gd): wordless control hints in level 1 ---
 ## Height (and width, for a letter key) of a key-cap, px.
-const KEY_HINT_CAP_SIZE: float = 34.0
+const KEY_HINT_CAP_SIZE: float = 18.0
 ## Width of the wide caps (Space, Shift), px.
-const KEY_HINT_WIDE_CAP_W: float = 84.0
+const KEY_HINT_WIDE_CAP_W: float = 44.0
 ## Space between caps, and between the caps and the icon, px.
-const KEY_HINT_GAP: float = 6.0
+const KEY_HINT_GAP: float = 3.0
 ## Height the action icon is drawn at, px.
-const KEY_HINT_ICON_H: float = 36.0
+const KEY_HINT_ICON_H: float = 18.0
 ## Letter size on a cap, and the cap's border width and corner radius, px.
-const KEY_HINT_FONT_SIZE: int = 20
-const KEY_HINT_BORDER: int = 2
-const KEY_HINT_CORNER: int = 6
+const KEY_HINT_FONT_SIZE: int = 11
+const KEY_HINT_BORDER: int = 1
+const KEY_HINT_CORNER: int = 3
 ## Cap fill: bodies-in-motion black, slightly see-through.
 const KEY_HINT_CAP_COLOR: Color = Color(0.102, 0.078, 0.063, 0.85)
 ## Seconds the hint takes to fade after the action is first used.
@@ -882,7 +882,7 @@ const LEVEL_SURFACE_TINT: Array[Color] = [
 ]
 ## World px covered by one copy of the surface painting (a temple brick ends up
 ## about 1.3 BL wide, close to Medusa's size).
-const TERRAIN_SURFACE_PX: float = 224.0
+const TERRAIN_SURFACE_PX: float = 64.0
 ## Marker atlas for terrain.gdshader: 16 x 8 blank 32 px tiles. Column = exposed sides
 ## (bits: 1 top, 2 left, 4 right, 8 bottom); row = depth below the surface (0-7).
 const TERRAIN_EDGE_ATLAS: String = "res://art/tiles/terrain_edges.png"
@@ -891,6 +891,19 @@ const TERRAIN_EDGE_PX: float = 3.0
 ## Terrain at this row (y = row x 32) or lower counts as ground and is extended down to
 ## TERRAIN_BOTTOM_ROW, so the ground is one solid mass below the view's bottom edge.
 const TERRAIN_GROUND_ROW: int = 19
+# --- Screen-space parallax background (level_base._build_background) ---
+## The CanvasLayer it sits on (negative = behind the world).
+const BG_CANVAS_LAYER: int = -10
+## How fast the painting drifts with the camera (fraction of camera motion).
+const BG_PAINTING_SCROLL: float = 0.1
+## Fractions of the painting's height trimmed off its own top and bottom bands.
+const BG_TRIM_TOP: float = 0.06
+const BG_TRIM_BOTTOM: float = 0.14
+## The silhouette bands, far to near: scroll speed, how tall (fraction of the screen),
+## and how far toward the deep terrain colour they are darkened.
+const BG_BAND_SCROLLS: Array[float] = [0.3, 0.55]
+const BG_BAND_HEIGHTS: Array[float] = [0.42, 0.3]
+const BG_BAND_DARKEN: Array[float] = [0.35, 0.6]
 const TERRAIN_BOTTOM_ROW: int = 30
 ## Depth darkening by Lighting: deep rock fades toward this colour over TERRAIN_DEEP_PX
 ## px below the surface, by at most TERRAIN_DEEP_MAX.
@@ -923,8 +936,8 @@ const GATE_MOVE_S: float = 0.4
 const SHARD_RADIUS: float = 10.0
 ## Camera zoom (2 = twice as close). 1.5 makes Medusa about 96 screen px tall, about
 ## an eighth of the screen, like the reference platformers.
-const CAMERA_ZOOM: float = 1.5
-const TERRAIN_LIP_PX: float = 12.0
+const CAMERA_ZOOM: float = 2.25
+const TERRAIN_LIP_PX: float = 8.0
 ## Background haze (shaders/haze.gdshader) by Lighting: the colour the painting fades
 ## toward, and how far (0 = none). Light terracotta makes the black figures pop by day;
 ## dark clay lets the cave and storm paintings sink into the dark.
