@@ -6,12 +6,23 @@ The record of truth for design choices, newest first. Statuses: Made / Changed /
 
 | ID | Date | Choice | Status |
 |---|---|---|---|
+| D-008 | 2026-11-05 | Full platformer kit and all three levels rebuilt as teach/test/twist rooms | Made |
+| D-007 | 2026-11-05 | Terrain drawn as one grounded mass (texkit surface, edges, depth), camera zoom 1.5 | Made |
 | D-006 | 2026-11-05 | Levels 2 and 3 built in the generator: statue-climb cliff, archers, mirror-bearers, plate door | Made |
 | D-005 | 2026-11-05 | Run vase: full AI route + fallback; empty-reply bug fixed, live vases now pass | Made |
 | D-004 | 2026-11-05 | One painted background layer per level (the `_px` paintings are opaque) | Proposed |
 | D-003 | 2026-11-05 | Enemy sprites are scaled to fit their existing hitboxes | Made |
 | D-002 | 2026-11-05 | Whip body uses 3 poses spread over the 8 whip frames | Made |
 | D-001 | 2026-11-05 | Character art comes from `art/processed` (Nano Banana + art_cleanup), not SpriteCook | Made |
+
+## D-008 · Platformer kit, levels rebuilt · Made
+Sasha: the levels were walk, hop, petrify; it should be a full platformer. Chose the full kit and a rebuild of all three levels (decision d4).
+- **Kit:** moving platforms (lifts and ferries, AnimatableBody2D so riders are carried), crumbling marble ledges (0.5 s, back after 3 s), column ledges you jump up through, spear traps (a statue resting in one jams it, the statue-bridge puzzle), plate-operated gates, and shards that mend one crack. All tunables in Balance; `sim_kit` checks all six (14 checks).
+- **Levels** (`tools/build_levels.gd`), each a chain of teach → test → twist rooms. Temple: steps, column climb to a shard, sprint gap with the leaper, spear trench, crumbling bridge, lift to the temple. Cliffs: statue climb, sea ferry, pillar archer, crumbling stair up to the high cliff. Cave: plate gate, spear trench, lift, column shard, crumbling gap, plate door.
+- Column ledges step up 3 rows, not 4: a jump rises exactly 4 rows, so 4 would need a perfect jump.
+
+## D-007 · Grounded terrain and zoom · Made
+The terrain was a whole painting shrunk to 32 px per tile, floating over a background that had its own ground. Now: texkit `tile` makes a seamless surface drawn in world space; exposed edges get black outlines and a Greek-key lip; ground fills below the view and darkens with depth; the camera zooms 1.5x with limits; backgrounds keep their screen size and fade into a haze, so they read as distance. The cave reuses the cliff rock because texkit's cave result showed seams.
 
 ## D-006 · Levels 2 and 3 filled in · Made
 The 7 PM browser playthrough found levels 2 and 3 were still the generator's starter rooms: a short floor and an exit 640 px away. Both are now laid out in `tools/build_levels.gd` (which now only rewrites the levels in its BUILD list, so level 1 and the hand-edited boss arena are safe).
