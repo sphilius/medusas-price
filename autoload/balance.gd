@@ -930,6 +930,16 @@ const PORTRAIT_TEXTURES: Array[String] = [
 	"res://art/portrait/stage_4.png",
 	"res://art/portrait/stage_5.png",
 ]
+## The same five portraits at 512 px (tools/build_portraits_hd.py), for where they are
+## shown large: the intro's aging beat and the museum. A missing file falls back to the
+## small one above.
+const PORTRAIT_TEXTURES_HD: Array[String] = [
+	"res://art/portrait/hd/stage_1.webp",
+	"res://art/portrait/hd/stage_2.webp",
+	"res://art/portrait/hd/stage_3.webp",
+	"res://art/portrait/hd/stage_4.webp",
+	"res://art/portrait/hd/stage_5.webp",
+]
 
 # ---------------------------------------------------------------------------
 # Shaders (petrify, marble, death veil)

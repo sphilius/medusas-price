@@ -79,7 +79,10 @@ func _add_statue(type: StringName, pose_frame: int, flip: bool, x: float, size_m
 ## The portrait as this run left it, in a gold ring, high on the wall in the middle.
 func _add_portrait(width: float) -> void:
 	var stage: int = clampi(PortraitState.stage, 1, Balance.PORTRAIT_TEXTURES.size())
-	var path: String = Balance.PORTRAIT_TEXTURES[stage - 1]
+	# The sharp 512 px portrait if it is there, else the small HUD one.
+	var path: String = Balance.PORTRAIT_TEXTURES_HD[stage - 1]
+	if not ResourceLoader.exists(path):
+		path = Balance.PORTRAIT_TEXTURES[stage - 1]
 	if not ResourceLoader.exists(path):
 		return
 	var tex: Texture2D = load(path)

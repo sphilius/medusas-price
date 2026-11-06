@@ -94,8 +94,11 @@ func _portrait_aging() -> void:
 	var fade := create_tween()
 	for stage in range(1, Balance.PORTRAIT_STAGE_COUNT + 1):
 		fade.tween_callback(func() -> void:
-			if ResourceLoader.exists(Balance.PORTRAIT_TEXTURES[stage - 1]):
-				_panel.texture = load(Balance.PORTRAIT_TEXTURES[stage - 1])
+			# The sharp 512 px portrait if it is there, else the small HUD one.
+			for path: String in [Balance.PORTRAIT_TEXTURES_HD[stage - 1], Balance.PORTRAIT_TEXTURES[stage - 1]]:
+				if ResourceLoader.exists(path):
+					_panel.texture = load(path)
+					break
 			_panel.modulate.a = 1.0
 			if stage > 1:
 				Fx.play(&"crack_portrait", 1.0 - stage * 0.06))
