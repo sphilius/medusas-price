@@ -102,9 +102,11 @@ func _build_level_1() -> void:
 	_add(root, "Hoplite1", P_HOPLITE, Vector2(46 * T, 15 * T - 32))
 	_hint(root, "HintGaze", Vector2(38 * T, 15 * T - 80), [&"gaze"], ["K"], "gaze")
 	_hint(root, "HintWhip", Vector2(50 * T, 15 * T - 80), [&"whip"], ["J"], "whip")
-	_column(root, "Column1", 52, 3, 11, 15)
-	_column(root, "Column2", 56, 3, 7, 15)
-	_add(root, "Shard1", P_SHARD, Vector2(57.5 * T, 6 * T))
+	# Columns step up 3 rows at a time: a jump rises exactly 4 rows, so 4 would need a
+	# pixel-perfect jump.
+	_column(root, "Column1", 52, 3, 12, 15)
+	_column(root, "Column2", 56, 3, 9, 15)
+	_add(root, "Shard1", P_SHARD, Vector2(57.5 * T, 8 * T))
 	# Room 3
 	_add(root, "SafeGapNear", P_LEDGE, Vector2(58 * T, 15 * T))
 	_hint(root, "HintSprint", Vector2(55 * T, 15 * T - 160), [&"run"], ["shift"], "right")
@@ -171,8 +173,8 @@ func _build_level_2() -> void:
 	_add(root, "SafeTop", P_LEDGE, Vector2(30 * T, 14 * T))
 	# Room 2
 	_add(root, "ArcherTop", P_ARCHER, Vector2(44 * T, 14 * T - 32))
-	_column(root, "Column1", 36, 3, 10, 14)
-	_add(root, "Shard1", P_SHARD, Vector2(37.5 * T, 9 * T))
+	_column(root, "Column1", 36, 3, 11, 14)
+	_add(root, "Shard1", P_SHARD, Vector2(37.5 * T, 10 * T))
 	# Room 3
 	_add(root, "SafeSeaNear", P_LEDGE, Vector2(46 * T, 14 * T))
 	_add_pit(root, "PitSea", 48, 58, 14 * T)
@@ -262,8 +264,8 @@ func _build_level_3() -> void:
 	_add(root, "SafeShelf", P_LEDGE, Vector2(86 * T, 13 * T))
 	_add(root, "MirrorBearer2", P_MIRROR, Vector2(94 * T, 13 * T - 32))
 	_add(root, "Hoplite", P_HOPLITE, Vector2(100 * T, 13 * T - 32))
-	_column(root, "Column1", 104, 3, 9, 13)
-	_add(root, "Shard1", P_SHARD, Vector2(105.5 * T, 8 * T))
+	_column(root, "Column1", 104, 3, 10, 13)
+	_add(root, "Shard1", P_SHARD, Vector2(105.5 * T, 9 * T))
 	# Room 5
 	_add(root, "SafeGap", P_LEDGE, Vector2(108 * T, 13 * T))
 	_add_pit(root, "PitGap", 110, 117, 13 * T)
