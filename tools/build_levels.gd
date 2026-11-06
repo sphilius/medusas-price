@@ -86,12 +86,12 @@ func _build_level_1() -> void:
 	# 5: crumbling bridge over the pit, tiles 116..131
 	_ground(t, 131, 160, 15)
 	# 6: the lift shaft at 160..164, then the temple top 5 rows higher
-	_ground(t, 164, 194, 10)
+	_ground(t, 164, 212, 10)        # temple top, now with the gauntlet room
 	_wall(t, -4, -2, 6, 19)
-	_wall(t, 192, 194, 0, 10)
+	_wall(t, 210, 212, 0, 10)
 
 	root.get_node("Spawn").position = Vector2(128, 576)
-	root.get_node("LevelExit").position = Vector2(186 * T, 10 * T)
+	root.get_node("LevelExit").position = Vector2(206 * T, 10 * T)
 
 	# Room 1
 	_hint(root, "HintMove", Vector2(260, 540), [&"move_left", &"move_right"], ["A", "D"], "right")
@@ -106,17 +106,22 @@ func _build_level_1() -> void:
 	# pixel-perfect jump.
 	_column(root, "Column1", 52, 3, 12, 15)
 	_column(root, "Column2", 56, 3, 9, 15)
-	_add(root, "Shard1", P_SHARD, Vector2(57.5 * T, 8 * T))
+	# An archer holds the high column: the shard is his to lose.
+	_add(root, "ArcherColumn", P_ARCHER, Vector2(57.5 * T, 9 * T - 32))
+	_add(root, "Shard1", P_SHARD, Vector2(57.5 * T, 7.5 * T))
 	# Room 3
 	_add(root, "SafeGapNear", P_LEDGE, Vector2(58 * T, 15 * T))
 	_hint(root, "HintSprint", Vector2(55 * T, 15 * T - 160), [&"run"], ["shift"], "right")
 	_add_pit(root, "PitLeaper", 60, 69, 15 * T)
 	_add(root, "Leaper", P_LEAPER, Vector2(70 * T, 15 * T - 20))
 	_add(root, "SafeGapFar", P_LEDGE, Vector2(72 * T, 15 * T))
+	_add(root, "Leaper2", P_LEAPER, Vector2(76 * T, 15 * T - 20))
 	# Room 4
 	_add(root, "Hoplite2", P_HOPLITE, Vector2(86 * T, 15 * T - 32))
 	_add(root, "VictimSpare", P_VICTIM, Vector2(83 * T, 15 * T - 32), {"pose": 2, "faces_right": false})
-	_spears(root, "TrenchSpears", 92, 11, 17)
+	# Two traps out of step: one statue jams only the trap it lands in.
+	_spears(root, "TrenchSpearsA", 92, 5, 17, 0.0)
+	_spears(root, "TrenchSpearsB", 97, 6, 17, 0.5)
 	_decor(root, "ColumnDecor1", "res://art/sprites/props/column.png", Vector2(108 * T, 15 * T), 120.0)
 	# Room 5
 	_add(root, "SafeBridge", P_LEDGE, Vector2(114 * T, 15 * T))
@@ -129,11 +134,22 @@ func _build_level_1() -> void:
 	_add(root, "Pool", P_POOL, Vector2(136 * T, 15 * T))
 	_hint(root, "HintKneel", Vector2(136 * T, 15 * T - 80), [&"move_down"], ["S"], "down")
 	# Room 6
-	_add(root, "Hoplite3", P_HOPLITE, Vector2(140 * T, 15 * T - 32))
-	_add(root, "Hoplite4", P_HOPLITE, Vector2(150 * T, 15 * T - 32))
+	# An archer looses at her while she crosses the crumbling bridge.
+	_add(root, "ArcherBridge", P_ARCHER, Vector2(142 * T, 15 * T - 32))
+	_add(root, "Hoplite3", P_HOPLITE, Vector2(147 * T, 15 * T - 32))
+	_add(root, "Hoplite4", P_HOPLITE, Vector2(153 * T, 15 * T - 32))
 	_lift(root, "Lift", 160, 4, 15, 10, 4.0)
 	_add_pit(root, "PitLift", 160, 164, 15 * T)
-	_decor(root, "ColumnDecor2", "res://art/sprites/props/column.png", Vector2(180 * T, 10 * T), 140.0)
+	# Room 7: the gauntlet on the temple top. An archer waits at the top of the lift, then
+	# three spear traps ripple out of step, then a mirror-bearer guards the door.
+	_add(root, "ArcherLift", P_ARCHER, Vector2(167 * T, 10 * T - 32))
+	_spears(root, "Gauntlet1", 170, 3, 10, 0.0)
+	_spears(root, "Gauntlet2", 175, 3, 10, 0.33)
+	_spears(root, "Gauntlet3", 180, 3, 10, 0.66)
+	_add(root, "SafeGauntlet", P_LEDGE, Vector2(186 * T, 10 * T))
+	_add(root, "MirrorDoor", P_MIRROR, Vector2(196 * T, 10 * T - 32))
+	_decor(root, "ColumnDecor2", "res://art/sprites/props/column.png", Vector2(190 * T, 10 * T), 140.0)
+	_decor(root, "ColumnDecor3", "res://art/sprites/props/column.png", Vector2(201 * T, 10 * T), 140.0)
 	_save(root, "level_1_temple")
 
 
@@ -165,13 +181,14 @@ func _build_level_2() -> void:
 	_wall(t, 138, 140, -2, 8)
 
 	root.get_node("Spawn").position = Vector2(300, 576)
-	root.get_node("LevelExit").position = Vector2(135 * T, 8 * T)
+	root.get_node("LevelExit").position = Vector2(137 * T, 8 * T)
 
 	# Room 1
 	_add(root, "VictimSpare", P_VICTIM, Vector2(150, 576), {"pose": 0})
 	_add(root, "HopliteCliff", P_HOPLITE, Vector2(700, 576))
 	_add(root, "SafeTop", P_LEDGE, Vector2(30 * T, 14 * T))
 	# Room 2
+	_add(root, "HopliteTop", P_HOPLITE, Vector2(40 * T, 14 * T - 32))
 	_add(root, "ArcherTop", P_ARCHER, Vector2(44 * T, 14 * T - 32))
 	_column(root, "Column1", 36, 3, 11, 14)
 	_add(root, "Shard1", P_SHARD, Vector2(37.5 * T, 10 * T))
@@ -181,6 +198,8 @@ func _build_level_2() -> void:
 	_ferry(root, "Ferry", 49, 3, 14, Vector2(5 * T, 0), 3.5)
 	_add(root, "Leaper", P_LEAPER, Vector2(59 * T, 14 * T - 20))
 	_add(root, "SafeSeaFar", P_LEDGE, Vector2(61 * T, 14 * T))
+	# An archer fires on the ferry from the far shore.
+	_add(root, "ArcherShore", P_ARCHER, Vector2(68 * T, 14 * T - 32))
 	# Room 4
 	_add(root, "SafePillarNear", P_LEDGE, Vector2(70 * T, 14 * T))
 	_add_pit(root, "PitPillarNear", 72, 77, 14 * T)
@@ -190,6 +209,8 @@ func _build_level_2() -> void:
 	# The level's ONE pool (single use), about 65% of the way through.
 	_add(root, "Pool", P_POOL, Vector2(91 * T, 14 * T))
 	_add(root, "Hoplite2", P_HOPLITE, Vector2(95 * T, 14 * T - 32))
+	# Crossfire: a second archer beyond the pillar.
+	_add(root, "ArcherFar", P_ARCHER, Vector2(98 * T, 14 * T - 32))
 	# Room 5
 	_add(root, "SafeStair", P_LEDGE, Vector2(100 * T, 14 * T))
 	_add_pit(root, "PitStair", 102, 117, 14 * T)
@@ -198,8 +219,12 @@ func _build_level_2() -> void:
 	_crumble(root, "Stair3", 111, 3, 8)
 	# Room 6
 	_add(root, "SafeHigh", P_LEDGE, Vector2(119 * T, 8 * T))
-	_add(root, "Hoplite3", P_HOPLITE, Vector2(123 * T, 8 * T - 32))
-	_add(root, "EyeShading", P_EYES, Vector2(128 * T, 8 * T - 32))
+	# An archer on the high cliff shoots down at the crumbling stair.
+	_add(root, "ArcherHigh", P_ARCHER, Vector2(121 * T, 8 * T - 32))
+	_add(root, "Hoplite3", P_HOPLITE, Vector2(124 * T, 8 * T - 32))
+	_add(root, "EyeShading", P_EYES, Vector2(127 * T, 8 * T - 32))
+	_spears(root, "ExitSpears", 129, 3, 8, 0.0)
+	_add(root, "MirrorExit", P_MIRROR, Vector2(134 * T, 8 * T - 32))
 	_save(root, "level_2_cliffs")
 
 
@@ -227,7 +252,7 @@ func _build_level_3() -> void:
 	# 4: lift shaft 80..84, shelf 6 rows up
 	_ground(t, 84, 110, 13)
 	# 5: gap 110..117
-	_ground(t, 117, 142, 13)
+	_ground(t, 120, 142, 13)        # past the widened crumbling gap
 	_wall(t, -4, -2, 4, 19)
 	_wall(t, 140, 142, 0, 13)
 	# The cave ceiling: a band of rock along the top, with a lower overhang over room 4.
@@ -249,14 +274,17 @@ func _build_level_3() -> void:
 	_add(root, "VictimOld1", P_VICTIM, Vector2(12 * T, 576), {"pose": 0})
 	_add(root, "VictimOld2", P_VICTIM, Vector2(16 * T, 576), {"pose": 3, "faces_right": false})
 	_add(root, "MirrorBearer1", P_MIRROR, Vector2(24 * T, 576))
+	_add(root, "MirrorBearer1b", P_MIRROR, Vector2(20 * T, 576))
 	# Room 2: plate at 34, gate at 45
 	_add(root, "VictimGate", P_VICTIM, Vector2(30 * T, 576), {"pose": 1})
 	_add(root, "GatePlate", P_PLATE, Vector2(35 * T, 19 * T))
 	_gate(root, "Gate1", 45, 19, 4, NodePath("../GatePlate"))
 	# Room 3
+	_add(root, "HopliteGate", P_HOPLITE, Vector2(48 * T, 576))
 	_add(root, "EyeShading", P_EYES, Vector2(52 * T, 576))
 	_add(root, "SafeTrench", P_LEDGE, Vector2(54 * T, 19 * T))
-	_spears(root, "TrenchSpears", 56, 11, 21)
+	_spears(root, "TrenchSpearsA", 56, 5, 21, 0.0)
+	_spears(root, "TrenchSpearsB", 61, 6, 21, 0.5)
 	_add(root, "SafeTrenchFar", P_LEDGE, Vector2(69 * T, 19 * T))
 	# Room 4
 	_lift(root, "Lift", 80, 4, 19, 13, 4.0)
@@ -270,13 +298,17 @@ func _build_level_3() -> void:
 	_add(root, "Shard1", P_SHARD, Vector2(105.5 * T, 9 * T))
 	# Room 5
 	_add(root, "SafeGap", P_LEDGE, Vector2(108 * T, 13 * T))
-	_add_pit(root, "PitGap", 110, 117, 13 * T)
-	_crumble(root, "CrumbleGap", 112, 3, 13)
-	_add(root, "SafeGapFar", P_LEDGE, Vector2(119 * T, 13 * T))
+	_add_pit(root, "PitGap", 110, 120, 13 * T)
+	_crumble(root, "CrumbleGap1", 111, 3, 13)
+	_crumble(root, "CrumbleGap2", 115, 3, 13)
+	_add(root, "SafeGapFar", P_LEDGE, Vector2(121 * T, 13 * T))
+	_add(root, "LeaperFar", P_LEAPER, Vector2(122 * T, 13 * T - 20))
 	# Room 6: the plate door
 	_add(root, "VictimPlate", P_VICTIM, Vector2(124 * T, 13 * T - 32), {"pose": 0})
-	_add(root, "Plate", P_PLATE, Vector2(127 * T, 13 * T))
+	_add(root, "Plate", P_PLATE, Vector2(128 * T, 13 * T))
+	_spears(root, "DoorSpears", 130, 2, 13, 0.25)
 	_add(root, "MirrorBearer3", P_MIRROR, Vector2(133 * T, 13 * T - 32))
+	_add(root, "ArcherDoor", P_ARCHER, Vector2(135 * T, 13 * T - 32))
 	var plate: Node = root.get_node("Plate")
 	# CONNECT_PERSIST saves the connection in the .tscn, so it exists when the level loads.
 	plate.connect(&"pressed", Callable(root, &"unlock_exit"), CONNECT_PERSIST)
@@ -332,8 +364,8 @@ func _ferry(root: Node, node_name: String, x: int, width: int, top_row: int, tra
 
 
 ## A spear trap `width` tiles wide on the ground surface at `row`.
-func _spears(root: Node, node_name: String, x: int, width: int, row: int) -> void:
-	_add(root, node_name, P_SPEARS, Vector2(x * T, row * T), {"width_tiles": width})
+func _spears(root: Node, node_name: String, x: int, width: int, row: int, phase: float = 0.0) -> void:
+	_add(root, node_name, P_SPEARS, Vector2(x * T, row * T), {"width_tiles": width, "phase": phase})
 
 
 ## A gate at column x standing on the surface at `row`, `height` tiles tall.
