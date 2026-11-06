@@ -149,6 +149,33 @@ const TRANSITION_PANELS: Dictionary = {
 	3: "res://art/bg/level_3_bg.png",
 	4: "res://art/bg/level_4_bg.png",
 }
+## Between levels, a short wordless story reel (scripts/story_reel.gd, no portrait
+## beat): the panels shown before each GameFlow index (2 cliffs, 3 cave, 4 boss,
+## 6 ending). Prompts for the art: docs/art/storyboard_prompts.md. Panels whose file is
+## missing are skipped; with none at all, TRANSITION_PANELS (one painting) is used.
+const TRANSITION_BEAT_S: float = 3.8
+const TRANSITION_STORIES: Dictionary = {
+	2: [
+		{"path": "res://art/story/ch2_1.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.0, "zoom_to": 1.1, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, -10)},
+		{"path": "res://art/story/ch2_2.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(50, 0), "pan_to": Vector2(-50, 0)},
+		{"path": "res://art/story/ch2_3.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO},
+	],
+	3: [
+		{"path": "res://art/story/ch3_1.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.0, "zoom_to": 1.1, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, -10)},
+		{"path": "res://art/story/ch3_2.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(50, 0), "pan_to": Vector2(-50, 0)},
+		{"path": "res://art/story/ch3_3.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO},
+	],
+	4: [
+		{"path": "res://art/story/ch4_1.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.0, "zoom_to": 1.1, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, -10)},
+		{"path": "res://art/story/ch4_2.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(50, 0), "pan_to": Vector2(-50, 0)},
+		{"path": "res://art/story/ch4_3.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO},
+	],
+	6: [
+		{"path": "res://art/story/end_1.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.0, "zoom_to": 1.1, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, -10)},
+		{"path": "res://art/story/end_2.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(50, 0), "pan_to": Vector2(-50, 0)},
+		{"path": "res://art/story/end_3.webp", "seconds": TRANSITION_BEAT_S, "zoom_from": 1.12, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO},
+	],
+}
 const TRANSITION_S: float = 2.4
 const TRANSITION_ZOOM: float = 1.08
 const MUSIC_STAGE_PATH: String = "res://audio/music/stage_%d.ogg"

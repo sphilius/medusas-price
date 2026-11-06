@@ -98,8 +98,8 @@ func _test_flow() -> void:
 	_check(GameFlow.current_index == 1 and RunLedger.level == 1, "flow index and ledger level = 1")
 
 	Events.level_exit_reached.emit()
-	# The cliffs have a painted transition panel first (Balance.TRANSITION_S).
-	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout
+	# The cliffs have a transition first (a story reel or one painting): wait for it.
+	await _wait_for_index(2)
 	_check(GameFlow.current_index == 2, "exit signal moves on to the cliffs")
 	var ends: Array = RunLedger.events_of("level_end")
 	_check(ends.size() == 1 and ends[0]["data"]["name"] == "level_1_temple" and ends[0]["data"]["seconds"] >= 0.0, "level_end logged with time")
@@ -110,10 +110,20 @@ func _test_flow() -> void:
 	key.keycode = KEY_4
 	key.pressed = true
 	GameFlow._unhandled_input(key)
-	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout  # the boss has a panel too
+	await _wait_for_index(4)  # the boss has a transition too
 	_check(GameFlow.current_index == 4, "key 4 skips to the boss")
 
 	# Intro resets the ledger (start_run).
 	GameFlow.go_to(0)
 	await get_tree().create_timer(1.5).timeout
 	_check(GameFlow.current_index == 0 and RunLedger.events_of("level_end").is_empty(), "intro starts a fresh run")
+
+
+## Wait until GameFlow has finished moving to `index` (transition included), at most
+## 30 s. `await` on a timer each loop lets the game run meanwhile.
+func _wait_for_index(index: int) -> void:
+	var waited: float = 0.0
+	while (GameFlow.current_index != index or GameFlow._changing) and waited < 30.0:
+		await get_tree().create_timer(0.25).timeout
+		waited += 0.25
+	await get_tree().create_timer(0.5).timeout

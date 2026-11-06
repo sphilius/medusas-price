@@ -14,6 +14,12 @@ extends CanvasLayer
 ## Emitted once when the reel ends or is skipped.
 signal finished
 
+## Set these BEFORE add_child (GameFlow does, for the reels between levels):
+## the beats to show (Balance.STORY_PANELS format), and whether the portrait-aging beat
+## follows them (only the title-card story has it).
+var panels: Array = Balance.STORY_PANELS
+var show_portrait: bool = true
+
 ## The panel being shown (a TextureRect that is moved and scaled by tweens).
 var _panel: TextureRect = null
 var _age: float = 0.0
@@ -38,12 +44,24 @@ func _ready() -> void:
 	_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_panel)
 	_sequence = create_tween()
-	for beat: Dictionary in Balance.STORY_PANELS:
+	for beat: Dictionary in panels:
+		if not ResourceLoader.exists(beat["path"]):
+			continue  # a missing panel is skipped, not shown as a black gap
 		_sequence.tween_callback(_show.bind(beat))
 		_sequence.tween_interval(float(beat["seconds"]))
-	_sequence.tween_callback(_portrait_aging)
-	_sequence.tween_interval(Balance.STORY_PORTRAIT_STEP_S * Balance.PORTRAIT_STAGE_COUNT + Balance.STORY_FADE_S)
+	if show_portrait:
+		_sequence.tween_callback(_portrait_aging)
+		_sequence.tween_interval(Balance.STORY_PORTRAIT_STEP_S * Balance.PORTRAIT_STAGE_COUNT + Balance.STORY_FADE_S)
 	_sequence.tween_callback(_finish)
+
+
+## True if at least one of `beats` has its picture on disk (static: callable as
+## StoryReel.has_any(...) without making a reel first).
+static func has_any(beats: Array) -> bool:
+	for beat: Dictionary in beats:
+		if ResourceLoader.exists(beat["path"]):
+			return true
+	return false
 
 
 ## One panel: set its picture, fade it up, drift from `from` to `to` (scale, offset in

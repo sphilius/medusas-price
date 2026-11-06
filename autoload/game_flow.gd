@@ -96,9 +96,11 @@ func go_to(index: int) -> void:
 	var out: Tween = create_tween()
 	out.tween_property(_fade, "modulate:a", 1.0, Balance.FADE_OUT_S)
 	await out.finished
-	# Between levels: the next level's painting rises out of the dark and drifts,
-	# then sinks back, before the level itself fades in (wordless "chapter" beat).
-	if Balance.TRANSITION_PANELS.has(index):
+	# Between levels: a short wordless story reel (3 painted panels) if its art exists,
+	# else the next level's painting rises out of the dark and drifts, then sinks back.
+	if Balance.TRANSITION_STORIES.has(index) and StoryReel.has_any(Balance.TRANSITION_STORIES[index]):
+		await _transition_reel(Balance.TRANSITION_STORIES[index])
+	elif Balance.TRANSITION_PANELS.has(index):
 		await _transition_panel(Balance.TRANSITION_PANELS[index])
 	get_tree().change_scene_to_file(ORDER[index])
 	# The new scene is in the tree a frame later.
@@ -109,6 +111,17 @@ func go_to(index: int) -> void:
 	back.tween_property(_fade, "modulate:a", 0.0, Balance.FADE_IN_S)
 	await back.finished
 	_changing = false
+
+
+## Play a StoryReel of `beats` (no portrait beat) and wait for its `finished` signal.
+## The player can skip it with jump, whip or gaze after STORY_SKIP_AFTER seconds.
+func _transition_reel(beats: Array) -> void:
+	var reel := StoryReel.new()
+	reel.panels = beats
+	reel.show_portrait = false
+	add_child(reel)
+	await reel.finished
+	reel.queue_free()
 
 
 ## Show one painting over the black fade: fade up, slow push-in, fade down. `await`
