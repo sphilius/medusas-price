@@ -56,6 +56,9 @@ static func from_enemy(enemy: Enemy) -> Statue:
 	statue.sync_to_physics = false
 	statue.transform = enemy.transform
 	statue.add_to_group(&"statues")
+	# Which enemy this was, so the level can remove the statue if that enemy comes
+	# back after Medusa's death (LevelBase._on_player_respawned).
+	statue.set_meta(&"from_enemy", enemy.get_instance_id())
 
 	# Same collision as the enemy (shape resources are shared; statues never resize).
 	for child in enemy.get_children():

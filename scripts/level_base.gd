@@ -42,7 +42,61 @@ const CAMERA_SCENE: PackedScene = preload("res://scenes/game_camera.tscn")
 var _lightning_timer: Timer
 
 
+## Every enemy placed in the level, kept so they can come back after Medusa dies:
+## [{template: an unused copy made before the enemy's _ready, live: the enemy in play
+## (an instance id), permanent: true once a pool was used after it was beaten}].
+var _enemy_slots: Array[Dictionary] = []
+
+
+## _enter_tree runs before the children's _ready, so the copies made here are pristine
+## (duplicate() copies the node with the properties the level file gave it). Perseus
+## is left out: he restarts his own fight (perseus.gd).
+func _enter_tree() -> void:
+	if not _enemy_slots.is_empty():
+		return
+	for child in get_children():
+		if child is Enemy and not child.has_method(&"_restart_fight"):
+			_enemy_slots.append({"template": child.duplicate(), "live": child.get_instance_id(), "permanent": false})
+
+
+## A pool is the checkpoint: enemies beaten before it stay beaten for good.
+func _on_checkpoint(_where: Vector2) -> void:
+	for slot: Dictionary in _enemy_slots:
+		if not _is_alive(slot["live"]):
+			slot["permanent"] = true
+
+
+## Medusa got up after dying: every enemy beaten since the last pool comes back where
+## it started, and the statue it had become (if still standing) is removed.
+func _on_player_respawned(_where: Vector2) -> void:
+	for slot: Dictionary in _enemy_slots:
+		if slot["permanent"] or _is_alive(slot["live"]):
+			continue
+		for statue: Node in get_tree().get_nodes_in_group(&"statues"):
+			if statue.get_meta(&"from_enemy", 0) == slot["live"]:
+				statue.queue_free()
+		var fresh: Node = (slot["template"] as Node).duplicate()
+		slot["live"] = fresh.get_instance_id()
+		add_child.call_deferred(fresh)  # deferred: we may be inside a physics callback
+
+
+## True if the enemy with this instance id still exists and is not dying or stone.
+func _is_alive(id: int) -> bool:
+	var enemy := instance_from_id(id) as Enemy
+	return enemy != null and is_instance_valid(enemy) and not enemy.is_queued_for_deletion() 			and not enemy._dying and not enemy._petrified
+
+
+## Frees the spare enemy copies (they were never added to the tree, so nothing else
+## would free them).
+func _exit_tree() -> void:
+	for slot: Dictionary in _enemy_slots:
+		(slot["template"] as Node).free()
+	_enemy_slots.clear()
+
+
 func _ready() -> void:
+	Events.pool_used.connect(_on_checkpoint)
+	Events.player_respawned.connect(_on_player_respawned)
 	_tint.color = _base_color()
 	(_backdrop as Polygon2D).color = Balance.COLOR_BACKDROP
 	_build_world_art()

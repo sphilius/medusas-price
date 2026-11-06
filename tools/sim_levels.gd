@@ -19,6 +19,7 @@ func _ready() -> void:
 	await _test_levels()
 	await _test_victim_statue()
 	await _test_cave_plate_door()
+	await _test_enemies_return()
 	await _test_flow()
 	print("sim_levels: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
@@ -80,6 +81,38 @@ func _test_victim_statue() -> void:
 	_check(victim.state == Statue.State.CRACKED, "victim cracks on first hit")
 	victim.whip_hit()
 	_check(victim.state == Statue.State.SHATTERED, "victim shatters on second hit")
+	level.free()
+	await get_tree().physics_frame
+
+
+## Death brings back enemies beaten since the last pool (and removes their statues);
+## after a pool, beaten enemies stay beaten.
+func _test_enemies_return() -> void:
+	var level: LevelBase = (load("res://scenes/levels/level_1_temple.tscn") as PackedScene).instantiate()
+	add_child(level)
+	await get_tree().physics_frame
+	var enemies: Array = level.get_children().filter(func(n: Node) -> bool: return n is Enemy)
+	var before: int = enemies.size()
+	var first: Enemy = enemies[0]
+	first.petrify()
+	await get_tree().physics_frame
+	var statues_after_petrify: int = get_tree().get_nodes_in_group(&"statues").size()
+	Events.player_respawned.emit(Vector2.ZERO)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var count: int = level.get_children().filter(func(n: Node) -> bool: return n is Enemy and not n.is_queued_for_deletion()).size()
+	_check(count == before, "death brings a petrified enemy back (%d of %d)" % [count, before])
+	_check(get_tree().get_nodes_in_group(&"statues").size() < statues_after_petrify, "its statue is removed")
+	# Now beat one, use a pool (checkpoint), die: it stays beaten.
+	var second: Enemy = level.get_children().filter(func(n: Node) -> bool: return n is Enemy and not n.is_queued_for_deletion())[0]
+	second.petrify()
+	await get_tree().physics_frame
+	Events.pool_used.emit(Vector2.ZERO)
+	Events.player_respawned.emit(Vector2.ZERO)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	count = level.get_children().filter(func(n: Node) -> bool: return n is Enemy and not n.is_queued_for_deletion()).size()
+	_check(count == before - 1, "after a pool, a beaten enemy stays beaten")
 	level.free()
 	await get_tree().physics_frame
 
