@@ -1,148 +1,279 @@
-## build_levels.gd - dev-only generator for the level scenes (run once, or again to reset them).
+## build_levels.gd - dev-only generator for the level scenes (run again to rebuild them).
 ## Run it with:  godot --headless --path . res://tools/build_levels.tscn
 ## (a scene, not --script, so the autoloads like Balance and Events exist).
-## It creates scenes/levels/level_1_temple.tscn (a short sample layout following the
-## spec's beats) and level_2_cliffs, level_3_cave and boss (a small starter floor and
-## the right lighting). Each one is an INHERITED scene of level_base.tscn, so editing
-## level_base later updates all of them. After this, edit the scenes in the Godot editor.
-## WARNING: running it overwrites those four scene files, including your edits.
+## It writes the levels named in BUILD as INHERITED scenes of level_base.tscn, so
+## editing level_base later updates all of them.
+## WARNING: running it overwrites those scene files, including edits made by hand.
+##
+## How the levels are designed (2026-11-05 rebuild, the full platformer kit):
+## each level is a chain of rooms. A room TEACHES one idea where failing is cheap, then
+## TESTS it with some danger, then TWISTS it (combines it with something else).
+## Measures to design with (Balance): 1 tile = 32 px, 1 BL = 2 tiles. A jump rises 2 BL
+## (4 tiles); a step of 2 to 3 tiles is comfortable. A walking jump crosses 3.5 BL
+## (7 tiles), a sprint jump 5.3 BL (10 tiles). The zoomed camera shows about 27 x 15 tiles.
+## Rows: row r has its top at y = r x 32. Level ground is row 19 (y 608) at the lowest.
 extends Node
 
 const BASE: String = "res://scenes/levels/level_base.tscn"
 
 ## Tile size in px (matches Balance.TILE_SIZE).
 const T: int = 32
-## Row of the floor's top surface: row 19 is y = 608 px.
+## The lowest ground row (y 608). Ground filled down to BOTTOM_ROW; level_base then
+## extends it below the view.
 const FLOOR_ROW: int = 19
-## Floor thickness in rows.
-const FLOOR_DEPTH: int = 3
+const BOTTOM_ROW: int = 22
+
+## Which level files this run writes. The boss arena was edited by hand (Perseus, pool),
+## so it is left out unless you add "boss" on purpose.
+const BUILD: Array[String] = ["level_1_temple", "level_2_cliffs", "level_3_cave"]
+
+const P_HOPLITE: String = "res://scenes/enemies/hoplite.tscn"
+const P_EYES: String = "res://scenes/enemies/eye_shading_hoplite.tscn"
+const P_LEAPER: String = "res://scenes/enemies/leaper.tscn"
+const P_ARCHER: String = "res://scenes/enemies/archer.tscn"
+const P_MIRROR: String = "res://scenes/enemies/mirror_bearer.tscn"
+const P_VICTIM: String = "res://scenes/props/victim_statue.tscn"
+const P_LEDGE: String = "res://scenes/props/safe_ledge.tscn"
+const P_POOL: String = "res://scenes/props/mirror_pool.tscn"
+const P_PIT: String = "res://scenes/props/pit.tscn"
+const P_TORCH: String = "res://scenes/props/torch.tscn"
+const P_PLATE: String = "res://scenes/props/pressure_plate.tscn"
+const P_MOVING: String = "res://scenes/props/moving_platform.tscn"
+const P_CRUMBLE: String = "res://scenes/props/crumbling_ledge.tscn"
+const P_COLUMN: String = "res://scenes/props/column_platform.tscn"
+const P_SPEARS: String = "res://scenes/props/spear_trap.tscn"
+const P_GATE: String = "res://scenes/props/gate.tscn"
+const P_SHARD: String = "res://scenes/props/shard.tscn"
+const P_HINT: String = "res://scenes/ui/key_hint.tscn"
 
 
-## _ready runs once when this scene starts. It builds each level file in turn and then
-## quits, so the whole tool is one command. Each _build_* function ends in _save().
+## _ready runs once when this scene starts: build each level in BUILD, then quit.
+## `match` is GDScript's switch statement.
 func _ready() -> void:
-	# Only the levels in BUILD are rewritten. Level 1 and the boss arena were edited by
-	# hand after they were generated (the boss has Perseus and a pool), so they are left
-	# alone; add their names here only to reset them on purpose.
 	for level: String in BUILD:
 		match level:
 			"level_1_temple": _build_level_1()
 			"level_2_cliffs": _build_level_2()
 			"level_3_cave": _build_level_3()
-			"boss": _build_starter("boss", LevelBase.Lighting.STORM, [])
+			"boss": _build_starter("boss", LevelBase.Lighting.STORM)
 	print("build_levels: done")
 	get_tree().quit()
 
 
-## Which level files this run writes (see _ready).
-const BUILD: Array[String] = ["level_2_cliffs", "level_3_cave"]
+# =====================================================================================
+# Level 1: temple steps at noon. Teaches every verb, then the first kit pieces.
+# =====================================================================================
 
-## Surface rows used by levels 2 and 3: the low floor (y 608) and the high shelf
-## 5 rows up (y 448, 2.5 BL higher). 2.5 BL is above Medusa's 2 BL jump but below
-## a jump made from the top of a 1 BL statue, so a shelf wall is a statue puzzle.
-const HIGH_ROW: int = 14
-## Rows of rock under a shelf (down past the bottom of the screen).
-const SHELF_DEPTH: int = 8
+## Rooms, left to right:
+## 1 the forecourt: move, a victim statue to push (teach push), up two temple steps (jump)
+## 2 the plateau: a hoplite (teach gaze), whip hint; a broken-column climb to a shard
+## 3 the leaper's gap: 4.5 BL, too far to walk-jump, a sprint jump clears it
+## 4 the pool (teach kneel), then the spear trench: a hoplite and a spare victim to push
+##   into it; a statue resting in the trench jams the spears (the statue bridge)
+## 5 the crumbling bridge over a pit: three cracked ledges that drop after you land
+## 6 two hoplites, then a lift (vertical moving platform) up to the temple; pool, exit
+func _build_level_1() -> void:
+	var root: LevelBase = _new_level("Level1Temple", LevelBase.Lighting.NOON)
+	var t: TileMapLayer = root.get_node("Terrain")
+	_ground(t, -4, 24, 19)
+	_ground(t, 24, 30, 17)         # temple step 1 (2 tiles up)
+	_ground(t, 30, 60, 15)         # step 2 and the plateau
+	# 3: the leaper's gap, tiles 60..69 (9 tiles = 4.5 BL)
+	_ground(t, 69, 92, 15)
+	# 4: spear trench, tiles 92..103, its floor 2 rows down
+	_ground(t, 92, 103, 17)
+	_ground(t, 103, 116, 15)
+	# 5: crumbling bridge over the pit, tiles 116..131
+	_ground(t, 131, 160, 15)
+	# 6: the lift shaft at 160..164, then the temple top 5 rows higher
+	_ground(t, 164, 194, 10)
+	_wall(t, -4, -2, 6, 19)
+	_wall(t, 192, 194, 0, 10)
+
+	root.get_node("Spawn").position = Vector2(128, 576)
+	root.get_node("LevelExit").position = Vector2(186 * T, 10 * T)
+
+	# Room 1
+	_hint(root, "HintMove", Vector2(260, 540), [&"move_left", &"move_right"], ["A", "D"], "right")
+	_add(root, "VictimPush", P_VICTIM, Vector2(13 * T, 576), {"pose": 1})
+	_decor(root, "Amphora1", "res://art/sprites/props/amphora.png", Vector2(6 * T, 19 * T), 56.0)
+	_hint(root, "HintJump", Vector2(21 * T, 540), [&"jump"], ["space"], "jump")
+	# Room 2
+	_add(root, "Hoplite1", P_HOPLITE, Vector2(46 * T, 15 * T - 32))
+	_hint(root, "HintGaze", Vector2(38 * T, 15 * T - 80), [&"gaze"], ["K"], "gaze")
+	_hint(root, "HintWhip", Vector2(50 * T, 15 * T - 80), [&"whip"], ["J"], "whip")
+	_column(root, "Column1", 52, 3, 11, 15)
+	_column(root, "Column2", 56, 3, 7, 15)
+	_add(root, "Shard1", P_SHARD, Vector2(57.5 * T, 6 * T))
+	# Room 3
+	_add(root, "SafeGapNear", P_LEDGE, Vector2(58 * T, 15 * T))
+	_hint(root, "HintSprint", Vector2(55 * T, 15 * T - 160), [&"run"], ["shift"], "right")
+	_add_pit(root, "PitLeaper", 60, 69, 15 * T)
+	_add(root, "Leaper", P_LEAPER, Vector2(70 * T, 15 * T - 20))
+	_add(root, "SafeGapFar", P_LEDGE, Vector2(72 * T, 15 * T))
+	# Room 4
+	_add(root, "PoolFirst", P_POOL, Vector2(76 * T, 15 * T))
+	_hint(root, "HintKneel", Vector2(76 * T, 15 * T - 80), [&"move_down"], ["S"], "down")
+	_add(root, "Hoplite2", P_HOPLITE, Vector2(86 * T, 15 * T - 32))
+	_add(root, "VictimSpare", P_VICTIM, Vector2(83 * T, 15 * T - 32), {"pose": 2, "faces_right": false})
+	_spears(root, "TrenchSpears", 92, 11, 17)
+	_decor(root, "ColumnDecor1", "res://art/sprites/props/column.png", Vector2(108 * T, 15 * T), 120.0)
+	# Room 5
+	_add(root, "SafeBridge", P_LEDGE, Vector2(114 * T, 15 * T))
+	_add_pit(root, "PitBridge", 116, 131, 15 * T)
+	_crumble(root, "Crumble1", 117, 3, 15)
+	_crumble(root, "Crumble2", 121, 3, 15)
+	_crumble(root, "Crumble3", 126, 3, 15)
+	_add(root, "SafeBridgeFar", P_LEDGE, Vector2(133 * T, 15 * T))
+	# Room 6
+	_add(root, "Hoplite3", P_HOPLITE, Vector2(140 * T, 15 * T - 32))
+	_add(root, "Hoplite4", P_HOPLITE, Vector2(150 * T, 15 * T - 32))
+	_lift(root, "Lift", 160, 4, 15, 10, 4.0)
+	_add_pit(root, "PitLift", 160, 164, 15 * T)
+	_add(root, "PoolLast", P_POOL, Vector2(172 * T, 10 * T))
+	_decor(root, "ColumnDecor2", "res://art/sprites/props/column.png", Vector2(180 * T, 10 * T), 140.0)
+	_save(root, "level_1_temple")
 
 
-## Level 2: cliffs over the sea at dusk. Beats, left to right:
-## 1) a hoplite: petrify him and push his statue against the 2.5 BL cliff to climb it
-##    (a victim statue behind the spawn is the spare if his statue gets smashed),
-## 2) an archer on the clifftop, 3) a 3 BL gap with the leaper waiting on the far side,
-## 4) a pool, a hoplite, then an archer on a pillar island between two 2.5 BL gaps
-##    (gaze him from the edge, about 3.3 BL away, out of whip reach),
-## 5) a hoplite and an eye-shading hoplite (0.7 s gaze), the last pool, the exit.
+# =====================================================================================
+# Level 2: cliffs over the sea at dusk. Archers, the leaper, and going UP.
+# =====================================================================================
+
+## Rooms:
+## 1 the cliff foot: petrify a hoplite, push his statue to the 2.5 BL cliff and climb it
+##   (spare victim statue behind the spawn)
+## 2 the clifftop: an archer; a column to a shard
+## 3 the sea gap: a moving slab ferries her across 5 BL of open sea; the leaper waits
+## 4 the pillar archer between two gaps (gaze reaches 4 BL, the whip only 2)
+## 5 the crumbling stair: three cracked ledges climbing to the high cliff over the sea
+## 6 the high cliff: hoplite, eye-shading hoplite (0.7 s gaze), pool, exit
 func _build_level_2() -> void:
 	var root: LevelBase = _new_level("Level2Cliffs", LevelBase.Lighting.DUSK)
-	var terrain: TileMapLayer = root.get_node("Terrain")
-	var high_y: int = HIGH_ROW * T  # 448
-	_fill(terrain, -4, 30, FLOOR_ROW, FLOOR_DEPTH)       # start floor
-	_fill(terrain, 30, 52, HIGH_ROW, SHELF_DEPTH)        # first clifftop (wall at x 960)
-	_fill(terrain, 58, 90, HIGH_ROW, SHELF_DEPTH)        # after the 3 BL leaper gap
-	_fill(terrain, 95, 99, HIGH_ROW - 2, SHELF_DEPTH + 2)  # the archer's pillar (1 BL higher)
-	_fill(terrain, 104, 140, HIGH_ROW, SHELF_DEPTH)      # last stretch
-	_fill(terrain, -4, -2, 8, 14)                        # left wall
-	_fill(terrain, 138, 140, 4, 10)                      # right wall
+	var t: TileMapLayer = root.get_node("Terrain")
+	_ground(t, -4, 26, 19)
+	_ground(t, 26, 48, 14)         # the cliff, 5 rows (2.5 BL) above the start
+	# 3: sea gap 48..58
+	_ground(t, 58, 72, 14)
+	# 4: gap 72..77, pillar 77..81 one row higher... two rows, gap 81..86
+	_ground(t, 77, 81, 12)
+	_ground(t, 86, 102, 14)
+	# 5: crumbling stair over the sea 102..117
+	_ground(t, 117, 140, 8)        # the high cliff, 6 rows above
+	_wall(t, -4, -2, 6, 19)
+	_wall(t, 138, 140, -2, 8)
 
-	# Medusa starts a little in, with the spare statue BEHIND her: placed in front, it
-	# stood between her and the hoplite and blocked her gaze (playtest, 2026-11-05).
 	root.get_node("Spawn").position = Vector2(300, 576)
-	root.get_node("LevelExit").position = Vector2(4300, high_y)
+	root.get_node("LevelExit").position = Vector2(135 * T, 8 * T)
 
-	# Beat 1: the hoplite whose statue is the climbing block; the spare behind her.
-	_add(root, "VictimStatue", "res://scenes/props/victim_statue.tscn", Vector2(150, 576), {"pose": 0})
-	_add(root, "HopliteCliff", "res://scenes/enemies/hoplite.tscn", Vector2(700, 576))
-	_add(root, "SafeLedgeTop", "res://scenes/props/safe_ledge.tscn", Vector2(1100, high_y))
-	# Beat 2: the clifftop archer.
-	_add(root, "ArcherTop", "res://scenes/enemies/archer.tscn", Vector2(1500, high_y - 32))
-	# Beat 3: the 3 BL gap (tiles 52..58) with the leaper on the far edge.
-	_add(root, "SafeLedgeGapNear", "res://scenes/props/safe_ledge.tscn", Vector2(1600, high_y))
-	_add_pit(root, "PitLeaper", 52, 58, high_y)
-	_add(root, "Leaper", "res://scenes/enemies/leaper.tscn", Vector2(1890, high_y - 20))
-	_add(root, "SafeLedgeGapFar", "res://scenes/props/safe_ledge.tscn", Vector2(1960, high_y))
-	# Beat 4: pool, hoplite, then the pillar archer between two 2.5 BL gaps.
-	_add(root, "PoolMid", "res://scenes/props/mirror_pool.tscn", Vector2(2300, high_y))
-	_add(root, "Hoplite2", "res://scenes/enemies/hoplite.tscn", Vector2(2600, high_y - 32))
-	_add(root, "SafeLedgePillarNear", "res://scenes/props/safe_ledge.tscn", Vector2(2780, high_y))
-	_add_pit(root, "PitPillarNear", 90, 95, high_y)
-	_add(root, "ArcherPillar", "res://scenes/enemies/archer.tscn", Vector2(3090, high_y - 64 - 32))
-	_add_pit(root, "PitPillarFar", 99, 104, high_y)
-	_add(root, "SafeLedgeFinal", "res://scenes/props/safe_ledge.tscn", Vector2(3400, high_y))
-	# Beat 5: two hoplites (the second shades his eyes), the last pool, the exit.
-	_add(root, "Hoplite3", "res://scenes/enemies/hoplite.tscn", Vector2(3700, high_y - 32))
-	_add(root, "EyeShading", "res://scenes/enemies/eye_shading_hoplite.tscn", Vector2(3950, high_y - 32))
-	_add(root, "PoolLast", "res://scenes/props/mirror_pool.tscn", Vector2(4150, high_y))
+	# Room 1
+	_add(root, "VictimSpare", P_VICTIM, Vector2(150, 576), {"pose": 0})
+	_add(root, "HopliteCliff", P_HOPLITE, Vector2(700, 576))
+	_add(root, "SafeTop", P_LEDGE, Vector2(30 * T, 14 * T))
+	# Room 2
+	_add(root, "ArcherTop", P_ARCHER, Vector2(44 * T, 14 * T - 32))
+	_column(root, "Column1", 36, 3, 10, 14)
+	_add(root, "Shard1", P_SHARD, Vector2(37.5 * T, 9 * T))
+	# Room 3
+	_add(root, "SafeSeaNear", P_LEDGE, Vector2(46 * T, 14 * T))
+	_add_pit(root, "PitSea", 48, 58, 14 * T)
+	_ferry(root, "Ferry", 49, 3, 14, Vector2(5 * T, 0), 3.5)
+	_add(root, "Leaper", P_LEAPER, Vector2(59 * T, 14 * T - 20))
+	_add(root, "SafeSeaFar", P_LEDGE, Vector2(61 * T, 14 * T))
+	_add(root, "PoolMid", P_POOL, Vector2(66 * T, 14 * T))
+	# Room 4
+	_add(root, "SafePillarNear", P_LEDGE, Vector2(70 * T, 14 * T))
+	_add_pit(root, "PitPillarNear", 72, 77, 14 * T)
+	_add(root, "ArcherPillar", P_ARCHER, Vector2(79 * T, 12 * T - 32))
+	_add_pit(root, "PitPillarFar", 81, 86, 14 * T)
+	_add(root, "SafePillarFar", P_LEDGE, Vector2(88 * T, 14 * T))
+	_add(root, "Hoplite2", P_HOPLITE, Vector2(95 * T, 14 * T - 32))
+	# Room 5
+	_add(root, "SafeStair", P_LEDGE, Vector2(100 * T, 14 * T))
+	_add_pit(root, "PitStair", 102, 117, 14 * T)
+	_crumble(root, "Stair1", 103, 3, 12)
+	_crumble(root, "Stair2", 107, 3, 10)
+	_crumble(root, "Stair3", 111, 3, 8)
+	# Room 6
+	_add(root, "SafeHigh", P_LEDGE, Vector2(119 * T, 8 * T))
+	_add(root, "Hoplite3", P_HOPLITE, Vector2(123 * T, 8 * T - 32))
+	_add(root, "EyeShading", P_EYES, Vector2(128 * T, 8 * T - 32))
+	_add(root, "PoolLast", P_POOL, Vector2(132 * T, 8 * T))
 	_save(root, "level_2_cliffs")
 
 
-## Level 3: the cave of statues by torchlight. Beats, left to right:
-## 1) old victim statues, then a mirror-bearer on open floor (whip the mirror aside,
-##    then gaze), 2) a victim statue and an eye-shading hoplite: push either statue to
-##    the 2.5 BL shelf wall and climb, 3) a mirror-bearer guarding a hoplite on the
-##    shelf, 4) a 2.5 BL gap, a pool, 5) the door: it is open only while something
-##    rests on the pressure plate. Push the waiting victim statue onto the plate (or
-##    petrify the last mirror-bearer and push his statue back), then walk out.
+# =====================================================================================
+# Level 3: the cave of statues by torchlight. Mirror-bearers, plates, gates, a lift.
+# =====================================================================================
+
+## Rooms:
+## 1 the hall of victims: old statues, the first mirror-bearer (whip the mirror aside,
+##   then gaze)
+## 2 the gate: a plate 10 tiles before a portcullis. Standing on it yourself is not enough
+##   (the gate shuts as you leave); push a victim statue onto it
+## 3 the spear trench: an eye-shading hoplite to petrify and push in as a bridge
+## 4 the lift shaft up to the shelf; a mirror-bearer guarding a hoplite; a column to a shard
+## 5 a crumbling ledge over a gap, the pool
+## 6 the door: open only while a statue rests on the plate 450 px away (exit_needs_plate)
 func _build_level_3() -> void:
 	var root: LevelBase = _new_level("Level3Cave", LevelBase.Lighting.TORCHLIGHT)
 	root.exit_needs_plate = true
-	var terrain: TileMapLayer = root.get_node("Terrain")
-	var high_y: int = HIGH_ROW * T  # 448
-	_fill(terrain, -4, 64, FLOOR_ROW, FLOOR_DEPTH)       # cave floor
-	_fill(terrain, 64, 92, HIGH_ROW, SHELF_DEPTH)        # the shelf (wall at x 2048)
-	_fill(terrain, 97, 135, HIGH_ROW, SHELF_DEPTH)       # past the gap
-	_fill(terrain, -4, -2, 8, 14)                        # left wall
-	_fill(terrain, 133, 135, 4, 10)                      # right wall
+	var t: TileMapLayer = root.get_node("Terrain")
+	_ground(t, -4, 56, 19)
+	# 3: trench 56..67, two rows down
+	_ground(t, 56, 67, 21)
+	_ground(t, 67, 80, 19)
+	# 4: lift shaft 80..84, shelf 6 rows up
+	_ground(t, 84, 110, 13)
+	# 5: gap 110..117
+	_ground(t, 117, 142, 13)
+	_wall(t, -4, -2, 4, 19)
+	_wall(t, 140, 142, 0, 13)
+	# The cave ceiling: a band of rock along the top, with a lower overhang over room 4.
+	_wall(t, -4, 142, -4, 4)
+	_wall(t, 60, 78, 4, 7)
 
 	root.get_node("Spawn").position = Vector2(128, 576)
-	root.get_node("LevelExit").position = Vector2(4100, high_y)
+	root.get_node("LevelExit").position = Vector2(138 * T, 13 * T)
 
-	# Torches along the way, a little above head height.
-	var torches: Array[Vector2] = [Vector2(300, 480), Vector2(850, 480), Vector2(1400, 480),
-			Vector2(1950, 480), Vector2(2500, 320), Vector2(3050, 320), Vector2(3600, 320), Vector2(4050, 320)]
+	var torches: Array[Vector2] = [Vector2(10, 15), Vector2(26, 15), Vector2(42, 15), Vector2(70, 15),
+			Vector2(90, 9), Vector2(104, 9), Vector2(122, 9), Vector2(134, 9)]
 	for i in torches.size():
-		_add(root, "Torch%d" % (i + 1), "res://scenes/props/torch.tscn", torches[i])
+		_add(root, "Torch%d" % (i + 1), P_TORCH, torches[i] * T)
+	for i in 6:
+		_decor(root, "Stalactite%d" % (i + 1), "res://art/sprites/props/stalactite.png",
+				Vector2((14 + i * 22) * T, 4 * T + 70), 70.0, true)
 
-	# Beat 1: the statues of those who came before, then the first mirror-bearer.
-	_add(root, "VictimOld1", "res://scenes/props/victim_statue.tscn", Vector2(420, 576), {"pose": 0})
-	_add(root, "VictimOld2", "res://scenes/props/victim_statue.tscn", Vector2(560, 576), {"pose": 2, "faces_right": false})
-	_add(root, "MirrorBearer1", "res://scenes/enemies/mirror_bearer.tscn", Vector2(1000, 576))
-	# Beat 2: two ways to get a climbing block to the shelf wall.
-	_add(root, "VictimClimb", "res://scenes/props/victim_statue.tscn", Vector2(1500, 576), {"pose": 1})
-	_add(root, "EyeShading", "res://scenes/enemies/eye_shading_hoplite.tscn", Vector2(1750, 576))
-	_add(root, "SafeLedgeShelf", "res://scenes/props/safe_ledge.tscn", Vector2(2150, high_y))
-	# Beat 3: a mirror-bearer in front of a hoplite.
-	_add(root, "MirrorBearer2", "res://scenes/enemies/mirror_bearer.tscn", Vector2(2500, high_y - 32))
-	_add(root, "Hoplite", "res://scenes/enemies/hoplite.tscn", Vector2(2750, high_y - 32))
-	# Beat 4: the gap (tiles 92..97) and the pool after it.
-	_add(root, "SafeLedgeGapNear", "res://scenes/props/safe_ledge.tscn", Vector2(2880, high_y))
-	_add_pit(root, "PitGap", 92, 97, high_y)
-	_add(root, "SafeLedgeGapFar", "res://scenes/props/safe_ledge.tscn", Vector2(3200, high_y))
-	_add(root, "PoolLast", "res://scenes/props/mirror_pool.tscn", Vector2(3330, high_y))
-	# Beat 5: the plate door. The plate is 450 px from the door, so Medusa cannot hold
-	# it down herself and reach the exit; a statue has to stay on it.
-	_add(root, "VictimPlate", "res://scenes/props/victim_statue.tscn", Vector2(3500, high_y - 32), {"pose": 0})
-	_add(root, "Plate", "res://scenes/props/pressure_plate.tscn", Vector2(3650, high_y))
-	_add(root, "MirrorBearer3", "res://scenes/enemies/mirror_bearer.tscn", Vector2(3900, high_y - 32))
+	# Room 1
+	_add(root, "VictimOld1", P_VICTIM, Vector2(12 * T, 576), {"pose": 0})
+	_add(root, "VictimOld2", P_VICTIM, Vector2(16 * T, 576), {"pose": 3, "faces_right": false})
+	_add(root, "MirrorBearer1", P_MIRROR, Vector2(24 * T, 576))
+	# Room 2: plate at 34, gate at 45
+	_add(root, "VictimGate", P_VICTIM, Vector2(30 * T, 576), {"pose": 1})
+	_add(root, "GatePlate", P_PLATE, Vector2(35 * T, 19 * T))
+	_gate(root, "Gate1", 45, 19, 4, NodePath("../GatePlate"))
+	# Room 3
+	_add(root, "EyeShading", P_EYES, Vector2(52 * T, 576))
+	_add(root, "SafeTrench", P_LEDGE, Vector2(54 * T, 19 * T))
+	_spears(root, "TrenchSpears", 56, 11, 21)
+	_add(root, "SafeTrenchFar", P_LEDGE, Vector2(69 * T, 19 * T))
+	# Room 4
+	_lift(root, "Lift", 80, 4, 19, 13, 4.0)
+	_add_pit(root, "PitLift", 80, 84, 19 * T)
+	_add(root, "SafeShelf", P_LEDGE, Vector2(86 * T, 13 * T))
+	_add(root, "MirrorBearer2", P_MIRROR, Vector2(94 * T, 13 * T - 32))
+	_add(root, "Hoplite", P_HOPLITE, Vector2(100 * T, 13 * T - 32))
+	_column(root, "Column1", 104, 3, 9, 13)
+	_add(root, "Shard1", P_SHARD, Vector2(105.5 * T, 8 * T))
+	# Room 5
+	_add(root, "SafeGap", P_LEDGE, Vector2(108 * T, 13 * T))
+	_add_pit(root, "PitGap", 110, 117, 13 * T)
+	_crumble(root, "CrumbleGap", 112, 3, 13)
+	_add(root, "SafeGapFar", P_LEDGE, Vector2(119 * T, 13 * T))
+	_add(root, "PoolLast", P_POOL, Vector2(121 * T, 13 * T))
+	# Room 6: the plate door
+	_add(root, "VictimPlate", P_VICTIM, Vector2(124 * T, 13 * T - 32), {"pose": 0})
+	_add(root, "Plate", P_PLATE, Vector2(127 * T, 13 * T))
+	_add(root, "MirrorBearer3", P_MIRROR, Vector2(133 * T, 13 * T - 32))
 	var plate: Node = root.get_node("Plate")
 	# CONNECT_PERSIST saves the connection in the .tscn, so it exists when the level loads.
 	plate.connect(&"pressed", Callable(root, &"unlock_exit"), CONNECT_PERSIST)
@@ -150,64 +281,93 @@ func _build_level_3() -> void:
 	_save(root, "level_3_cave")
 
 
+## A level with only a starter floor (used for the boss arena when rebuilt on purpose).
+func _build_starter(file: String, light: LevelBase.Lighting) -> void:
+	var root: LevelBase = _new_level(file.to_pascal_case(), light)
+	var t: TileMapLayer = root.get_node("Terrain")
+	_ground(t, -4, 60, FLOOR_ROW)
+	_wall(t, -4, -2, 8, FLOOR_ROW)
+	_save(root, file)
+
+
+# =====================================================================================
+# Building blocks
+# =====================================================================================
+
+## Ground with its top surface at `top_row`, filled down to BOTTOM_ROW, columns [x0, x1).
+func _ground(layer: TileMapLayer, x0: int, x1: int, top_row: int) -> void:
+	_fill(layer, x0, x1, top_row, BOTTOM_ROW - top_row + 1)
+
+
+## Solid rock between rows [row0, row1), columns [x0, x1) (walls, ceilings).
+func _wall(layer: TileMapLayer, x0: int, x1: int, row0: int, row1: int) -> void:
+	_fill(layer, x0, x1, row0, row1 - row0)
+
+
+## A column platform: slab `width` tiles wide at column x, its top on `top_row`, the
+## column reaching down to the ground surface at `ground_row`.
+func _column(root: Node, node_name: String, x: int, width: int, top_row: int, ground_row: int) -> void:
+	_add(root, node_name, P_COLUMN, Vector2(x * T, top_row * T),
+			{"width_tiles": width, "column_height": float((ground_row - top_row) * T)})
+
+
+## A crumbling ledge `width` tiles wide, its top on `top_row`.
+func _crumble(root: Node, node_name: String, x: int, width: int, top_row: int) -> void:
+	_add(root, node_name, P_CRUMBLE, Vector2(x * T, top_row * T), {"width_tiles": width})
+
+
+## A lift: a moving slab in a shaft that carries her from `from_row` up to `to_row`.
+func _lift(root: Node, node_name: String, x: int, width: int, from_row: int, to_row: int, period: float) -> void:
+	_add(root, node_name, P_MOVING, Vector2(x * T, from_row * T),
+			{"width_tiles": width, "travel": Vector2(0, (to_row - from_row) * T), "period": period})
+
+
+## A ferry: a moving slab that glides sideways by `travel`.
+func _ferry(root: Node, node_name: String, x: int, width: int, top_row: int, travel: Vector2, period: float) -> void:
+	_add(root, node_name, P_MOVING, Vector2(x * T, top_row * T),
+			{"width_tiles": width, "travel": travel, "period": period})
+
+
+## A spear trap `width` tiles wide on the ground surface at `row`.
+func _spears(root: Node, node_name: String, x: int, width: int, row: int) -> void:
+	_add(root, node_name, P_SPEARS, Vector2(x * T, row * T), {"width_tiles": width})
+
+
+## A gate at column x standing on the surface at `row`, `height` tiles tall.
+func _gate(root: Node, node_name: String, x: int, row: int, height: int, plate: NodePath) -> void:
+	_add(root, node_name, P_GATE, Vector2(x * T, row * T), {"height_tiles": height, "plate": plate})
+
+
+## A key hint. Typed arrays are built here, because the hint's @export properties are
+## Array[StringName] / Array[String] and an untyped [] literal would not fit them.
+func _hint(root: Node, node_name: String, pos: Vector2, actions: Array[StringName], keys: Array[String], icon: String) -> void:
+	_add(root, node_name, P_HINT, pos, {"actions": actions, "keys": keys, "icon_name": icon})
+
+
+## A decoration sprite (no collision) standing on `feet` (bottom-centre), `height` px
+## tall, drawn behind the characters. `hang` hangs it from the point instead.
+func _decor(root: Node, node_name: String, texture_path: String, feet: Vector2, height: float, hang: bool = false) -> void:
+	if not ResourceLoader.exists(texture_path):
+		return
+	var tex: Texture2D = load(texture_path)
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = tex
+	sprite.scale = Vector2.ONE * (height / tex.get_height())
+	sprite.offset = Vector2(0, tex.get_height() * 0.5 if hang else -tex.get_height() * 0.5)
+	sprite.position = feet
+	sprite.z_index = -1
+	root.add_child(sprite)
+	sprite.owner = root
+
+
 ## A pit under the gap between tile columns x0 and x1, for a floor at `surface_y`:
-## its top edge sits 112 px below the floor (as in level 1) and it is 2 BL wider than
-## the gap so a body falling past the edge is still caught.
+## its top edge sits 112 px below the floor and it is 2 BL wider than the gap so a body
+## falling past the edge is still caught.
 func _add_pit(root: Node, node_name: String, x0: int, x1: int, surface_y: int) -> void:
 	var center_x: float = (x0 + x1) * 0.5 * T
-	_add(root, node_name, "res://scenes/props/pit.tscn", Vector2(center_x, surface_y + 112),
+	_add(root, node_name, P_PIT, Vector2(center_x, surface_y + 112),
 			{"size": Vector2((x1 - x0) * T + 128, 500)})
-
-
-## Level 1: temple steps at noon. Beats in order, left to right:
-## 1) a hoplite standing on a ledge, 2) the leaper and the 4.5 BL gap (a sprint jump
-## clears it), 3) a pool soon after the first cracks, 4) three hoplites, 5) a pool, the exit.
-func _build_level_1() -> void:
-	var root: LevelBase = _new_level("Level1Temple", LevelBase.Lighting.NOON)
-	var terrain: TileMapLayer = root.get_node("Terrain")
-	var gap_tiles: int = roundi(Balance.LEVEL1_GAP_BL * Balance.BL / T)  # 4.5 BL = 9 tiles
-	var gap_start: int = 48
-	var gap_end: int = gap_start + gap_tiles
-	_fill(terrain, -4, gap_start, FLOOR_ROW, FLOOR_DEPTH)       # near floor
-	_fill(terrain, gap_end, 126, FLOOR_ROW, FLOOR_DEPTH)        # far floor
-	_fill(terrain, 20, 30, FLOOR_ROW - 3, 3)                    # the ledge (1.5 BL high)
-	_fill(terrain, -4, -2, 8, 14)                               # left wall
-	_fill(terrain, 124, 126, 8, 14)                             # right wall
-
-	var gap_center: float = (gap_start + gap_tiles * 0.5) * T
-	root.get_node("Spawn").position = Vector2(128, 576)
-	root.get_node("LevelExit").position = Vector2(3800, FLOOR_ROW * T)
-
-	# Beat 1: a victim to push or crack, a hoplite up on the ledge.
-	_add(root, "VictimStatue", "res://scenes/props/victim_statue.tscn", Vector2(420, 576), {"pose": 1})
-	_add(root, "HopliteLedge", "res://scenes/enemies/hoplite.tscn", Vector2(800, 480))
-	# Beat 2: the leaper waits at the edge; safe ledges either side; the pit under the gap.
-	_add(root, "SafeLedgeNear", "res://scenes/props/safe_ledge.tscn", Vector2(1400, FLOOR_ROW * T))
-	_add(root, "Leaper", "res://scenes/enemies/leaper.tscn", Vector2(1470, 588))
-	_add(root, "Pit", "res://scenes/props/pit.tscn", Vector2(gap_center, 720), {"size": Vector2(gap_tiles * T + 128, 500)})
-	_add(root, "SafeLedgeFar", "res://scenes/props/safe_ledge.tscn", Vector2(gap_end * T + 60, FLOOR_ROW * T))
-	# Beat 3: the first pool, after the first cracks.
-	_add(root, "PoolFirst", "res://scenes/props/mirror_pool.tscn", Vector2(2000, FLOOR_ROW * T))
-	_add(root, "VictimCrouched", "res://scenes/props/victim_statue.tscn", Vector2(2250, 576), {"pose": 2, "faces_right": false})
-	# Beat 4: three hoplites in a row. Beat 5: the pool before the exit.
-	_add(root, "Hoplite1", "res://scenes/enemies/hoplite.tscn", Vector2(2500, 576))
-	_add(root, "Hoplite2", "res://scenes/enemies/hoplite.tscn", Vector2(2800, 576))
-	_add(root, "Hoplite3", "res://scenes/enemies/hoplite.tscn", Vector2(3100, 576))
-	_add(root, "PoolLast", "res://scenes/props/mirror_pool.tscn", Vector2(3450, FLOOR_ROW * T))
-	_save(root, "level_1_temple")
-
-
-## A level with only a starter floor (so you can stand in it) and its lighting.
-func _build_starter(file: String, light: LevelBase.Lighting, torches: Array) -> void:
-	var root: LevelBase = _new_level(file.to_pascal_case(), light)
-	var terrain: TileMapLayer = root.get_node("Terrain")
-	_fill(terrain, -4, 60, FLOOR_ROW, FLOOR_DEPTH)
-	_fill(terrain, -4, -2, 8, 14)
-	var i: int = 0
-	for pos: Vector2 in torches:
-		i += 1
-		_add(root, "Torch%d" % i, "res://scenes/props/torch.tscn", pos)
-	_save(root, file)
 
 
 ## An inherited-scene root of level_base. GEN_EDIT_STATE_MAIN is what makes saving it
@@ -237,6 +397,7 @@ func _add(root: Node, node_name: String, path: String, pos: Vector2, props: Dict
 	node.owner = root  # without an owner the node is not saved with the scene
 
 
+## Pack the level into a scene file.
 func _save(root: Node, file: String) -> void:
 	var packed := PackedScene.new()
 	packed.pack(root)
