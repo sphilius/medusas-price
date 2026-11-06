@@ -220,6 +220,32 @@ func _build_terrain_art(index: int) -> void:
 	mat.set_shader_parameter("deep_px", Balance.TERRAIN_DEEP_PX)
 	mat.set_shader_parameter("deep_max", Balance.TERRAIN_DEEP_MAX)
 	_terrain.material = mat
+	# Pieces (moving, crumbling, column platforms) get the same look. Their own copy of
+	# the material draws the surface in local space, so it rides along when they move.
+	var piece_mat := mat.duplicate() as ShaderMaterial
+	piece_mat.set_shader_parameter("local_space", true)
+	for piece: Node in get_tree().get_nodes_in_group(&"terrain_pieces"):
+		_skin_piece((piece as TerrainPiece).tiles, tile_set, piece_mat)
+
+
+## Re-tile one piece's own TileMapLayer with the edge and depth markers (its neighbours
+## are only its own cells) and give it the terrain material. Collision comes along,
+## because every marker tile has the base tile's collision polygon.
+func _skin_piece(layer: TileMapLayer, tile_set: TileSet, piece_mat: ShaderMaterial) -> void:
+	layer.tile_set = tile_set
+	var source_id: int = tile_set.get_source_id(0)
+	for cell: Vector2i in layer.get_used_cells():
+		var flags: int = 0
+		if layer.get_cell_source_id(cell + Vector2i.UP) == -1:
+			flags |= 1
+		if layer.get_cell_source_id(cell + Vector2i.LEFT) == -1:
+			flags |= 2
+		if layer.get_cell_source_id(cell + Vector2i.RIGHT) == -1:
+			flags |= 4
+		if layer.get_cell_source_id(cell + Vector2i.DOWN) == -1:
+			flags |= 8
+		layer.set_cell(cell, source_id, Vector2i(flags, mini(cell.y, 7)))
+	layer.material = piece_mat
 
 
 ## Load a texture if the file exists; null (and no error popup) if it does not.

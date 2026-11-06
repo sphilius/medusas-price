@@ -34,12 +34,16 @@ uniform vec4 deep_color : source_color = vec4(0.2, 0.1, 0.06, 1.0);
 uniform float deep_px = 192.0;
 uniform float deep_max = 0.75;
 
+// Moving pieces set this: the surface is drawn in the piece's own space so it does not
+// slide across the slab as the slab moves.
+uniform bool local_space = false;
+
 // `varying` passes a value from vertex() to fragment(), interpolated per pixel.
 varying vec2 world_pos;
 
 void vertex() {
 	// MODEL_MATRIX turns the tile layer's local position into world position.
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+	world_pos = local_space ? VERTEX : (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
 }
 
 void fragment() {

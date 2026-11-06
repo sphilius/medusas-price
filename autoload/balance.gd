@@ -777,6 +777,17 @@ const TERRAIN_DEEP_COLOR: Array[Color] = [
 ]
 const TERRAIN_DEEP_PX: float = 160.0
 const TERRAIN_DEEP_MAX: float = 0.85
+# --- Platformer kit (scripts/terrain_piece.gd and the props built on it) ---
+## Crumbling ledge: seconds from Medusa landing to the drop, seconds until it is back,
+## how far it sinks while fading (px), and its pale cracked-marble tint.
+const CRUMBLE_DELAY: float = 0.5
+const CRUMBLE_RESPAWN: float = 3.0
+const CRUMBLE_DROP_PX: float = 24.0
+const CRUMBLE_TINT: Color = Color(1.25, 1.18, 1.1, 1.0)
+## Column platform: thickness of its one-way top (px), the column sprite and its width.
+const COLUMN_ONE_WAY_THICKNESS: float = 8.0
+const COLUMN_TEXTURE: String = "res://art/sprites/props/column.png"
+const COLUMN_WIDTH: float = 56.0
 ## Camera zoom (2 = twice as close). 1.5 makes Medusa about 96 screen px tall, about
 ## an eighth of the screen, like the reference platformers.
 const CAMERA_ZOOM: float = 1.5
