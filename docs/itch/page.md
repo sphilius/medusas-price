@@ -48,8 +48,8 @@ At the cave mouth, Perseus waits with a mirror for a shield.
 | Snake whip | J | whip button |
 | Gaze | hold K | gaze button |
 | Push a statue | walk into it and keep holding | same |
-
 | Pause | Esc or P | pause button (top right) |
+| Webcam stare (optional) | pause menu → camera button, then widen your eyes | same, front camera |
 
 **Tips without spoilers:** lash an enemy while its weapon glints gold to parry. A parried enemy can be finished by your snakes. Statues jam spike traps. The little gold-rimmed portraits mend cracks, or ring your portrait in gold to stop the next one. Die, and everyone you beat since your last pool comes back.
 
@@ -58,6 +58,7 @@ At the cave mouth, Perseus waits with a mirror for a shield.
 Made in 5 days for **Jamference AI Game Jam Hack 3**, theme *Great Works of Art*.
 
 - **The run vase:** when you beat Perseus, your run is painted onto a black-figure amphora. A small Claude model reads what happened (who you petrified, how you fought, how old your portrait got) and writes a frieze, an image model paints it, and a check makes sure no letters sneak onto the pot. If anything fails or you are offline, a hand-made vase appears instead.
+- **Webcam stare mode:** open the pause menu (Esc, or the button in the top right) and tap the camera. A face-tracking model (Google's MediaPipe Face Landmarker) runs right in your browser, spends a second and a half learning your relaxed face, then turns *widening your eyes* into Medusa's petrifying gaze. You literally stare heroes into stone. Your video never leaves your device: no upload, no recording. A small round mirror at the top of the screen shows you, and its ring turns gold while your stare is on. Works on laptops and phones; the K key and gaze button still work alongside it.
 - **Perseus learns:** he watches how fast you react when his shield drops and which side you guard least, then shortens his window and attacks from your blind side.
 - **The score** follows the portrait: five loops, one per stage, thinning as she ages.
 
@@ -76,4 +77,4 @@ Best in Chrome or Firefox on desktop. About 10 to 15 minutes to finish.
 
 ## Jam submission field (if the jam form asks for "How did you use AI?")
 
-AI is in the pipeline and in the game. Pipeline: art from Nano Banana briefs, music from ElevenLabs, code with Claude Code. In the game: the run vase (Claude writes a wordless frieze from your run log, an image model paints it, a letter check rejects any writing, fallback vase offline), and Perseus adapts his shield window and attack side to how you play. No API keys ship in the build; the AI calls go through a rate-limited Cloudflare Worker.
+AI is in the pipeline and in the game, three ways: the AI-painted run vase, webcam stare mode (on-device face tracking turns your real stare into Medusa's gaze), and a Perseus who adapts to how you play. Pipeline: art from Nano Banana briefs, music from ElevenLabs, code with Claude Code. In the game: the run vase (Claude writes a wordless frieze from your run log, an image model paints it, a letter check rejects any writing, fallback vase offline), and Perseus adapts his shield window and attack side to how you play. No API keys ship in the build; the AI calls go through a rate-limited Cloudflare Worker.
