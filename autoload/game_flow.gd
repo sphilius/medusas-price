@@ -62,12 +62,17 @@ func _ready() -> void:
 var _fps_clock: float = 0.0
 
 
-## Debug builds: print the frame rate once a second (read it in the browser console).
+## Debug builds: print the frame rate, the scene and the music track (with how far into
+## it the music is, in seconds) once a second. Console only, never on screen.
 func _process(delta: float) -> void:
 	_fps_clock += delta
 	if _fps_clock >= 1.0:
 		_fps_clock = 0.0
-		print("fps %d scene %d" % [Engine.get_frames_per_second(), current_index])
+		var track: AudioStreamPlayer = Music.current()
+		var music: String = "none"
+		if track != null and track.playing:
+			music = "%s %.0fs" % [track.stream.resource_path.get_file(), track.get_playback_position()]
+		print("fps %d scene %d music %s" % [Engine.get_frames_per_second(), current_index, music])
 
 
 ## Go to the next scene in ORDER (after the last one, back to the intro).

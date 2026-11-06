@@ -29,8 +29,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var black := ColorRect.new()
 	black.color = Balance.COLOR_BLACK
-	black.set_anchors_preset(Control.PRESET_FULL_RECT)
-	black.size = Vector2(1280, 720)
+	black.set_anchors_preset(Control.PRESET_FULL_RECT)  # the anchors size it to the screen
 	add_child(black)
 	_panel = TextureRect.new()
 	_panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
