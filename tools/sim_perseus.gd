@@ -61,13 +61,42 @@ func _test_fight() -> void:
 	_check("a held gaze in the window lands one hit", perseus.hits_in_phase == 1)
 	_check("the reaction time was recorded", perseus.reactions.size() == 1)
 
-	perseus.register_gaze_hit()
-	_check("2 hits end phase 1 and start the study beat", perseus.phase == 2 and perseus.state == perseus.State.STUDY)
-	perseus.register_gaze_hit()
-	perseus.register_gaze_hit()
-	_check("2 more hits reach phase 3", perseus.phase == 3)
-	perseus.register_gaze_hit()
-	perseus.register_gaze_hit()
+	var per: int = Balance.PERSEUS_GAZE_HITS_PER_PHASE
+	for i in per - 1:
+		perseus.register_gaze_hit()
+	_check("%d hits end phase 1 and start the study beat" % per, perseus.phase == 2 and perseus.state == perseus.State.STUDY)
+
+	# Let the study beat finish (its tween moves him to the middle and back down).
+	var waited: int = 0
+	while perseus.state == perseus.State.STUDY and waited < 900:
+		await _frames(1)
+		waited += 1
+
+	# Phase 2: a lash during his glint is a parry -> shield down, longer window.
+	perseus._telegraph(perseus.State.SLASH)
+	perseus.whip_hit(1)
+	_check("whip during the phase-2 glint parries: shield down", perseus.state == perseus.State.SHIELD_DOWN)
+	_check("the parry window is longer", perseus._window > perseus.adapted_window(perseus.reactions, Features.PERSEUS_ADAPT))
+	for i in per:
+		perseus.register_gaze_hit()
+	_check("%d more hits reach phase 3" % per, perseus.phase == 3)
+
+	# Phase 3: after a charge he braces; gaze reflects, the whip knocks the shield aside.
+	perseus.state = perseus.State.BASH
+	perseus.global_position.x = perseus.arena_right
+	waited = 0
+	while perseus.state == perseus.State.BASH and waited < 300:  # the charge ends at the edge
+		await _frames(1)
+		waited += 1
+	_check("after a charge he braces behind the shield", perseus.state == perseus.State.GUARD)
+	_hits.clear()
+	perseus._reflect_cooldown = 0.0
+	perseus.add_gaze(1.0 / 60.0)
+	_check("gaze into the braced shield reflects", _hits.has([Balance.CRACKS_REFLECT, &"reflect"]))
+	perseus.whip_hit(1)
+	_check("the whip knocks the braced shield aside", perseus.state == perseus.State.SHIELD_DOWN)
+	for i in per:
+		perseus.register_gaze_hit()
 	_check("phase 3 done: defeated", perseus.state == perseus.State.DEFEATED)
 	await _frames(int(Balance.PERSEUS_DEFEAT_STONE_TIME * 60.0) + 20)
 	_check("boss_defeated was announced", _defeated)

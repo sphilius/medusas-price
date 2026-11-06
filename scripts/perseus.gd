@@ -5,7 +5,11 @@
 ##   (study)     - between phases 1 and 2 he hovers and his shield replays ghost echoes
 ##                 of her last gazes (marble Medusas where she stood), as if learning.
 ##   2 GROUNDED  - walks in and cuts with the harpe.
-##   3 DESPERATE - shield-bash charges across the arena that shatter any statue.
+##   3 DESPERATE - shield-bash charges across the arena that shatter any statue; after
+##                 each charge he braces behind the shield and only a lash of the
+##                 whip knocks it aside (a whip icon pulses over him while he braces).
+## The whip also parries: a lash while his gold glint shows (phases 2 and 3) cancels
+## the attack and drops his shield for a longer window (PERSEUS_PARRY_WINDOW_MULT).
 ## Every attack is telegraphed by a gold glint and ends with his shield dropped for a
 ## window. A gaze held PERSEUS_GAZE_HIT_TIME on him in that window is a hit; after
 ## PERSEUS_GAZE_HITS_PER_PHASE hits the next phase starts; after phase 3 he turns to
@@ -24,7 +28,7 @@
 ## her current facing.
 extends Enemy
 
-enum State { HOVER, TELEGRAPH, DIVE, WALK, SLASH, BASH, SHIELD_DOWN, REEL, STUDY, DEFEATED }
+enum State { HOVER, TELEGRAPH, DIVE, WALK, SLASH, BASH, SHIELD_DOWN, REEL, STUDY, DEFEATED, GUARD }
 
 ## Left and right edge of the arena floor he moves within (world x, px). Set in boss.tscn.
 @export var arena_left: float = 0.0
@@ -66,6 +70,8 @@ var _attack_landed: bool = false
 
 ## The "gaze now" eye shown over his head while his shield is down.
 var _eye: Sprite2D = null
+## The whip icon over his head while he braces in phase 3 (null if the art is missing).
+var _whip_icon: Sprite2D = null
 ## The boss pips (screen space) and the dimmer used in the study beat.
 var _pips: Node2D = null
 var _dim: ColorRect = null
@@ -83,22 +89,26 @@ func _ready() -> void:
 	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
 	_glint.polygon = SpriteKit.sparkle(Balance.PERSEUS_GLINT_SIZE * 0.5)
 	_glint.visible = false
-	_build_eye()
+	_eye = _build_icon("gaze", Balance.PERSEUS_EYE_SIZE)
+	_whip_icon = _build_icon("whip", Balance.PERSEUS_WHIP_ICON_SIZE)
 	_build_hud()
 	_start_hover()
 
 
-## The gaze icon (made by tools/cut_ui_icons.py), above his head, hidden until he is open.
-func _build_eye() -> void:
-	if not ResourceLoader.exists(Balance.KEY_HINT_ICONS["gaze"]):
-		return
-	_eye = Sprite2D.new()
-	_eye.texture = load(Balance.KEY_HINT_ICONS["gaze"])
-	_eye.modulate = Balance.COLOR_GOLD
-	_eye.position = Vector2(0.0, -half_size.y - Balance.PERSEUS_EYE_RISE)
-	_eye.scale = Vector2.ONE * (Balance.PERSEUS_EYE_SIZE / _eye.texture.get_height())
-	_eye.visible = false
-	add_child(_eye)
+## A gold key icon (made by tools/cut_ui_icons.py) above his head, hidden until needed:
+## "gaze" shows while his shield is down, "whip" while he braces in phase 3. Returns
+## null (no icon, no error) if the art is missing.
+func _build_icon(key: String, size_px: float) -> Sprite2D:
+	if not ResourceLoader.exists(Balance.KEY_HINT_ICONS[key]):
+		return null
+	var icon := Sprite2D.new()
+	icon.texture = load(Balance.KEY_HINT_ICONS[key])
+	icon.modulate = Balance.COLOR_GOLD
+	icon.position = Vector2(0.0, -half_size.y - Balance.PERSEUS_EYE_RISE)
+	icon.scale = Vector2.ONE * (size_px / icon.texture.get_height())
+	icon.visible = false
+	add_child(icon)
+	return icon
 
 
 ## A CanvasLayer (screen space, unaffected by the camera) holding the pips and the dimmer.
@@ -142,9 +152,28 @@ func _draw_pips() -> void:
 		x += gap
 
 
-## Whip lashes glance off the shield and the hero's armour: no stagger.
+## The whip never hurts him (only the gaze does), but it opens him up:
+##   - during his gold-glint wind-up on the ground (phases 2 and 3): a parry, the
+##     attack is cancelled and the shield drops for a longer window;
+##   - while he braces after a phase-3 charge: the shield is knocked aside.
+## Any other lash glances off the shield.
 func whip_hit(_away_dir: int) -> void:
-	pass
+	if state == State.TELEGRAPH and phase >= 2:
+		_glint.visible = false
+		_knocked(Balance.PERSEUS_PARRY_WINDOW_MULT)
+		RunLedger.log_event("parry", {"enemy": "perseus"})
+	elif state == State.GUARD:
+		_knocked(1.0)
+		RunLedger.log_event("perseus_shield_knocked", {"phase": phase})
+
+
+## The lash landed: gold flash, glint sound, hit-stop and shake, then the open window.
+func _knocked(window_mult: float) -> void:
+	_flash(Balance.COLOR_GOLD, Balance.PARRY_OPEN_S)
+	Fx.play(&"mirror_glint", 0.8)
+	Fx.hit_stop(Balance.HITSTOP_PARRY)
+	Events.shake_requested.emit(Balance.SHAKE_PARRY_PX, Balance.SHAKE_PARRY_TIME)
+	_drop_shield(window_mult)
 
 
 ## _physics_process runs every physics tick: count time, track which way she faces
@@ -157,6 +186,10 @@ func _physics_process(delta: float) -> void:
 		_eye.visible = state == State.SHIELD_DOWN
 		var throb: float = 1.0 + 0.15 * sin(_state_time * TAU * 2.0)
 		_eye.scale = Vector2.ONE * throb * (Balance.PERSEUS_EYE_SIZE / _eye.texture.get_height())
+	if _whip_icon != null:
+		_whip_icon.visible = state == State.GUARD
+		var beat: float = 1.0 + 0.15 * sin(_state_time * TAU * 2.0)
+		_whip_icon.scale = Vector2.ONE * beat * (Balance.PERSEUS_WHIP_ICON_SIZE / _whip_icon.texture.get_height())
 	var player: Player = find_player()
 	if player != null:
 		facing_time[player.facing] = float(facing_time[player.facing]) + delta
@@ -175,6 +208,10 @@ func _physics_process(delta: float) -> void:
 			_tick_bash(delta, player)
 		State.SHIELD_DOWN:
 			_tick_window(delta)
+		State.GUARD:
+			_hold(delta)
+			if _state_time >= Balance.PERSEUS_GUARD_TIME:
+				_next_after_window()  # not knocked aside in time: he charges again
 		State.REEL:
 			_hold(delta)
 			if _state_time >= Balance.PERSEUS_REEL_TIME:
@@ -275,17 +312,19 @@ func _tick_bash(delta: float, player: Player) -> void:
 	var at_edge: bool = global_position.x <= arena_left or global_position.x >= arena_right
 	if at_edge or is_on_wall() or _state_time >= Balance.PERSEUS_BASH_MAX_TIME:
 		velocity.x = 0.0
-		_drop_shield()
+		_face_toward(player)
+		state = State.GUARD  # braced: shield stays up until the whip knocks it aside
 
 
 # ---------------------------------------------------------------------------
 # The window (shield down) and gaze hits
 # ---------------------------------------------------------------------------
 
-## End of every attack: shield down for the (adapted) window.
-func _drop_shield() -> void:
+## End of an attack (or a lash that opened him): shield down for the (adapted) window,
+## stretched by `mult` (a parry gives a longer window).
+func _drop_shield(mult: float = 1.0) -> void:
 	velocity = Vector2.ZERO
-	_window = adapted_window(reactions, Features.PERSEUS_ADAPT)
+	_window = adapted_window(reactions, Features.PERSEUS_ADAPT) * mult
 	_reacted = false
 	_place_shield(false)
 	state = State.SHIELD_DOWN
@@ -590,6 +629,8 @@ func _animate() -> void:
 			SpriteKit.play(sprite, &"hover")
 		State.TELEGRAPH:
 			SpriteKit.play(sprite, &"hover" if phase == 1 else &"grounded")
+		State.GUARD:
+			SpriteKit.play(sprite, &"grounded")
 		State.DIVE:
 			SpriteKit.play(sprite, &"dive")
 		State.WALK:

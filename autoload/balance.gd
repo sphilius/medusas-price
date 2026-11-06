@@ -180,7 +180,7 @@ const SFX_FILES: Dictionary = {
 }
 ## Per-sound volume trims in dB (0 = as recorded); tune by ear.
 const SFX_VOLUME_DB: Dictionary = {
-	&"hiss": -8.0, &"crack_portrait": -6.0, &"gate": -4.0, &"shard": -4.0, &"statue_thud": -3.0,
+	&"hiss": -8.0, &"crack_portrait": -6.0, &"spear": -14.0, &"gate": -4.0, &"shard": -4.0, &"statue_thud": -3.0,
 }
 ## How many copies of one sound may overlap, and the random pitch spread (+/-).
 const SFX_POLYPHONY: int = 4
@@ -633,7 +633,7 @@ const DEATH_FADE_BACK_TIME: float = 0.4
 # ---------------------------------------------------------------------------
 const PERSEUS_PHASES: int = 3
 ## Gaze hits needed per phase.
-const PERSEUS_GAZE_HITS_PER_PHASE: int = 2
+const PERSEUS_GAZE_HITS_PER_PHASE: int = 3
 ## Base shield-down window after each attack (s).
 const SHIELD_WINDOW_BASE: float = 1.0
 ## Adapted window = clamp(median reaction + OFFSET, MIN, MAX).
@@ -667,6 +667,15 @@ const PERSEUS_ECHO_TIME: float = 1.0
 const PERSEUS_ECHO_ALPHA: float = 0.6
 ## Seconds of rest after a gaze hit (he reels, shield still down, no damage).
 const PERSEUS_REEL_TIME: float = 0.6
+## The whip in the boss fight (perseus.gd whip_hit):
+## a lash while his gold glint shows (phases 2 and 3) parries: the attack is cancelled
+## and his shield drops for the window x PERSEUS_PARRY_WINDOW_MULT.
+const PERSEUS_PARRY_WINDOW_MULT: float = 1.6
+## Phase 3: after each charge he braces behind the shield for this long (s); only a
+## lash knocks it aside (a gaze just reflects). Not knocked in time = he charges again.
+const PERSEUS_GUARD_TIME: float = 2.2
+## The whip icon pulsing over him while he braces (px tall), like the gaze eye.
+const PERSEUS_WHIP_ICON_SIZE: float = 24.0
 ## Defeat: seconds the stone takes to cover him before he becomes a statue.
 const PERSEUS_DEFEAT_STONE_TIME: float = 1.5
 ## His shield (Visual/Shield): held in front, or dropped to his side during the window.
