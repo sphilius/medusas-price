@@ -37,7 +37,9 @@ ART = ROOT / "art"
 CHARACTERS: dict = {
     "medusa": [
         ("idle", [("medusa_a", 0), ("medusa_a", 1)], 2.0, True),
-        ("run", [("medusa_a", i) for i in (2, 3, 4, 5)], 10.0, True),
+        # Stride, passing, stride, passing. Frame 3 (a crouched hop) is left out: in the
+        # 2-5 order it read as a stutter-step (playtest, 2026-11-05).
+        ("run", [("medusa_a", i) for i in (2, 4, 5, 4)], 10.0, True),
         ("jump", [("medusa_a", 6)], 1.0, False),
         ("fall", [("medusa_a", 7)], 1.0, False),
         # The whip has 8 frames that follow whip.gd's own timeline (speed 0 here:
@@ -51,14 +53,16 @@ CHARACTERS: dict = {
         ("death", [("medusa_b", 7)], 1.0, False),
     ],
     "hoplite": [
-        ("walk", [("enemy_hoplites", i) for i in (0, 1, 2, 3)], 6.0, True),
+        # Stride, high-knee passing, stride, passing. Frame 1 (a low lunge) made the
+        # head bob and read as a stutter-step; the same goes for the next two sheets.
+        ("walk", [("enemy_hoplites", i) for i in (0, 3, 2, 3)], 6.0, True),
         ("windup", [("enemy_hoplites", 4)], 1.0, False),
         ("thrust", [("enemy_hoplites", 5)], 1.0, False),
         ("recover", [("enemy_hoplites", 6)], 1.0, False),
         ("stagger", [("enemy_hoplites", 7)], 1.0, False),
     ],
     "eye_shading": [
-        ("walk", [("enemy_hoplites_eyeshaded", i) for i in (0, 1, 2, 3)], 6.0, True),
+        ("walk", [("enemy_hoplites_eyeshaded", i) for i in (0, 3, 2, 3)], 6.0, True),
         ("windup", [("enemy_hoplites_eyeshaded", 4)], 1.0, False),
         ("thrust", [("enemy_hoplites_eyeshaded", 5)], 1.0, False),
         ("recover", [("enemy_hoplites_eyeshaded", 6)], 1.0, False),
@@ -82,7 +86,7 @@ CHARACTERS: dict = {
         ("stagger", [("enemy_archer", 7)], 1.0, False),
     ],
     "mirror_bearer": [
-        ("walk", [("enemy_mirror", i) for i in (0, 1, 2, 3)], 6.0, True),
+        ("walk", [("enemy_mirror", i) for i in (0, 3, 2, 3)], 6.0, True),
         ("braced", [("enemy_mirror", 4)], 1.0, False),
         ("knocked", [("enemy_mirror", 5)], 1.0, False),
         ("stagger", [("enemy_mirror", 6)], 1.0, False),
@@ -148,6 +152,21 @@ def load_meta(sheet: str) -> dict:
     return json.loads((PROCESSED / sheet / f"{sheet}_meta.json").read_text())
 
 
+def torso_x(img: Image.Image) -> float:
+    """Horizontal middle of the torso: the alpha-weighted mean x of the band from 25%
+    to 55% down the figure (below the head and hair, above the legs)."""
+    box = img.getbbox()
+    top = box[1] + (box[3] - box[1]) * 0.25
+    bottom = box[1] + (box[3] - box[1]) * 0.55
+    band = img.getchannel("A").crop((0, int(top), img.width, int(bottom)))
+    # getdata() lists every pixel's alpha row by row; i % width is that pixel's x.
+    total = weighted = 0
+    for i, a in enumerate(band.getdata()):
+        total += a
+        weighted += a * (i % band.width)
+    return weighted / total if total else img.width / 2
+
+
 def build_character(name: str, anims: list) -> dict:
     """Pads all frames of one character onto a shared canvas and writes its SpriteFrames."""
     out_dir = ART / "sprites" / name
@@ -177,6 +196,21 @@ def build_character(name: str, anims: list) -> dict:
         img = Image.open(frame_path(sheet, index)).convert("RGBA")
         canvas.paste(img, (left - meta["feet"][0], up - meta["feet"][1]))
         padded[(sheet, index)] = canvas
+
+    # 2b. Walk/run cycles: line the torsos up. Each frame sits where it was drawn in
+    #     its sheet cell, so in a cycle the body slid back and forth a few px per frame
+    #     (a stutter-step). Shift each cycle frame sideways so its torso lines up with
+    #     the cycle's first frame; the feet then do all the moving, as in a real walk.
+    for anim_name, frames, _, loop in anims:
+        if not loop or len(set(frames)) < 3:
+            continue  # only real cycles (idle and hover are 2-frame breathing loops)
+        target = torso_x(padded[frames[0]])
+        for key in dict.fromkeys(frames):  # each distinct frame once, in order
+            shift = round(target - torso_x(padded[key]))
+            if shift:
+                moved = Image.new("RGBA", padded[key].size, (0, 0, 0, 0))
+                moved.paste(padded[key], (shift, 0))
+                padded[key] = moved
 
     # 3. Trim the empty margin shared by ALL frames (keeps every frame the same
     #    size and the feet on the same pixel, but drops wasted transparent space).
