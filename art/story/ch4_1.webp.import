@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://o02k6d4yxuvt"
-path="res://.godot/imported/panel_3_heroes.png-7bd85d726950af8ece1185254d99db23.ctex"
+uid="uid://c814ysb17ffb0"
+path="res://.godot/imported/ch4_1.webp-af2581bde63f5a9922f9eb3f8c39c35f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/story/panel_3_heroes.png"
-dest_files=["res://.godot/imported/panel_3_heroes.png-7bd85d726950af8ece1185254d99db23.ctex"]
+source_file="res://art/story/ch4_1.webp"
+dest_files=["res://.godot/imported/ch4_1.webp-af2581bde63f5a9922f9eb3f8c39c35f.ctex"]
 
 [params]
 

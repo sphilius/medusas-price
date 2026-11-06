@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dt03evqx3wbb8"
-path="res://.godot/imported/panel_1_temple.png-bf77c8ac4b454bba885529d06cd1ca8a.ctex"
+uid="uid://blmehuu1sya85"
+path="res://.godot/imported/panel_1_temple.webp-e8458a68b329ba06c17107e0449a7c4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/story/panel_1_temple.png"
-dest_files=["res://.godot/imported/panel_1_temple.png-bf77c8ac4b454bba885529d06cd1ca8a.ctex"]
+source_file="res://art/story/panel_1_temple.webp"
+dest_files=["res://.godot/imported/panel_1_temple.webp-e8458a68b329ba06c17107e0449a7c4a.ctex"]
 
 [params]
 

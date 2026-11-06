@@ -165,7 +165,7 @@ look up at it. A single gold glint in the painted eyes. No plaques, no labels, n
 
 ## Optional: a better title-card story
 
-The intro reel uses `art/story/panel_1_temple.png` to `panel_4_gaze.png`, cut from concept art. To replace them, use the same chat and save over those exact file names (PNG, 16:9). They need no conversion step.
+The intro reel uses `art/story/panel_1_temple.webp` to `panel_4_gaze.webp`. To replace them, save new PNGs as `art/raw/story/panel_1_temple.png` (and so on) and run `python tools/build_story.py`, the same as the chapter panels.
 
 - **panel_1_temple:** *"The empty temple of the gorgon at noon, wide temple steps, olive trees, a calm sky. No figures."*
 - **panel_2_gorgon:** *"Close profile of Medusa's face in shadow inside the temple, gold eye open, snakes waking."*

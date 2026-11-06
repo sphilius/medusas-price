@@ -137,10 +137,10 @@ const SFX_MIX_RATE: int = 22050
 ## The panels in order: picture, seconds on screen, zoom and pan (px) at start and end,
 ## and an optional sound. The portrait-aging beat follows them.
 const STORY_PANELS: Array[Dictionary] = [
-	{"path": "res://art/story/panel_1_temple.png", "seconds": 3.5, "zoom_from": 1.0, "zoom_to": 1.08, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, 0)},
-	{"path": "res://art/story/panel_2_gorgon.png", "seconds": 3.0, "zoom_from": 1.0, "zoom_to": 1.3, "pan_from": Vector2.ZERO, "pan_to": Vector2(-60, 40), "sound": "hiss"},
-	{"path": "res://art/story/panel_3_heroes.png", "seconds": 3.5, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(60, 0), "pan_to": Vector2(-60, 0)},
-	{"path": "res://art/story/panel_4_gaze.png", "seconds": 3.5, "zoom_from": 1.15, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO, "sound": "petrify"},
+	{"path": "res://art/story/panel_1_temple.webp", "seconds": 3.5, "zoom_from": 1.0, "zoom_to": 1.08, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, 0)},
+	{"path": "res://art/story/panel_2_gorgon.webp", "seconds": 3.0, "zoom_from": 1.0, "zoom_to": 1.3, "pan_from": Vector2.ZERO, "pan_to": Vector2(-60, 40), "sound": "hiss"},
+	{"path": "res://art/story/panel_3_heroes.webp", "seconds": 3.5, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(60, 0), "pan_to": Vector2(-60, 0)},
+	{"path": "res://art/story/panel_4_gaze.webp", "seconds": 3.5, "zoom_from": 1.15, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO, "sound": "petrify"},
 ]
 ## Seconds per portrait stage in the aging beat, fade time (s), and the skip delay (s).
 const STORY_PORTRAIT_STEP_S: float = 0.9

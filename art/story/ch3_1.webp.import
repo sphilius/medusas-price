@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://oaxkg0q8de4l"
-path="res://.godot/imported/panel_2_gorgon.png-195fb4ee080750c245e3c1464674ed98.ctex"
+uid="uid://bofrjkq41dyts"
+path="res://.godot/imported/ch3_1.webp-6ba37b2e3f6948eaf49f0e194c64ece4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/story/panel_2_gorgon.png"
-dest_files=["res://.godot/imported/panel_2_gorgon.png-195fb4ee080750c245e3c1464674ed98.ctex"]
+source_file="res://art/story/ch3_1.webp"
+dest_files=["res://.godot/imported/ch3_1.webp-6ba37b2e3f6948eaf49f0e194c64ece4.ctex"]
 
 [params]
 

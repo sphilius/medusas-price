@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ck7n3xavox1s3"
-path="res://.godot/imported/panel_4_gaze.png-84fb14548a92c0d3d73e1e8c7be2953c.ctex"
+uid="uid://2cmvkk507vf0"
+path="res://.godot/imported/ch2_1.webp-72fc780364e4db38452bcc784a921e5d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/story/panel_4_gaze.png"
-dest_files=["res://.godot/imported/panel_4_gaze.png-84fb14548a92c0d3d73e1e8c7be2953c.ctex"]
+source_file="res://art/story/ch2_1.webp"
+dest_files=["res://.godot/imported/ch2_1.webp-72fc780364e4db38452bcc784a921e5d.ctex"]
 
 [params]
 
