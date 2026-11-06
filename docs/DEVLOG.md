@@ -6,6 +6,8 @@ The record of truth for design choices, newest first. Statuses: Made / Changed /
 
 | ID | Date | Choice | Status |
 |---|---|---|---|
+| D-010 | 2026-11-05 | One single-use pool per level; readable Perseus fight | Made |
+| D-009 | 2026-11-05 | Whip kills (4-6 lashes), parry and snake finisher | Made |
 | D-008 | 2026-11-05 | Full platformer kit and all three levels rebuilt as teach/test/twist rooms | Made |
 | D-007 | 2026-11-05 | Terrain drawn as one grounded mass (texkit surface, edges, depth), camera zoom 1.5 | Made |
 | D-006 | 2026-11-05 | Levels 2 and 3 built in the generator: statue-climb cliff, archers, mirror-bearers, plate door | Made |
@@ -14,6 +16,14 @@ The record of truth for design choices, newest first. Statuses: Made / Changed /
 | D-003 | 2026-11-05 | Enemy sprites are scaled to fit their existing hitboxes | Made |
 | D-002 | 2026-11-05 | Whip body uses 3 poses spread over the 8 whip frames | Made |
 | D-001 | 2026-11-05 | Character art comes from `art/processed` (Nano Banana + art_cleanup), not SpriteCook | Made |
+
+## D-010 · Pools and the boss · Made
+Playtest: pools refilled when you stepped out, so you could always heal to stage 1 (the Dorian Gray idea died); the boss took ~15 min because phase 2 was unclear, phase 3 went unnoticed and the echoes meant nothing.
+- **Pools** heal once and never refill. One per level, about 2/3 through (temple ~70%, cliffs ~65%, cave ~62%); the boss arena keeps its one.
+- **Perseus** shows a pulsing gaze-eye while his shield is down, six phase pips at the top of the screen, stone creeping over him for each lost phase (with a flash, shake and hit-stop), and a study beat that dims the world and beams gold from his shield to each echo of her gazes before they shatter.
+
+## D-009 · Whip combat · Made
+Playtest: the whip only pushed enemies back. Now each lash costs 1 hp (hoplite 5, leaper and archer 4, mirror-bearer and eye-shading 6); at 0 they collapse into dust. Whip kills cost no crack, petrifying costs one: slow and safe vs. fast and costly. A lash during a wind-up (hoplite thrust, archer draw, leaper mid-leap) is a parry: exposed for 1.5 s, the gaze petrifies almost at once, and the next lash is the snake finisher (the snakes latch on and strangle). `sim_combat` checks it.
 
 ## D-008 · Platformer kit, levels rebuilt · Made
 Sasha: the levels were walk, hop, petrify; it should be a full platformer. Chose the full kit and a rebuild of all three levels (decision d4).
