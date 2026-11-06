@@ -40,6 +40,7 @@ func _ready() -> void:
 	_grind = AudioStreamPlayer2D.new()
 	_grind.stream = Fx.grind_stream
 	_grind.volume_db = Balance.GRIND_SFX_VOLUME_DB
+	_grind.attenuation = Balance.GRIND_SFX_ATTENUATION
 	add_child(_grind)
 
 
@@ -105,6 +106,11 @@ func _add_sprite() -> bool:
 	sprite.position = Vector2(0.0, FEET_Y)
 	sprite.scale = Vector2.ONE * (Balance.VICTIM_BODY_SIZE.y / standing.get_height())
 	_art.add_child(sprite)
+	# The marble shader (without recolouring: the art is already painted marble) so a
+	# crack shows as fine hairlines on the stone, not as overlay lines.
+	_marble = SpriteKit.marble_material()
+	_marble.set_shader_parameter(&"recolor", false)
+	sprite.material = _marble
 	return true
 
 

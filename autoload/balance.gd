@@ -114,7 +114,7 @@ const SFX_FILES: Dictionary = {
 }
 ## Per-sound volume trims in dB (0 = as recorded); tune by ear.
 const SFX_VOLUME_DB: Dictionary = {
-	&"hiss": -8.0, &"grind_loop": -6.0, &"crack_portrait": -6.0, &"gate": -4.0, &"shard": -4.0,
+	&"hiss": -8.0, &"crack_portrait": -6.0, &"gate": -4.0, &"shard": -4.0, &"statue_thud": -3.0,
 }
 ## How many copies of one sound may overlap, and the random pitch spread (+/-).
 const SFX_POLYPHONY: int = 4
@@ -152,6 +152,32 @@ const WHIP_STAGGER: float = 0.4
 const WHIP_KNOCKBACK_BL: float = 1.0
 ## Seconds a mirror-bearer's mirror is knocked aside.
 const WHIP_MIRROR_KNOCK: float = 1.5
+## Whip combat. Lashes to kill each enemy type (hp); anything unlisted uses the default.
+const ENEMY_WHIP_HP: Dictionary = {
+	&"hoplite": 5, &"leaper": 4, &"archer": 4, &"mirror_bearer": 6, &"eye_shading": 6,
+}
+const ENEMY_WHIP_HP_DEFAULT: int = 5
+## A whip kill: seconds to slump and fade, and dust specks.
+const ENEMY_DEATH_S: float = 0.6
+const DUST_DEATH_COUNT: int = 14
+## White flash on each lash (s).
+const HIT_FLASH_S: float = 0.12
+## Parry: seconds exposed, the gaze hold while exposed (s), hit-stop (s), shake.
+const PARRY_OPEN_S: float = 1.5
+const PARRY_GAZE_HOLD: float = 0.08
+const HITSTOP_PARRY: float = 0.09
+const SHAKE_PARRY_PX: float = 5.0
+const SHAKE_PARRY_TIME: float = 0.15
+## Snake finisher: seconds of struggle, latch line width (px), poison tint, hit-stop.
+const FINISHER_TIME: float = 0.55
+const FINISHER_LATCH_WIDTH: float = 3.0
+const FINISHER_POISON_TINT: Color = Color(0.35, 0.45, 0.25, 1.0)
+const HITSTOP_FINISHER: float = 0.12
+## Dust puffs (Fx.dust): colour, seconds a speck lives, launch speed and gravity (px/s).
+const DUST_COLOR: Color = Color(0.93, 0.88, 0.8, 0.9)
+const DUST_LIFETIME: float = 0.55
+const DUST_SPEED: float = 110.0
+const DUST_GRAVITY: float = 260.0
 ## Where the snakes grow from, relative to Medusa's center (her head). Reach is
 ## measured from here, so the tip sits WHIP_REACH_BL ahead of her center.
 const WHIP_HEAD_OFFSET: Vector2 = Vector2(0.0, -22.0)
@@ -207,7 +233,11 @@ const SHAKE_STATUE_LAND_TIME: float = 0.15
 const GRIND_SFX_LENGTH: float = 0.5
 const GRIND_SFX_SMOOTH: float = 0.92
 const GRIND_SFX_GAIN: float = 3.0
-const GRIND_SFX_VOLUME_DB: float = -10.0
+## Grind loop volume (dB). The recording is normalized to a -1 dB peak (it was -13 dB,
+## and at -10 here the slide was silent in playtest).
+const GRIND_SFX_VOLUME_DB: float = -2.0
+## How fast the positional grind fades with distance (1 = Godot default, lower = gentler).
+const GRIND_SFX_ATTENUATION: float = 0.4
 ## Placeholder thud, generated in code: length (s), frequency (Hz), decay rate,
 ## volume (dB), and pitch multiplier for a slide stopping (a landing uses 1.0).
 const THUD_SFX_LENGTH: float = 0.18
@@ -298,7 +328,11 @@ const ENEMY_CONTACT_MARGIN: float = 2.0
 ## BL from its spawn point, so it never appears inside her.
 const LEAPER_RESPAWN_CLEARANCE_BL: float = 2.0
 ## Size (px) of the hoplite's gold wind-up glint.
-const HOPLITE_GLINT_SIZE: float = 10.0
+const HOPLITE_GLINT_SIZE: float = 5.0
+## Every attack glint: a four-point sparkle (SpriteKit.sparkle) whose waist is this
+## fraction of its radius, drawn slightly see-through so it stays subtle.
+const GLINT_WAIST: float = 0.18
+const GLINT_ALPHA: float = 0.85
 ## Hoplite art geometry, matching scenes/enemies/hoplite.tscn: the Glint
 ## polygon's radius and the spear tip's x in the Visual's right-facing space (px).
 const HOPLITE_GLINT_ART_RADIUS: float = 5.0
@@ -342,7 +376,7 @@ const ARCHER_DRAW_TIME: float = 0.5
 const ARCHER_COOLDOWN: float = 2.5
 const ARCHER_LEAD: float = 0.5
 const ARCHER_MUZZLE: Vector2 = Vector2(26.0, -8.0)
-const ARCHER_GLINT_SIZE: float = 10.0
+const ARCHER_GLINT_SIZE: float = 5.0
 const ARCHER_GLINT_ART_RADIUS: float = 5.0
 ## Arrow: speed (px/s), gravity (px/s^2), seconds it stays stuck in a wall or statue
 ## before fading away, seconds it may fly before it is dropped, and its length (px).
@@ -371,7 +405,7 @@ const MIRROR_BEAM_WIDTH: float = 5.0
 ## swings by this many degrees (it hangs down and away from the gaze).
 const MIRROR_HELD_OFFSET: Vector2 = Vector2(26.0, -10.0)
 const MIRROR_KNOCK_DEG: float = 80.0
-const MIRROR_GLINT_SIZE: float = 14.0
+const MIRROR_GLINT_SIZE: float = 8.0
 const MIRROR_GLINT_ART_RADIUS: float = 5.0
 
 ## DEFAULT size of the level 1 gap (BL): the open space between the near and far ledges
@@ -574,7 +608,19 @@ const PERSEUS_SHIELD_UP_POS: Vector2 = Vector2(16.0, -6.0)
 const PERSEUS_SHIELD_DOWN_POS: Vector2 = Vector2(6.0, 22.0)
 const PERSEUS_SHIELD_DOWN_DEG: float = 70.0
 ## Size of the gold telegraph diamond and where it shows (on the harpe / shield).
-const PERSEUS_GLINT_SIZE: float = 12.0
+const PERSEUS_GLINT_SIZE: float = 7.0
+## Readability: the gaze-now eye over his head (px tall, px above his body), the pips
+## (radius px, distance from the screen top), stone left per lost phase (0..1), the
+## study dimming (alpha), and the shakes / hit-stops for hits and phase changes.
+const PERSEUS_EYE_SIZE: float = 26.0
+const PERSEUS_EYE_RISE: float = 40.0
+const PERSEUS_PIP_RADIUS: float = 7.0
+const PERSEUS_PIPS_Y: float = 44.0
+const PERSEUS_PHASE_STONE: float = 0.3
+const PERSEUS_STUDY_DIM: float = 0.45
+const HITSTOP_PERSEUS: float = 0.14
+const SHAKE_PERSEUS_PHASE_PX: float = 10.0
+const SHAKE_PERSEUS_PHASE_TIME: float = 0.4
 const PERSEUS_GLINT_OFFSET: Vector2 = Vector2(24.0, -30.0)
 ## Screen shake when a gaze hit lands.
 const SHAKE_PERSEUS_HIT_PX: float = 8.0
@@ -757,7 +803,9 @@ const MARBLE_VEIN_SCALE: float = 7.0
 const MARBLE_VEIN_STRENGTH: float = 0.12
 const MARBLE_RIM_PX: float = 3.0
 const MARBLE_CRACK_SCALE: float = 5.0
-const MARBLE_CRACK_WIDTH: float = 0.05
+## The portrait's craquelure and wear shader (replaces the overlay crack lines).
+const PORTRAIT_CRACK_SHADER: String = "res://shaders/portrait_crack.gdshader"
+const MARBLE_CRACK_WIDTH: float = 0.03
 ## Where Medusa's eyes are in her frame (UV): her own death starts there.
 const MEDUSA_EYE_UV: Vector2 = Vector2(0.62, 0.15)
 ## Death veil: how far the gray world is pushed toward marble white at full strength.

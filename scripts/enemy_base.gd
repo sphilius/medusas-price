@@ -1,8 +1,12 @@
 ## enemy_base.gd (base class; each enemy scene's root script extends it)
 ## Purpose: what every enemy shares - layer 3 body, gravity, facing, gaze progress
 ## (marble spreading from where the gaze touched, petrify.gdshader), petrification into a Statue, and
-## removal when it falls into a pit, and the whip's stagger + knockback. Enemies
-## have no hp: they die only by petrify() or falling.
+## removal when it falls into a pit, and the whip: each lash costs 1 hp (staggers and
+## knocks back); at 0 hp the enemy collapses into dust (_die). A lash that lands while
+## the enemy is winding up an attack (is_telegraphing) is a PARRY: the enemy is EXPOSED
+## for PARRY_OPEN_S, the gaze petrifies it almost at once, and the next lash is the
+## snake finisher (the snakes latch on and strangle it). Whip kills cost no crack;
+## petrifying costs one, so the whip is the slow, safe road and the gaze the fast one.
 ## Bodies are solid to Medusa both ways (she masks enemies, enemies mask her), and a
 ## ContactHitbox built in _ready lets subclasses hurt her on touch (check_contact).
 ## Expects a child Node2D named "Visual" holding the art. In _ready the real sprite
@@ -31,6 +35,12 @@ var half_size: Vector2 = Vector2(Balance.ENEMY_HALF_WIDTH, Balance.ENEMY_HALF_HE
 
 ## Seconds left staggered by a whip hit: the enemy does nothing but slide to a stop.
 var _stagger_left: float = 0.0
+## Whip hits left before it dies (set from Balance.ENEMY_WHIP_HP in _ready).
+var hp: int = 5
+## Seconds left EXPOSED after a parry (0 = not exposed).
+var _exposed_left: float = 0.0
+## True once it is dying (whip kill or finisher): ignores everything after that.
+var _dying: bool = false
 
 ## Seconds spent continuously in the gaze cone with a clear view.
 var _gaze_time: float = 0.0
@@ -60,6 +70,7 @@ func _ready() -> void:
 	# Medusa stops against her instead of sliding inside her body.
 	collision_mask = Balance.PHYS_WORLD | Balance.PHYS_STATUES | Balance.PHYS_PLAYER
 	gaze_hold_time = Balance.GAZE_HOLD_EYE_SHADING if eye_shading else Balance.GAZE_HOLD
+	hp = Balance.ENEMY_WHIP_HP.get(&"eye_shading" if eye_shading else enemy_type, Balance.ENEMY_WHIP_HP_DEFAULT)
 	# Real art: the eye-shading hoplite has its own sheet, everyone else is keyed by type.
 	sprite = SpriteKit.attach(visual, &"eye_shading" if eye_shading else enemy_type)
 	# Sprites carry their own colors (white modulate); placeholders are tinted black.
@@ -101,7 +112,7 @@ func _build_contact_area() -> void:
 ## knocks her back (her invulnerable window stops repeat hits). Staggered enemies and
 ## statues never hurt. The hit names this enemy's type, e.g. "hoplite".
 func check_contact() -> void:
-	if _petrified or is_staggered():
+	if _petrified or _dying or is_staggered():
 		return
 	for node in _contact.get_overlapping_bodies():
 		if node is Player:
@@ -121,14 +132,101 @@ func apply_gravity(delta: float) -> void:
 ## The whip landed: stagger and knock back away_dir (-1 / 1, away from Medusa).
 ## Mirror-bearers also lose their mirror for a moment. Not for statues (see Statue.whip_hit).
 func whip_hit(away_dir: int) -> void:
-	if _petrified:
+	if _petrified or _dying:
 		return
+	if _exposed_left > 0.0:
+		_finisher()
+		return
+	if is_telegraphing():
+		_parry()
+		return
+	hp -= 1
+	RunLedger.log_event("whip_hit", {"enemy": String(enemy_type), "hp": hp})
+	if hp <= 0:
+		_die()
+		return
+	_flash(Balance.COLOR_MARBLE)
 	_stagger_left = Balance.WHIP_STAGGER
 	velocity.x = away_dir * sqrt(2.0 * Balance.ENEMY_KNOCKBACK_DECEL * Balance.WHIP_KNOCKBACK_BL * Balance.BL)
 	_on_staggered()
 	SpriteKit.play(sprite, &"stagger")
 	if mirror_bearer:
 		knock_mirror(Balance.WHIP_MIRROR_KNOCK)
+
+
+## Override: true while the enemy is winding up an attack, the moment a lash parries.
+func is_telegraphing() -> bool:
+	return false
+
+
+## True while exposed after a parry (the gaze petrifies almost at once).
+func is_exposed() -> bool:
+	return _exposed_left > 0.0
+
+
+## The parry: a stun long enough to act on, a gold flash, a hit-stop and a metal ting.
+## While exposed the gaze needs only PARRY_GAZE_HOLD seconds.
+func _parry() -> void:
+	_exposed_left = Balance.PARRY_OPEN_S
+	_stagger_left = Balance.PARRY_OPEN_S
+	velocity.x = 0.0
+	gaze_hold_time = Balance.PARRY_GAZE_HOLD
+	_on_staggered()
+	SpriteKit.play(sprite, &"stagger")
+	_flash(Balance.COLOR_GOLD, Balance.PARRY_OPEN_S)
+	Fx.play(&"mirror_glint", 0.8)
+	Fx.hit_stop(Balance.HITSTOP_PARRY)
+	Events.shake_requested.emit(Balance.SHAKE_PARRY_PX, Balance.SHAKE_PARRY_TIME)
+	RunLedger.log_event("parry", {"enemy": String(enemy_type)})
+
+
+## The snake finisher: the snakes latch on (a black line from her head to the enemy),
+## the enemy shakes and turns poison-dark, then dies.
+func _finisher() -> void:
+	_dying = true
+	_exposed_left = 0.0
+	set_physics_process(false)
+	Fx.play(&"hiss", 1.2)
+	Fx.hit_stop(Balance.HITSTOP_FINISHER)
+	var player: Player = find_player()
+	if player != null:
+		var latch := Line2D.new()
+		latch.width = Balance.FINISHER_LATCH_WIDTH
+		latch.default_color = Balance.COLOR_BLACK
+		latch.top_level = true  # drawn in world space, not moved by this enemy
+		latch.points = PackedVector2Array([player.global_position + Balance.WHIP_HEAD_OFFSET, global_position])
+		add_child(latch)
+	var tween := create_tween()
+	for i in 6:  # a struggling shake
+		tween.tween_property(visual, "position:x", 3.0 if i % 2 == 0 else -3.0, Balance.FINISHER_TIME / 6.0)
+	tween.parallel().tween_property(visual, "modulate", Balance.FINISHER_POISON_TINT, Balance.FINISHER_TIME)
+	tween.tween_callback(_die)
+	RunLedger.log_event("finisher", {"enemy": String(enemy_type)})
+
+
+## Death by whip: collision off, a dust puff, a slump and fade, then gone.
+## Events.enemy_slain tells the ledger (and anything else) it happened.
+func _die() -> void:
+	_dying = true
+	set_physics_process(false)
+	collision_layer = 0
+	collision_mask = 0
+	Fx.play(&"statue_thud", 1.4)
+	Fx.dust(global_position + Vector2(0.0, half_size.y), Balance.DUST_DEATH_COUNT)
+	Events.enemy_slain.emit(enemy_type, global_position)
+	RunLedger.log_event("slain", {"enemy": String(enemy_type), "level": RunLedger.level})
+	var tween := create_tween().set_parallel(true)
+	tween.tween_property(visual, "rotation", facing * -1.2, Balance.ENEMY_DEATH_S)
+	tween.tween_property(visual, "position:y", half_size.y * 0.6, Balance.ENEMY_DEATH_S)
+	tween.tween_property(self, "modulate:a", 0.0, Balance.ENEMY_DEATH_S)
+	tween.chain().tween_callback(queue_free)
+
+
+## A brief colour flash on the art (white on a hit, gold on a parry).
+func _flash(color: Color, seconds: float = Balance.HIT_FLASH_S) -> void:
+	var tween := create_tween()
+	visual.modulate = color
+	tween.tween_property(visual, "modulate", Color.WHITE if sprite != null else Balance.COLOR_BLACK, seconds)
 
 
 ## True while a whip hit still holds the enemy.
@@ -143,6 +241,10 @@ func tick_stagger(delta: float) -> bool:
 	if _stagger_left <= 0.0:
 		return false
 	_stagger_left -= delta
+	if _exposed_left > 0.0:
+		_exposed_left -= delta
+		if _exposed_left <= 0.0:
+			gaze_hold_time = Balance.GAZE_HOLD_EYE_SHADING if eye_shading else Balance.GAZE_HOLD
 	velocity.x = move_toward(velocity.x, 0.0, Balance.ENEMY_KNOCKBACK_DECEL * delta)
 	if _stagger_left <= 0.0:
 		_animate()  # back on its feet: show the state's animation again
@@ -181,7 +283,7 @@ func has_floor_at(x: float) -> bool:
 
 ## Called by the gaze every physics frame this enemy is in the cone and visible.
 func add_gaze(delta: float) -> void:
-	if _petrified:
+	if _petrified or _dying:
 		return
 	_gaze_time += delta
 	var t: float = clampf(_gaze_time / gaze_hold_time, 0.0, 1.0)
@@ -225,7 +327,7 @@ func pose_frame() -> int:
 
 ## Turn to stone: swap this body for a Statue in the same pose, then announce it.
 func petrify() -> void:
-	if _petrified:
+	if _petrified or _dying:
 		return
 	_petrified = true
 	set_physics_process(false)

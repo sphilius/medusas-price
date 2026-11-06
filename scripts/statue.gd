@@ -65,6 +65,7 @@ static func from_enemy(enemy: Enemy) -> Statue:
 	statue._grind = AudioStreamPlayer2D.new()
 	statue._grind.stream = Fx.grind_stream
 	statue._grind.volume_db = Balance.GRIND_SFX_VOLUME_DB
+	statue._grind.attenuation = Balance.GRIND_SFX_ATTENUATION
 	statue.add_child(statue._grind)
 
 	enemy.get_parent().add_child(statue)
@@ -181,6 +182,10 @@ func _crack() -> void:
 	state = State.CRACKED
 	var rect: Rect2 = _body_rect()
 	if _marble != null:
+		# Cracks start on the side the whip came from (Medusa's side), at chest height.
+		var player := get_tree().get_first_node_in_group(&"player") as Node2D
+		var from_left: bool = player != null and player.global_position.x < global_position.x
+		_marble.set_shader_parameter(&"crack_origin", Vector2(0.25 if from_left else 0.75, 0.35))
 		_marble.set_shader_parameter(&"cracked", true)  # cracks drawn by marble.gdshader
 	else:
 		_build_cracks(rect)

@@ -12,6 +12,12 @@
 ## stone and the arena's exit opens (Events.boss_defeated).
 ## Gazing at him while his shield is up reflects it (2 cracks, like a mirror-bearer).
 ## Any attack that touches her costs CRACKS_PERSEUS.
+## Readability (playtest 2026-11-05: phase 2 was unclear, phase 3 went unnoticed, the
+## echoes meant nothing): while his shield is down a gaze-eye icon pulses over his head;
+## six pips at the top of the screen (two per phase) fill as gaze hits land; each phase
+## he loses leaves stone creeping further over him (petrify shader, partial), with a
+## white flash; during the study the world dims and each echo is joined to his shield
+## by a gold beam (he is studying her reflections), then the echoes shatter.
 ## Adaptation (Features.PERSEUS_ADAPT): the window shrinks to her median reaction time
 ## + 0.15 s (clamped 0.45 to 1.0 s), and he attacks from the side she faces least.
 ## With the flag off the window stays SHIELD_WINDOW_BASE and he attacks from behind
@@ -58,6 +64,14 @@ var _attack_landed: bool = false
 @onready var _shield: Node2D = $Visual/Shield
 @onready var _glint: Polygon2D = $Glint
 
+## The "gaze now" eye shown over his head while his shield is down.
+var _eye: Sprite2D = null
+## The boss pips (screen space) and the dimmer used in the study beat.
+var _pips: Node2D = null
+var _dim: ColorRect = null
+## How far the stone has crept over him (0 = none); grows each phase he loses.
+var _stone: float = 0.0
+
 
 ## _ready runs once when he enters the scene. super._ready() runs Enemy's setup first
 ## (layers, sprite art, contact zone); @onready vars above are already filled by then.
@@ -66,11 +80,67 @@ func _ready() -> void:
 	_floor_y = global_position.y
 	SpriteKit.weapon(_shield, &"shield")
 	_place_shield(true)
-	_glint.color = Balance.COLOR_GOLD
-	var r: float = Balance.PERSEUS_GLINT_SIZE * 0.5
-	_glint.polygon = PackedVector2Array([Vector2(-r, 0), Vector2(0, -r), Vector2(r, 0), Vector2(0, r)])
+	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
+	_glint.polygon = SpriteKit.sparkle(Balance.PERSEUS_GLINT_SIZE * 0.5)
 	_glint.visible = false
+	_build_eye()
+	_build_hud()
 	_start_hover()
+
+
+## The gaze icon (made by tools/cut_ui_icons.py), above his head, hidden until he is open.
+func _build_eye() -> void:
+	if not ResourceLoader.exists(Balance.KEY_HINT_ICONS["gaze"]):
+		return
+	_eye = Sprite2D.new()
+	_eye.texture = load(Balance.KEY_HINT_ICONS["gaze"])
+	_eye.modulate = Balance.COLOR_GOLD
+	_eye.position = Vector2(0.0, -half_size.y - Balance.PERSEUS_EYE_RISE)
+	_eye.scale = Vector2.ONE * (Balance.PERSEUS_EYE_SIZE / _eye.texture.get_height())
+	_eye.visible = false
+	add_child(_eye)
+
+
+## A CanvasLayer (screen space, unaffected by the camera) holding the pips and the dimmer.
+## The pips are drawn by a plain Node2D through its `draw` signal: connect() hooks our
+## _draw_pips function to it, and queue_redraw() asks for a new drawing.
+func _build_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = Balance.HUD_LAYER - 1
+	add_child(layer)
+	_dim = ColorRect.new()
+	_dim.color = Color(Balance.COLOR_BLACK, 0.0)
+	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dim.size = get_viewport_rect().size
+	layer.add_child(_dim)
+	_pips = Node2D.new()
+	_pips.position = Vector2(get_viewport_rect().size.x * 0.5, Balance.PERSEUS_PIPS_Y)
+	_pips.draw.connect(_draw_pips)
+	layer.add_child(_pips)
+	_pips.queue_redraw()
+
+
+## Six pips in three pairs: filled marble for landed hits, outlined for hits to come;
+## the current phase's pair is ringed in gold.
+func _draw_pips() -> void:
+	var per: int = Balance.PERSEUS_GAZE_HITS_PER_PHASE
+	var r: float = Balance.PERSEUS_PIP_RADIUS
+	var step: float = r * 2.6
+	var gap: float = r * 2.5
+	var total_w: float = Balance.PERSEUS_PHASES * per * step + (Balance.PERSEUS_PHASES - 1) * gap
+	var x: float = -total_w * 0.5 + r
+	for ph in range(1, Balance.PERSEUS_PHASES + 1):
+		for i in per:
+			var landed: bool = ph < phase or (ph == phase and i < hits_in_phase) or state == State.DEFEATED
+			var center := Vector2(x, 0.0)
+			_pips.draw_circle(center, r + 2.0, Balance.COLOR_BLACK)
+			if landed:
+				_pips.draw_circle(center, r, Balance.COLOR_MARBLE)
+			if ph == phase and state != State.DEFEATED:
+				_pips.draw_arc(center, r + 3.5, 0.0, TAU, 20, Balance.COLOR_GOLD, 2.0)
+			x += step
+		x += gap
 
 
 ## Whip lashes glance off the shield and the hero's armour: no stagger.
@@ -83,6 +153,11 @@ func whip_hit(_away_dir: int) -> void:
 func _physics_process(delta: float) -> void:
 	_state_time += delta
 	_reflect_cooldown = maxf(_reflect_cooldown - delta, 0.0)
+	if _eye != null:
+		# Pulse the eye while he is open: sin() over time gives a smooth throb.
+		_eye.visible = state == State.SHIELD_DOWN
+		var throb: float = 1.0 + 0.15 * sin(_state_time * TAU * 2.0)
+		_eye.scale = Vector2.ONE * throb * (Balance.PERSEUS_EYE_SIZE / _eye.texture.get_height())
 	var player: Player = find_player()
 	if player != null:
 		facing_time[player.facing] = float(facing_time[player.facing]) + delta
@@ -249,6 +324,8 @@ func reset_gaze() -> void:
 ## One gaze hit: count it, flash, and move the fight on (next phase, or defeat).
 func register_gaze_hit() -> void:
 	hits_in_phase += 1
+	Fx.play(&"petrify", 0.8)
+	Fx.hit_stop(Balance.HITSTOP_PERSEUS)
 	Events.shake_requested.emit(Balance.SHAKE_PERSEUS_HIT_PX, Balance.SHAKE_PERSEUS_HIT_TIME)
 	RunLedger.log_event("perseus_hit", {"phase": phase, "hits": hits_in_phase})
 	var flash := create_tween()
@@ -259,12 +336,33 @@ func register_gaze_hit() -> void:
 		return
 	hits_in_phase = 0
 	phase += 1
+	if _pips != null:
+		_pips.queue_redraw()
+	if phase <= Balance.PERSEUS_PHASES:
+		_phase_beat()
 	if phase > Balance.PERSEUS_PHASES:
 		_defeat()
 	elif phase == 2:
 		_study()
 	else:
 		state = State.REEL
+
+
+## A phase lost: stone creeps further over him (kept on), a big shake and a flash.
+func _phase_beat() -> void:
+	_stone = Balance.PERSEUS_PHASE_STONE * (phase - 1)
+	if sprite != null:
+		if _petrify_mat == null:
+			_petrify_mat = SpriteKit.petrify_material()
+			_petrify_mat.set_shader_parameter(&"origin", Vector2(0.5, 0.0))  # from the head down
+			sprite.material = _petrify_mat
+		_petrify_mat.set_shader_parameter(&"progress", _stone)
+	Fx.hit_stop(Balance.HITSTOP_PERSEUS * 2.0)
+	Events.shake_requested.emit(Balance.SHAKE_PERSEUS_PHASE_PX, Balance.SHAKE_PERSEUS_PHASE_TIME)
+	if _dim != null:
+		var flash := create_tween()
+		_dim.color = Color(Balance.COLOR_MARBLE, 0.6)
+		flash.tween_property(_dim, "color", Color(Balance.COLOR_MARBLE, 0.0), 0.4)
 
 
 ## After a window (or a reel): the next attack of the current phase.
@@ -315,6 +413,11 @@ func _study() -> void:
 	var echoes: Array = RunLedger.events_of("gaze")
 	echoes = echoes.slice(maxi(echoes.size() - Balance.PERSEUS_ECHO_COUNT, 0))
 	var tween := create_tween()
+	if _dim != null:
+		var dim := create_tween()
+		dim.tween_property(_dim, "color", Color(Balance.COLOR_BLACK, Balance.PERSEUS_STUDY_DIM), 0.5)
+		dim.tween_interval(Balance.PERSEUS_ECHO_TIME * (echoes.size() + 0.5))
+		dim.tween_property(_dim, "color", Color(Balance.COLOR_BLACK, 0.0), 0.5)
 	var middle := Vector2((arena_left + arena_right) * 0.5, _floor_y - Balance.PERSEUS_HOVER_HEIGHT)
 	tween.tween_property(self, "global_position", middle, Balance.PERSEUS_ECHO_TIME * 0.5)
 	for e: Dictionary in echoes:
@@ -339,12 +442,25 @@ func _show_echo(where: Vector2, dir: int) -> void:
 	ghost.scale = Vector2(dir, 1.0) * (float(info["height"]) / float(info["figure_h"]))
 	ghost.global_position = where + Vector2(0.0, info["feet_y"])
 	ghost.material = SpriteKit.marble_material()
-	ghost.modulate.a = 0.0
+	ghost.modulate = Color(Balance.COLOR_GOLD, 0.0)  # a gold-tinted reflection of her
 	add_child(ghost)
+	# The beam: his shield "sees" her old gaze, a thin gold line from shield to ghost.
+	var beam := Line2D.new()
+	beam.top_level = true
+	beam.width = Balance.MIRROR_BEAM_WIDTH
+	beam.default_color = Color(Balance.COLOR_GOLD, 0.8)
+	beam.points = PackedVector2Array([_shield.global_position, where + Balance.GAZE_EYE_OFFSET])
+	add_child(beam)
+	Fx.play(&"mirror_glint")
 	var fade := ghost.create_tween()
 	fade.tween_property(ghost, "modulate:a", Balance.PERSEUS_ECHO_ALPHA, Balance.PERSEUS_ECHO_TIME * 0.3)
 	fade.tween_interval(Balance.PERSEUS_ECHO_TIME * 0.4)
+	fade.tween_callback(func() -> void:
+		Fx.play(&"crack_portrait", 1.3)  # the reflection shatters like glass
+		Fx.dust(where, 10, Balance.COLOR_GOLD))
 	fade.tween_property(ghost, "modulate:a", 0.0, Balance.PERSEUS_ECHO_TIME * 0.3)
+	fade.parallel().tween_property(beam, "modulate:a", 0.0, Balance.PERSEUS_ECHO_TIME * 0.3)
+	fade.tween_callback(beam.queue_free)
 	fade.tween_callback(ghost.queue_free)
 
 
@@ -352,6 +468,8 @@ func _show_echo(where: Vector2, dir: int) -> void:
 func _defeat() -> void:
 	state = State.DEFEATED
 	_glint.visible = false
+	if _pips != null:
+		_pips.queue_redraw()
 	var player: Player = find_player()
 	if sprite != null:
 		_petrify_mat = SpriteKit.petrify_material()
@@ -361,7 +479,7 @@ func _defeat() -> void:
 	# A Tween changes a value over time: here it calls _set_stone(0 .. 1) over the
 	# defeat time, then runs _finish_defeat once.
 	var tween := create_tween()
-	tween.tween_method(_set_stone, 0.0, 1.0, Balance.PERSEUS_DEFEAT_STONE_TIME)
+	tween.tween_method(_set_stone, _stone, 1.0, Balance.PERSEUS_DEFEAT_STONE_TIME)
 	tween.tween_callback(_finish_defeat)
 
 

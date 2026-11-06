@@ -1,8 +1,9 @@
 ## mirror_pool.gd (root script of scenes/props/mirror_pool.tscn)
-## Purpose: a still pool that heals Medusa once per visit. Kneel in it (hold down) or
-## simply stand still in it for Balance.POOL_STAND_TIME: the portrait clears this
-## stage's cracks and drops one stage, and the pool becomes her death respawn
-## (Events.pool_used). It is spent until she leaves and comes back.
+## Purpose: a still pool that heals Medusa ONCE. Kneel in it (hold down) or simply
+## stand still in it for Balance.POOL_STAND_TIME: the portrait clears this stage's
+## cracks and drops one stage, and the pool becomes her death respawn
+## (Events.pool_used). Then it is spent for good (dull, no glint): a pool that refilled
+## when she stepped out made the portrait's aging trivial (playtest, 2026-11-05).
 ## A death that respawns her inside it does not give her a free heal.
 ## Place it with its origin at the middle of the basin on the floor surface.
 extends Area2D
@@ -11,7 +12,7 @@ extends Area2D
 var _player: Player = null
 ## Seconds she has stood still on the floor inside the zone.
 var _still_time: float = 0.0
-## True once healed on this visit.
+## True once it has healed her (it never refills).
 var _spent: bool = false
 
 @onready var _trigger: CollisionShape2D = $Trigger
@@ -77,14 +78,12 @@ func _on_body_entered(body: Node2D) -> void:
 		set_physics_process(true)
 
 
-## Leaving recharges the pool.
+## Leaving stops the stand-still count. It does NOT refill the pool.
 func _on_body_exited(body: Node2D) -> void:
 	if body is Player:
 		_player = null
 		_still_time = 0.0
-		_spent = false
 		set_physics_process(false)
-		_apply_visual()
 
 
 ## Getting up inside the pool after dying counts as this visit.

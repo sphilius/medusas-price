@@ -38,7 +38,8 @@ func _ready() -> void:
 	super._ready()
 	_home_x = position.x
 	mirror_bearer = true  # tells Enemy.whip_hit to call knock_mirror
-	_glint.color = Balance.COLOR_GOLD
+	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
+	_glint.polygon = SpriteKit.sparkle(Balance.MIRROR_GLINT_ART_RADIUS)
 	_glint.scale = Vector2.ONE * (Balance.MIRROR_GLINT_SIZE / Balance.MIRROR_GLINT_ART_RADIUS)
 	_glint.visible = false
 	_place_mirror()

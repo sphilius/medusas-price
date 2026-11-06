@@ -98,6 +98,15 @@ static func petrify_material() -> ShaderMaterial:
 
 
 ## A fresh marble material for a statue (one each, since `cracked` is per statue).
+## A slim four-point sparkle (the glint on a spearhead or arrow) of `radius` px: long
+## thin arms with a narrow waist, so it reads as a glint of light, not a solid diamond.
+static func sparkle(radius: float) -> PackedVector2Array:
+	var waist: float = radius * Balance.GLINT_WAIST
+	return PackedVector2Array([Vector2(0, -radius), Vector2(waist, -waist), Vector2(radius, 0),
+			Vector2(waist, waist), Vector2(0, radius), Vector2(-waist, waist),
+			Vector2(-radius, 0), Vector2(-waist, -waist)])
+
+
 static func marble_material() -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = MARBLE_SHADER

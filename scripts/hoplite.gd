@@ -32,7 +32,8 @@ var _spear_offset: float = 0.0
 func _ready() -> void:
 	super._ready()
 	_home_x = position.x
-	_glint.color = Balance.COLOR_GOLD
+	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
+	_glint.polygon = SpriteKit.sparkle(Balance.HOPLITE_GLINT_ART_RADIUS)
 	_glint.scale = Vector2.ONE * (Balance.HOPLITE_GLINT_SIZE / Balance.HOPLITE_GLINT_ART_RADIUS)
 	_glint.visible = false
 	var shape := RectangleShape2D.new()
@@ -127,6 +128,11 @@ func _recover(delta: float) -> void:
 
 ## A whip hit breaks the attack: no glint, spear back at rest, and once the
 ## stagger ends he goes back to chasing (a wind-up has to start over).
+## Parry window: the spear is drawn back (the gold glint is showing).
+func is_telegraphing() -> bool:
+	return state == State.WINDUP
+
+
 func _on_staggered() -> void:
 	if state in [State.WINDUP, State.THRUST, State.RECOVER]:
 		state = State.CHASE

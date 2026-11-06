@@ -47,6 +47,13 @@ func _ready() -> void:
 	_painting.size = Vector2(size, size)
 	_painting.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_painting.stretch_mode = TextureRect.STRETCH_SCALE
+	# Craquelure: the damage is painted into the portrait (shaders/portrait_crack.gdshader).
+	if ResourceLoader.exists(Balance.PORTRAIT_CRACK_SHADER):
+		var crack_mat := ShaderMaterial.new()
+		crack_mat.shader = load(Balance.PORTRAIT_CRACK_SHADER)
+		crack_mat.set_shader_parameter(&"crack_color", Balance.COLOR_BLACK)
+		crack_mat.set_shader_parameter(&"flake_color", Balance.COLOR_MARBLE)
+		_painting.material = crack_mat
 	var center := Vector2(size, size) * 0.5
 	_frame.points = _circle(center, size * 0.5 - Balance.HUD_FRAME_WIDTH * 0.5)
 	_frame.closed = true
@@ -140,6 +147,14 @@ func _set_veil(amount: float) -> void:
 
 ## Add or remove hairlines until exactly n are drawn.
 func _sync_cracks(n: int) -> void:
+	# The craquelure shader on the painting shows the damage; the old overlay lines are
+	# only kept as a fallback if the shader is missing.
+	var crack_mat := _painting.material as ShaderMaterial
+	if crack_mat != null:
+		var need: float = float(PortraitState.threshold(PortraitState.stage))
+		crack_mat.set_shader_parameter(&"amount", clampf(n / maxf(need, 1.0), 0.0, 1.0))
+		crack_mat.set_shader_parameter(&"wear", float(PortraitState.stage - 1) / float(maxi(Balance.PORTRAIT_STAGE_COUNT - 1, 1)))
+		return
 	while _lines.size() > n:
 		_lines.pop_back().queue_free()
 	while _lines.size() < n:

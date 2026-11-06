@@ -32,3 +32,5 @@ signal player_respawned(position: Vector2)
 signal level_exit_reached
 ## Perseus has turned to stone (opens the boss arena's exit).
 signal boss_defeated
+## An enemy was killed by the whip (lashes or the snake finisher), not petrified.
+signal enemy_slain(enemy_type: StringName, position: Vector2)

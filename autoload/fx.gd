@@ -68,6 +68,37 @@ func play(sound_name: StringName, pitch: float = 1.0) -> bool:
 	return true
 
 
+## A one-shot puff of dust at `where` (world px): `count` specks thrown up and out,
+## falling and fading. CPUParticles2D runs on the CPU, so it is safe in WebGL2. The
+## puff frees itself when done. `color` defaults to pale stone dust.
+func dust(where: Vector2, count: int, color: Color = Balance.DUST_COLOR) -> void:
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var puff := CPUParticles2D.new()
+	puff.one_shot = true
+	puff.explosiveness = 0.9
+	puff.amount = maxi(count, 1)
+	puff.lifetime = Balance.DUST_LIFETIME
+	puff.direction = Vector2.UP
+	puff.spread = 70.0
+	puff.initial_velocity_min = Balance.DUST_SPEED * 0.4
+	puff.initial_velocity_max = Balance.DUST_SPEED
+	puff.gravity = Vector2(0.0, Balance.DUST_GRAVITY)
+	puff.scale_amount_min = 1.5
+	puff.scale_amount_max = 3.5
+	puff.color = color
+	# Fade out over the lifetime: a 2-point gradient from the colour to transparent.
+	var fade := Gradient.new()
+	fade.set_color(0, color)
+	fade.set_color(1, Color(color, 0.0))
+	puff.color_ramp = fade
+	puff.global_position = where
+	scene.add_child(puff)
+	puff.emitting = true
+	puff.finished.connect(puff.queue_free)  # `finished` fires once the last speck is gone
+
+
 ## Freeze the game for `duration` real seconds. Overlapping calls extend the stop.
 func hit_stop(duration: float) -> void:
 	_stop_id += 1

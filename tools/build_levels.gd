@@ -68,7 +68,7 @@ func _ready() -> void:
 ## 1 the forecourt: move, a victim statue to push (teach push), up two temple steps (jump)
 ## 2 the plateau: a hoplite (teach gaze), whip hint; a broken-column climb to a shard
 ## 3 the leaper's gap: 4.5 BL, too far to walk-jump, a sprint jump clears it
-## 4 the pool (teach kneel), then the spear trench: a hoplite and a spare victim to push
+## 4 the spear trench: a hoplite and a spare victim to push
 ##   into it; a statue resting in the trench jams the spears (the statue bridge)
 ## 5 the crumbling bridge over a pit: three cracked ledges that drop after you land
 ## 6 two hoplites, then a lift (vertical moving platform) up to the temple; pool, exit
@@ -114,8 +114,6 @@ func _build_level_1() -> void:
 	_add(root, "Leaper", P_LEAPER, Vector2(70 * T, 15 * T - 20))
 	_add(root, "SafeGapFar", P_LEDGE, Vector2(72 * T, 15 * T))
 	# Room 4
-	_add(root, "PoolFirst", P_POOL, Vector2(76 * T, 15 * T))
-	_hint(root, "HintKneel", Vector2(76 * T, 15 * T - 80), [&"move_down"], ["S"], "down")
 	_add(root, "Hoplite2", P_HOPLITE, Vector2(86 * T, 15 * T - 32))
 	_add(root, "VictimSpare", P_VICTIM, Vector2(83 * T, 15 * T - 32), {"pose": 2, "faces_right": false})
 	_spears(root, "TrenchSpears", 92, 11, 17)
@@ -127,12 +125,14 @@ func _build_level_1() -> void:
 	_crumble(root, "Crumble2", 121, 3, 15)
 	_crumble(root, "Crumble3", 126, 3, 15)
 	_add(root, "SafeBridgeFar", P_LEDGE, Vector2(133 * T, 15 * T))
+	# The level's ONE pool (single use), about 70% of the way through.
+	_add(root, "Pool", P_POOL, Vector2(136 * T, 15 * T))
+	_hint(root, "HintKneel", Vector2(136 * T, 15 * T - 80), [&"move_down"], ["S"], "down")
 	# Room 6
 	_add(root, "Hoplite3", P_HOPLITE, Vector2(140 * T, 15 * T - 32))
 	_add(root, "Hoplite4", P_HOPLITE, Vector2(150 * T, 15 * T - 32))
 	_lift(root, "Lift", 160, 4, 15, 10, 4.0)
 	_add_pit(root, "PitLift", 160, 164, 15 * T)
-	_add(root, "PoolLast", P_POOL, Vector2(172 * T, 10 * T))
 	_decor(root, "ColumnDecor2", "res://art/sprites/props/column.png", Vector2(180 * T, 10 * T), 140.0)
 	_save(root, "level_1_temple")
 
@@ -181,13 +181,14 @@ func _build_level_2() -> void:
 	_ferry(root, "Ferry", 49, 3, 14, Vector2(5 * T, 0), 3.5)
 	_add(root, "Leaper", P_LEAPER, Vector2(59 * T, 14 * T - 20))
 	_add(root, "SafeSeaFar", P_LEDGE, Vector2(61 * T, 14 * T))
-	_add(root, "PoolMid", P_POOL, Vector2(66 * T, 14 * T))
 	# Room 4
 	_add(root, "SafePillarNear", P_LEDGE, Vector2(70 * T, 14 * T))
 	_add_pit(root, "PitPillarNear", 72, 77, 14 * T)
 	_add(root, "ArcherPillar", P_ARCHER, Vector2(79 * T, 12 * T - 32))
 	_add_pit(root, "PitPillarFar", 81, 86, 14 * T)
 	_add(root, "SafePillarFar", P_LEDGE, Vector2(88 * T, 14 * T))
+	# The level's ONE pool (single use), about 65% of the way through.
+	_add(root, "Pool", P_POOL, Vector2(91 * T, 14 * T))
 	_add(root, "Hoplite2", P_HOPLITE, Vector2(95 * T, 14 * T - 32))
 	# Room 5
 	_add(root, "SafeStair", P_LEDGE, Vector2(100 * T, 14 * T))
@@ -199,7 +200,6 @@ func _build_level_2() -> void:
 	_add(root, "SafeHigh", P_LEDGE, Vector2(119 * T, 8 * T))
 	_add(root, "Hoplite3", P_HOPLITE, Vector2(123 * T, 8 * T - 32))
 	_add(root, "EyeShading", P_EYES, Vector2(128 * T, 8 * T - 32))
-	_add(root, "PoolLast", P_POOL, Vector2(132 * T, 8 * T))
 	_save(root, "level_2_cliffs")
 
 
@@ -262,6 +262,8 @@ func _build_level_3() -> void:
 	_lift(root, "Lift", 80, 4, 19, 13, 4.0)
 	_add_pit(root, "PitLift", 80, 84, 19 * T)
 	_add(root, "SafeShelf", P_LEDGE, Vector2(86 * T, 13 * T))
+	# The level's ONE pool (single use), about 62% of the way through.
+	_add(root, "Pool", P_POOL, Vector2(88 * T, 13 * T))
 	_add(root, "MirrorBearer2", P_MIRROR, Vector2(94 * T, 13 * T - 32))
 	_add(root, "Hoplite", P_HOPLITE, Vector2(100 * T, 13 * T - 32))
 	_column(root, "Column1", 104, 3, 10, 13)
@@ -271,7 +273,6 @@ func _build_level_3() -> void:
 	_add_pit(root, "PitGap", 110, 117, 13 * T)
 	_crumble(root, "CrumbleGap", 112, 3, 13)
 	_add(root, "SafeGapFar", P_LEDGE, Vector2(119 * T, 13 * T))
-	_add(root, "PoolLast", P_POOL, Vector2(121 * T, 13 * T))
 	# Room 6: the plate door
 	_add(root, "VictimPlate", P_VICTIM, Vector2(124 * T, 13 * T - 32), {"pose": 0})
 	_add(root, "Plate", P_PLATE, Vector2(127 * T, 13 * T))

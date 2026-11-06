@@ -27,7 +27,8 @@ var _timer: float = 0.0
 ## first (collision layers, contact zone); then we style the gold glint.
 func _ready() -> void:
 	super._ready()
-	_glint.color = Balance.COLOR_GOLD
+	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
+	_glint.polygon = SpriteKit.sparkle(Balance.ARCHER_GLINT_ART_RADIUS)
 	_glint.scale = Vector2.ONE * (Balance.ARCHER_GLINT_SIZE / Balance.ARCHER_GLINT_ART_RADIUS)
 	_glint.visible = false
 	_place_glint()
@@ -94,6 +95,11 @@ func _cooldown(delta: float) -> void:
 
 
 ## A whip hit drops the draw (no shot, no cooldown: he has to start over).
+## Parry window: the bow is drawn (only reachable by a lash from close in).
+func is_telegraphing() -> bool:
+	return state == State.DRAW
+
+
 func _on_staggered() -> void:
 	_lower_bow()
 

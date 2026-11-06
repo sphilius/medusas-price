@@ -86,6 +86,11 @@ func _recover(delta: float) -> void:
 
 
 ## A whip hit cancels a leap in progress; after the stagger it rests, then looks again.
+## Parry window: mid-leap, as it is about to land on her.
+func is_telegraphing() -> bool:
+	return state == State.LEAP
+
+
 func _on_staggered() -> void:
 	if state == State.LEAP:
 		state = State.RECOVER
