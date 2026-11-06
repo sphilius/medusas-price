@@ -21,6 +21,7 @@ const PATTERNS: Array[String] = [
 ## K, S), which CLAUDE.md allows as icons.
 const ALLOW: Dictionary = {
 	"res://scripts/key_hint.gd": "key-cap letters (allowed by the rule)",
+	"res://scripts/pause_menu.gd": "icon-only Buttons: their text is never set, they draw shapes",
 }
 
 ## Folders not shipped as game content.

@@ -49,7 +49,9 @@ At the cave mouth, Perseus waits with a mirror for a shield.
 | Gaze | hold K | gaze button |
 | Push a statue | walk into it and keep holding | same |
 
-**Tips without spoilers:** lash an enemy while its weapon glints gold to parry. A parried enemy can be finished by your snakes. Statues jam spike traps. Gold shards mend the portrait a little.
+| Pause | Esc or P | pause button (top right) |
+
+**Tips without spoilers:** lash an enemy while its weapon glints gold to parry. A parried enemy can be finished by your snakes. Statues jam spike traps. The little gold-rimmed portraits mend cracks, or ring your portrait in gold to stop the next one. Die, and everyone you beat since your last pool comes back.
 
 ### About
 
