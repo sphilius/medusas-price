@@ -67,7 +67,7 @@ func _refresh() -> void:
 	var scene: int = GameFlow.current_index
 	if scene == Balance.MUSIC_BOSS_SCENE and _boss != null:
 		target = _boss
-	elif scene == Balance.MUSIC_ENDING_SCENE and _ending != null:
+	elif scene >= Balance.MUSIC_ENDING_SCENE and _ending != null:  # museum and ending card
 		target = _ending
 	elif not _stages.is_empty():
 		target = _stages[clampi(PortraitState.stage, 1, _stages.size()) - 1]

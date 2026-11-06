@@ -10,7 +10,7 @@
 extends Node
 
 ## The game, in order. The position in this list is the level number RunLedger uses
-## (intro 0, temple 1, cliffs 2, cave 3, boss 4, vase 5, ending 6).
+## (intro 0, temple 1, cliffs 2, cave 3, boss 4, vase 5, museum 6, ending 7).
 const ORDER: Array[String] = [
 	"res://scenes/flow/intro.tscn",
 	"res://scenes/levels/level_1_temple.tscn",
@@ -18,10 +18,11 @@ const ORDER: Array[String] = [
 	"res://scenes/levels/level_3_cave.tscn",
 	"res://scenes/levels/boss.tscn",
 	"res://scenes/flow/vase.tscn",
+	"res://scenes/flow/museum.tscn",
 	"res://scenes/flow/ending.tscn",
 ]
 ## Names for the ledger (same order as ORDER).
-const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "vase", "ending"]
+const NAMES: Array[String] = ["intro", "level_1_temple", "level_2_cliffs", "level_3_cave", "boss", "vase", "museum", "ending"]
 
 ## Index in ORDER of the scene we are in, or -1 for a scene that is not in the list.
 var current_index: int = -1

@@ -820,6 +820,23 @@ const PAUSE_LEGEND_Y: float = 0.72
 const PAUSE_LEGEND_STEP: float = 0.12
 const PAUSE_LEGEND_SCALE: float = 2.25
 ## Fade to black between levels: seconds out and seconds back in.
+# --- Museum ending (scripts/museum.gd) ---
+## At most this many of the run's statues are shown (the first ones petrified).
+const MUSEUM_MAX_STATUES: int = 14
+## Gap between plinths (px), statue display scale, Perseus's extra size.
+const MUSEUM_SPACING: float = 170.0
+const MUSEUM_STATUE_SCALE: float = 2.6
+const MUSEUM_PERSEUS_SCALE: float = 1.3
+## Plinth size (px), floor line, upper wall band and portrait height and size (px).
+const MUSEUM_PLINTH_SIZE: Vector2 = Vector2(110.0, 70.0)
+const MUSEUM_FLOOR_Y: float = 600.0
+const MUSEUM_BAND_Y: float = 40.0
+const MUSEUM_PORTRAIT_Y: float = 175.0
+const MUSEUM_PORTRAIT_SIZE: float = 190.0
+const MUSEUM_WALL_COLOR: Color = Color("E2A27A")
+## Seconds for one slow drift along the gallery, and before input counts.
+const MUSEUM_PAN_S: float = 9.0
+const MUSEUM_INPUT_DELAY_S: float = 2.0
 const FADE_OUT_S: float = 0.35
 const FADE_IN_S: float = 0.35
 ## Victim statue (scenes/props/victim_statue.tscn): body size (px) when standing, and
