@@ -37,6 +37,7 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 	_taken = true
 	PortraitState.mend(1)
+	Fx.play(&"shard")
 	RunLedger.log_event("shard", {"level": RunLedger.level, "x": global_position.x})
 	var tween := create_tween()
 	tween.tween_property(self, "scale", Vector2.ONE * 1.8, 0.2)

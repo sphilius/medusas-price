@@ -62,6 +62,7 @@ func _fall() -> void:
 	_timer = Balance.CRUMBLE_RESPAWN
 	position = _home
 	tiles.collision_enabled = false
+	Fx.play(&"crumble")
 	# A Tween animates properties over time; set_parallel runs both at once.
 	var tween := create_tween().set_parallel(true)
 	tween.tween_property(self, "position", _home + Vector2(0.0, Balance.CRUMBLE_DROP_PX), 0.35)

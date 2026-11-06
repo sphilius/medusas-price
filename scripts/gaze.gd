@@ -31,6 +31,7 @@ func _physics_process(delta: float) -> void:
 	var active: bool = _player.state == Player.State.GAZE
 	# Log the start of each gaze (where and which way): Perseus replays the last ones.
 	if active and not _cone.visible:
+		Fx.play(&"hiss")  # her snakes hiss as the gaze opens
 		RunLedger.log_event("gaze", {
 			"position": [_player.global_position.x, _player.global_position.y],
 			"facing": _player.facing,

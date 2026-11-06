@@ -115,6 +115,7 @@ func _on_phase_changed(phase: Player.WhipPhase) -> void:
 			_anim.advance(0.0)  # show the coil on this very frame, not the next
 		Player.WhipPhase.ACTIVE:
 			monitoring = true
+			Fx.play(&"whip_snap")
 		Player.WhipPhase.RECOVERY:
 			monitoring = false
 		Player.WhipPhase.NONE:

@@ -58,6 +58,7 @@ func _physics_process(delta: float) -> void:
 		State.WARN:
 			if _timer <= 0.0:
 				_set_state(State.UP, Balance.SPEAR_UP_S)
+				Fx.play(&"spear")
 		State.UP:
 			# Pull back at once if a statue landed in the trap while it was up.
 			if _timer <= 0.0 or is_jammed():

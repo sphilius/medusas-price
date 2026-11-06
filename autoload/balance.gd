@@ -93,6 +93,35 @@ const SHAKE_PETRIFY_PX: float = 6.0
 const SHAKE_PETRIFY_TIME: float = 0.2
 ## Sample rate (Hz) of every placeholder sound generated in code.
 const SFX_MIX_RATE: int = 22050
+## Recorded sound effects (CC0, Freesound; see audio/CREDITS.md), played by Fx.play().
+const SFX_FILES: Dictionary = {
+	&"petrify": "res://audio/sfx/petrify.ogg",
+	&"statue_crack": "res://audio/sfx/statue_crack.ogg",
+	&"statue_shatter": "res://audio/sfx/statue_shatter.ogg",
+	&"statue_thud": "res://audio/sfx/statue_thud.ogg",
+	&"grind_loop": "res://audio/sfx/grind_loop.ogg",
+	&"whip_snap": "res://audio/sfx/whip_snap.ogg",
+	&"hiss": "res://audio/sfx/hiss.ogg",
+	&"arrow": "res://audio/sfx/arrow.ogg",
+	&"mirror_glint": "res://audio/sfx/mirror_glint.ogg",
+	&"reflect": "res://audio/sfx/reflect.ogg",
+	&"pool": "res://audio/sfx/pool.ogg",
+	&"crack_portrait": "res://audio/sfx/crack_portrait.ogg",
+	&"spear": "res://audio/sfx/spear.ogg",
+	&"crumble": "res://audio/sfx/crumble.ogg",
+	&"gate": "res://audio/sfx/gate.ogg",
+	&"shard": "res://audio/sfx/shard.ogg",
+}
+## Per-sound volume trims in dB (0 = as recorded); tune by ear.
+const SFX_VOLUME_DB: Dictionary = {
+	&"hiss": -8.0, &"grind_loop": -6.0, &"crack_portrait": -6.0, &"gate": -4.0, &"shard": -4.0,
+}
+## How many copies of one sound may overlap, and the random pitch spread (+/-).
+const SFX_POLYPHONY: int = 4
+const SFX_PITCH_JITTER: float = 0.06
+## Death replays the petrify crackle lower and slower; a gate closing sounds lower.
+const SFX_DEATH_PITCH: float = 0.6
+const SFX_GATE_CLOSE_PITCH: float = 0.8
 ## Placeholder crack sound, generated in code: length (s), random pitch jitter
 ## (+/-), noise decay rate, thunk frequency (Hz), noise and thunk mix levels,
 ## and volume (dB).

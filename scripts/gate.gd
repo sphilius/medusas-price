@@ -50,6 +50,7 @@ func open() -> void:
 	if is_open:
 		return
 	is_open = true
+	Fx.play(&"gate")
 	# set_deferred: change it after this physics step (a plate signal can fire mid-step).
 	_shape.set_deferred("disabled", true)  # collision off
 	_slide(-height_tiles * Balance.TILE_SIZE + 8.0)
@@ -60,6 +61,7 @@ func close() -> void:
 	if not is_open:
 		return
 	is_open = false
+	Fx.play(&"gate", Balance.SFX_GATE_CLOSE_PITCH)
 	_shape.set_deferred("disabled", false)  # collision back on
 	_slide(0.0)
 

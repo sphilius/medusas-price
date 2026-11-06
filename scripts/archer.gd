@@ -149,6 +149,7 @@ func _fire(player: Player) -> void:
 		target = player.global_position + lead
 	var d: Vector2 = target - from
 	var launch := Vector2(d.x / t, d.y / t - 0.5 * Balance.ARROW_GRAVITY * t)
+	Fx.play(&"arrow")
 	var arrow: Arrow = ARROW_SCENE.instantiate()
 	# The arrow belongs to the level, not the archer, so it outlives him.
 	get_parent().add_child(arrow)
