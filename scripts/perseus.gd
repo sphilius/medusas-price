@@ -112,7 +112,6 @@ func _build_hud() -> void:
 	_dim.color = Color(Balance.COLOR_BLACK, 0.0)
 	_dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_dim.size = get_viewport_rect().size
 	layer.add_child(_dim)
 	_pips = Node2D.new()
 	_pips.position = Vector2(get_viewport_rect().size.x * 0.5, Balance.PERSEUS_PIPS_Y)

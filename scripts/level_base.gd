@@ -120,7 +120,6 @@ func _build_background(index: int) -> void:
 	sky.color = Balance.LEVEL_HAZE_COLOR[index]
 	sky.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	sky.set_anchors_preset(Control.PRESET_FULL_RECT)
-	sky.size = get_viewport_rect().size
 	layer.add_child(sky)
 	var bg: Texture2D = _load_texture(Balance.LEVEL_BACKGROUNDS[index])
 	if bg != null:
@@ -290,7 +289,6 @@ func _build_vignette() -> void:
 	var rect := ColorRect.new()
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	rect.size = get_viewport_rect().size
 	var mat := ShaderMaterial.new()
 	mat.shader = load(Balance.VIGNETTE_SHADER)
 	mat.set_shader_parameter(&"color", Balance.COLOR_BLACK)
