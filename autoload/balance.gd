@@ -955,6 +955,11 @@ const SPEAR_THRUST_SPEED: float = 10.0
 const GATE_MOVE_S: float = 0.4
 ## Shard pickup radius (px, also its drawn size).
 const SHARD_RADIUS: float = 10.0
+## Picking one up: a gold sparkle (px) flies to the portrait in SHARD_FLY_S seconds,
+## then the portrait swells to this scale and back.
+const SHARD_FLY_SIZE: float = 9.0
+const SHARD_FLY_S: float = 0.55
+const SHARD_PULSE_SCALE: float = 1.1
 ## Camera zoom (2 = twice as close). 1.5 makes Medusa about 96 screen px tall, about
 ## an eighth of the screen, like the reference platformers.
 const CAMERA_ZOOM: float = 2.25

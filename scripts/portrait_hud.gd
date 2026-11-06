@@ -83,6 +83,7 @@ func _ready() -> void:
 	_last_total = PortraitState.total_cracks()
 	PortraitState.stage_changed.connect(_on_stage_changed)
 	PortraitState.cracked.connect(_on_cracked)
+	Events.shard_collected.connect(_on_shard_collected)
 	PortraitState.healed.connect(_on_healed)
 	Events.player_died.connect(_on_player_died)
 	Events.player_respawned.connect(_on_player_respawned)
@@ -211,6 +212,27 @@ func _flinch() -> void:
 	_pulse_tween = create_tween()
 	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.HUD_FLINCH_SCALE, Balance.HUD_FLINCH_TIME * 0.3)
 	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, Balance.HUD_FLINCH_TIME * 0.7)
+
+
+## A shard was picked up: a gold sparkle flies from where it was (converted from world
+## to screen position with the viewport's canvas transform) into the portrait, which
+## then swells gently, so the player sees that shards mend the painting.
+func _on_shard_collected(world_pos: Vector2) -> void:
+	var sparkle := Polygon2D.new()
+	sparkle.polygon = SpriteKit.sparkle(Balance.SHARD_FLY_SIZE)
+	sparkle.color = Balance.COLOR_GOLD
+	sparkle.position = get_viewport().get_canvas_transform() * world_pos
+	add_child(sparkle)
+	var target: Vector2 = _shield.global_position + Vector2.ONE * Balance.HUD_SIZE * 0.5
+	var fly := create_tween()
+	fly.tween_property(sparkle, "position", target, Balance.SHARD_FLY_S).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fly.parallel().tween_property(sparkle, "rotation", TAU, Balance.SHARD_FLY_S)
+	fly.tween_callback(sparkle.queue_free)
+	fly.tween_callback(func() -> void:
+		_rest()
+		_pulse_tween = create_tween()
+		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.SHARD_PULSE_SCALE, 0.12)
+		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, 0.3))
 
 
 ## A petrify: a crisp pop outward and back, like a stone snapping into place.

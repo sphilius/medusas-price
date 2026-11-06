@@ -36,3 +36,5 @@ signal level_started(index: int)
 signal boss_defeated
 ## An enemy was killed by the whip (lashes or the snake finisher), not petrified.
 signal enemy_slain(enemy_type: StringName, position: Vector2)
+## Medusa picked up a shard at this world position (the portrait shows it arriving).
+signal shard_collected(position: Vector2)

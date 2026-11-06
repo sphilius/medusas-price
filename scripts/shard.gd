@@ -36,6 +36,7 @@ func _on_body_entered(body: Node2D) -> void:
 	if _taken or not body is Player:
 		return
 	_taken = true
+	Events.shard_collected.emit(global_position)  # the HUD flies a sparkle to the portrait
 	PortraitState.mend(1)
 	Fx.play(&"shard")
 	RunLedger.log_event("shard", {"level": RunLedger.level, "x": global_position.x})
