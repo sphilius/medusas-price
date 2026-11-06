@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://scripts/pit.gd" id="14_oe8p5"]
 [ext_resource type="PackedScene" path="res://scenes/props/mirror_pool.tscn" id="15_rhcl0"]
 [ext_resource type="Script" path="res://scripts/mirror_pool.gd" id="16_mf72p"]
+[ext_resource type="PackedScene" path="res://scenes/ui/key_hint.tscn" id="hint_1"]
 
 [node name="Level1Temple" type="Node2D" unique_id=2079500827]
 script = ExtResource("1_pvgfe")
@@ -110,3 +111,39 @@ enemy_type = &"hoplite"
 [node name="PoolLast" type="Area2D" parent="." unique_id=460040695 instance=ExtResource("15_rhcl0")]
 position = Vector2(3450, 608)
 script = ExtResource("16_mf72p")
+
+[node name="HintMove" parent="." instance=ExtResource("hint_1")]
+position = Vector2(250, 540)
+actions = Array[StringName]([&"move_left", &"move_right"])
+keys = Array[String](["A", "D"])
+icon_name = "right"
+
+[node name="HintJump" parent="." instance=ExtResource("hint_1")]
+position = Vector2(540, 540)
+actions = Array[StringName]([&"jump"])
+keys = Array[String](["space"])
+icon_name = "jump"
+
+[node name="HintGaze" parent="." instance=ExtResource("hint_1")]
+position = Vector2(700, 420)
+actions = Array[StringName]([&"gaze"])
+keys = Array[String](["K"])
+icon_name = "gaze"
+
+[node name="HintWhip" parent="." instance=ExtResource("hint_1")]
+position = Vector2(1180, 540)
+actions = Array[StringName]([&"whip"])
+keys = Array[String](["J"])
+icon_name = "whip"
+
+[node name="HintSprint" parent="." instance=ExtResource("hint_1")]
+position = Vector2(1420, 540)
+actions = Array[StringName]([&"run"])
+keys = Array[String](["shift"])
+icon_name = "right"
+
+[node name="HintKneel" parent="." instance=ExtResource("hint_1")]
+position = Vector2(2000, 540)
+actions = Array[StringName]([&"move_down"])
+keys = Array[String](["S"])
+icon_name = "down"

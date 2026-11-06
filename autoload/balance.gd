@@ -600,6 +600,35 @@ const LEVEL_EXIT_HEIGHT_BL: float = 2.0
 ## Tint of an exit door that is shut (the cave's pressure-plate door while no statue
 ## holds the plate down): the door still shows where to go, but dark.
 const EXIT_LOCKED_TINT: Color = Color(0.35, 0.3, 0.28, 1.0)
+
+# --- Key hints (scripts/key_hint.gd): wordless control hints in level 1 ---
+## Height (and width, for a letter key) of a key-cap, px.
+const KEY_HINT_CAP_SIZE: float = 34.0
+## Width of the wide caps (Space, Shift), px.
+const KEY_HINT_WIDE_CAP_W: float = 84.0
+## Space between caps, and between the caps and the icon, px.
+const KEY_HINT_GAP: float = 6.0
+## Height the action icon is drawn at, px.
+const KEY_HINT_ICON_H: float = 36.0
+## Letter size on a cap, and the cap's border width and corner radius, px.
+const KEY_HINT_FONT_SIZE: int = 20
+const KEY_HINT_BORDER: int = 2
+const KEY_HINT_CORNER: int = 6
+## Cap fill: bodies-in-motion black, slightly see-through.
+const KEY_HINT_CAP_COLOR: Color = Color(0.102, 0.078, 0.063, 0.85)
+## Seconds the hint takes to fade after the action is first used.
+const KEY_HINT_FADE_S: float = 0.6
+## Draw order: above the terrain and characters, below the HUD layer.
+const KEY_HINT_Z: int = 30
+## Icon textures by name (made by tools/cut_ui_icons.py from art/raw/P18).
+const KEY_HINT_ICONS: Dictionary = {
+	"left": "res://art/sprites/ui/icon_left.png",
+	"right": "res://art/sprites/ui/icon_right.png",
+	"down": "res://art/sprites/ui/icon_down.png",
+	"jump": "res://art/sprites/ui/icon_jump.png",
+	"whip": "res://art/sprites/ui/icon_whip.png",
+	"gaze": "res://art/sprites/ui/icon_gaze.png",
+}
 ## Fade to black between levels: seconds out and seconds back in.
 const FADE_OUT_S: float = 0.35
 const FADE_IN_S: float = 0.35
