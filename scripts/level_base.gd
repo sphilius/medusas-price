@@ -46,6 +46,7 @@ func _ready() -> void:
 	_tint.color = _base_color()
 	(_backdrop as Polygon2D).color = Balance.COLOR_BACKDROP
 	_build_world_art()
+	_build_vignette()
 	_build_exit()
 	_spawn_player()
 	_exit.body_entered.connect(_on_exit_body_entered)
@@ -246,6 +247,32 @@ func _skin_piece(layer: TileMapLayer, tile_set: TileSet, piece_mat: ShaderMateri
 			flags |= 8
 		layer.set_cell(cell, source_id, Vector2i(flags, mini(cell.y, 7)))
 	layer.material = piece_mat
+
+
+## A dark vignette around the screen edge that tightens as the portrait ages (one more
+## step per stage), so the world closes in on her. A ColorRect on its own CanvasLayer,
+## drawn by shaders/vignette.gdshader; PortraitState.stage_changed updates it.
+func _build_vignette() -> void:
+	if not ResourceLoader.exists(Balance.VIGNETTE_SHADER):
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = Balance.HUD_LAYER - 3  # under the bands, the pips and the portrait
+	add_child(layer)
+	var rect := ColorRect.new()
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.size = get_viewport_rect().size
+	var mat := ShaderMaterial.new()
+	mat.shader = load(Balance.VIGNETTE_SHADER)
+	mat.set_shader_parameter(&"color", Balance.COLOR_BLACK)
+	rect.material = mat
+	layer.add_child(rect)
+	var apply := func(stage: int) -> void:
+		var k: float = float(stage - 1) / float(maxi(Balance.PORTRAIT_STAGE_COUNT - 1, 1))
+		mat.set_shader_parameter(&"inner", lerpf(Balance.VIGNETTE_INNER_START, Balance.VIGNETTE_INNER_END, k))
+		mat.set_shader_parameter(&"strength", lerpf(Balance.VIGNETTE_STRENGTH_START, Balance.VIGNETTE_STRENGTH_END, k))
+	apply.call(PortraitState.stage)
+	PortraitState.stage_changed.connect(apply)
 
 
 ## Load a texture if the file exists; null (and no error popup) if it does not.

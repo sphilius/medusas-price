@@ -87,6 +87,41 @@ const GAZE_LOS_MASK: int = PHYS_WORLD | PHYS_STATUES
 # ---------------------------------------------------------------------------
 ## Hit-stop on petrify: real seconds, and the time scale held during it.
 const HITSTOP_DURATION: float = 0.08
+# --- Juice (Prompt 17) ---
+## Hit-stops (s): statue shatter, Medusa hurt.
+const HITSTOP_SHATTER: float = 0.04
+const HITSTOP_HURT: float = 0.05
+## Shake when Medusa is hurt.
+const SHAKE_HURT_PX: float = 5.0
+const SHAKE_HURT_TIME: float = 0.18
+## Squash and stretch (x, y scale): springing up, landing; how fast it eases back (1/s).
+const JUICE_JUMP_STRETCH: Vector2 = Vector2(0.84, 1.16)
+const JUICE_LAND_SQUASH: Vector2 = Vector2(1.2, 0.82)
+const JUICE_SQUASH_RETURN: float = 12.0
+## A landing counts (squash + dust) when she was falling faster than this (px/s).
+const JUICE_LAND_MIN_SPEED: float = 250.0
+## Dust specks: landing, each run puff, a petrify, a shatter, a whip hit.
+const JUICE_LAND_DUST: int = 8
+const JUICE_RUN_DUST: int = 3
+const JUICE_PETRIFY_DUST: int = 12
+const JUICE_SHATTER_DUST: int = 18
+const JUICE_WHIP_DUST: int = 5
+## Run dust: a puff every this many seconds above this speed (px/s).
+const JUICE_RUN_DUST_EVERY: float = 0.28
+const JUICE_RUN_DUST_SPEED: float = 200.0
+## Whip smear: opacity and seconds to fade.
+const WHIP_SMEAR_ALPHA: float = 0.45
+const WHIP_SMEAR_S: float = 0.1
+## Camera look-ahead toward where she faces (px) and how fast it eases (1/s).
+const CAMERA_LOOKAHEAD_PX: float = 56.0
+const CAMERA_LOOKAHEAD_EASE: float = 3.0
+## Vignette by portrait stage: radius where the dark starts (0 = centre, 1 = corner)
+## and how dark the corners get, from stage 1 to stage 5.
+const VIGNETTE_SHADER: String = "res://shaders/vignette.gdshader"
+const VIGNETTE_INNER_START: float = 0.75
+const VIGNETTE_INNER_END: float = 0.4
+const VIGNETTE_STRENGTH_START: float = 0.25
+const VIGNETTE_STRENGTH_END: float = 0.7
 const HITSTOP_TIME_SCALE: float = 0.05
 ## Camera shake on petrify: max offset (px) and decay time (s).
 const SHAKE_PETRIFY_PX: float = 6.0

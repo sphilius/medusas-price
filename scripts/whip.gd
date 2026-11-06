@@ -116,6 +116,7 @@ func _on_phase_changed(phase: Player.WhipPhase) -> void:
 		Player.WhipPhase.ACTIVE:
 			monitoring = true
 			Fx.play(&"whip_snap")
+			_smear()
 		Player.WhipPhase.RECOVERY:
 			monitoring = false
 		Player.WhipPhase.NONE:
@@ -185,7 +186,20 @@ func _pose_snake(sprite: Sprite2D, tip: Vector2) -> void:
 
 ## Hit each target once per lash. Enemies are pushed away from Medusa; statues are
 ## only told (they never move).
+## A pale smear over the lash's fan for a moment: motion blur, the way a fast strike
+## reads in a drawing. It fades out over WHIP_SMEAR_S.
+func _smear() -> void:
+	var smear := Polygon2D.new()
+	smear.polygon = _shape.polygon
+	smear.color = Color(Balance.COLOR_MARBLE, Balance.WHIP_SMEAR_ALPHA)
+	add_child(smear)
+	var tween := smear.create_tween()
+	tween.tween_property(smear, "modulate:a", 0.0, Balance.WHIP_SMEAR_S)
+	tween.tween_callback(smear.queue_free)
+
+
 func _on_body_entered(body: Node2D) -> void:
+	Fx.dust(body.global_position, Balance.JUICE_WHIP_DUST)
 	var id: int = body.get_instance_id()
 	if _hit_ids.has(id):
 		return

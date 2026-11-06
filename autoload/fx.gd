@@ -39,7 +39,7 @@ func _ready() -> void:
 	Events.statue_cracked.connect(_on_statue_cracked)
 	Events.statue_shattered.connect(_on_statue_shattered)
 	# More events that only need a sound: connect() with a lambda (an inline func).
-	Events.player_hit.connect(func(_c: int, _s: StringName, _p: Vector2) -> void: play(&"crack_portrait"))
+	Events.player_hit.connect(_on_player_hit)
 	Events.gaze_reflected.connect(func(_t: StringName, _p: Vector2) -> void: play(&"reflect"))
 	Events.pool_used.connect(func(_p: Vector2) -> void: play(&"pool"))
 	Events.player_died.connect(func(_p: Vector2) -> void: play(&"petrify", Balance.SFX_DEATH_PITCH))
@@ -116,9 +116,17 @@ func play_crack() -> void:
 	_crack_player.play()
 
 
-func _on_petrified(_enemy_type: StringName, _pose_frame: int, _flip: bool, _position: Vector2) -> void:
+## Medusa took a hit: the portrait-crack sound, a short shake and a tiny hit-stop.
+func _on_player_hit(_cracks: int, _source: StringName, _from: Vector2) -> void:
+	play(&"crack_portrait")
+	Events.shake_requested.emit(Balance.SHAKE_HURT_PX, Balance.SHAKE_HURT_TIME)
+	hit_stop(Balance.HITSTOP_HURT)
+
+
+func _on_petrified(_enemy_type: StringName, _pose_frame: int, _flip: bool, position: Vector2) -> void:
 	if not play(&"petrify"):
 		play_crack()
+	dust(position + Vector2(0.0, Balance.ENEMY_HALF_HEIGHT), Balance.JUICE_PETRIFY_DUST)
 	Events.shake_requested.emit(Balance.SHAKE_PETRIFY_PX, Balance.SHAKE_PETRIFY_TIME)
 	hit_stop(Balance.HITSTOP_DURATION)
 
@@ -140,9 +148,11 @@ func _on_statue_cracked(_enemy_type: StringName, _position: Vector2) -> void:
 	_crack_player.play()
 
 
-func _on_statue_shattered(_enemy_type: StringName, _position: Vector2) -> void:
+func _on_statue_shattered(_enemy_type: StringName, position: Vector2) -> void:
 	if not play(&"statue_shatter"):
 		_shatter_player.play()
+	hit_stop(Balance.HITSTOP_SHATTER)
+	dust(position, Balance.JUICE_SHATTER_DUST)
 
 
 func _add_player(stream: AudioStream, volume_db: float) -> AudioStreamPlayer:

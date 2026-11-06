@@ -53,6 +53,10 @@ var _air_sprint: bool = false
 
 ## The child node holding the art; flipped when facing changes.
 @onready var _visual: Node2D = $Visual
+## Squash and stretch: a scale on top of the facing flip that eases back to (1, 1).
+var _squash: Vector2 = Vector2.ONE
+## Seconds until the next puff of run dust.
+var _run_dust_left: float = 0.0
 ## Medusa's animated sprite (made in _ready by SpriteKit), or null if the art is
 ## missing, in which case the placeholder polygons stay visible.
 var _sprite: AnimatedSprite2D = null
@@ -113,6 +117,7 @@ func _physics_process(delta: float) -> void:
 	# Jump if a press is buffered and we are (or just were) on the ground.
 	if _buffer_left > 0.0 and _coyote_left > 0.0:
 		velocity.y = Balance.PLAYER_JUMP_VELOCITY
+		_squash = Balance.JUICE_JUMP_STRETCH  # tall and thin as she springs up
 		_buffer_left = 0.0
 		_coyote_left = 0.0  # spend coyote time so we cannot double jump
 
@@ -120,7 +125,11 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_released("jump") and velocity.y < 0.0:
 		velocity.y *= Balance.PLAYER_JUMP_CUT
 
+	# Remember the fall speed and floor contact from before the move, to spot a landing.
+	var was_on_floor: bool = is_on_floor()
+	var fall_speed: float = velocity.y
 	move_and_slide()
+	_juice(was_on_floor, fall_speed, delta)
 	_update_push(dir, delta)
 	_update_locomotion_state(dir)
 	# Kneel and push are not states, so watch their flags and re-pick the pose when one flips.
@@ -130,6 +139,24 @@ func _physics_process(delta: float) -> void:
 		_was_kneeling = kneeling
 		_was_pushing = pushing
 		_refresh_animation()
+
+
+## Feel: a squash and a dust puff on landing, dust every few strides while running,
+## and the squash easing back to normal. The squash scales around her feet (the
+## Visual moves down as it shrinks), so she never floats or sinks.
+func _juice(was_on_floor: bool, fall_speed: float, delta: float) -> void:
+	var feet := global_position + Vector2(0.0, Balance.SPRITE_ART[&"medusa"]["feet_y"])
+	if not was_on_floor and is_on_floor() and fall_speed > Balance.JUICE_LAND_MIN_SPEED:
+		_squash = Balance.JUICE_LAND_SQUASH
+		Fx.dust(feet, Balance.JUICE_LAND_DUST)
+	if is_on_floor() and absf(velocity.x) > Balance.JUICE_RUN_DUST_SPEED:
+		_run_dust_left -= delta
+		if _run_dust_left <= 0.0:
+			_run_dust_left = Balance.JUICE_RUN_DUST_EVERY
+			Fx.dust(feet, Balance.JUICE_RUN_DUST)
+	_squash = _squash.lerp(Vector2.ONE, minf(Balance.JUICE_SQUASH_RETURN * delta, 1.0))
+	_visual.scale = Vector2(facing * _squash.x, _squash.y)
+	_visual.position.y = Balance.SPRITE_ART[&"medusa"]["feet_y"] * (1.0 - _squash.y)
 
 
 ## A hit lands: stun, knock away from the attacker, start the invulnerable window.
