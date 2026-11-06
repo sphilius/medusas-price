@@ -3,7 +3,8 @@
 ## right corner (for mouse and touch), pauses a level and shows:
 ##   - four round buttons, standard symbols: return to the game (the bent arrow of the
 ##     Enter key), restart this level (circular arrow; the portrait keeps its cracks,
-##     so it is no free heal), quit to the title card (an X), music on/off (a note);
+##     so it is no free heal), quit to the title card (an X), music on/off (a note),
+##     and in web builds webcam stare mode on/off (a camera; see webcam_stare.gd);
 ##   - below them, the controls legend: each action's icon over its key-caps (KeyHint).
 ## Everything is drawn with shapes and icons, no words or numbers (CLAUDE.md HARD RULE).
 ## The buttons are real Godot Buttons, so mouse, touch, arrow keys + Enter all work.
@@ -12,7 +13,7 @@ class_name PauseMenu
 extends CanvasLayer
 
 ## What each round button draws (see _draw_icon).
-enum Icon { RESUME, RESTART, QUIT, MUSIC }
+enum Icon { RESUME, RESTART, QUIT, MUSIC, CAMERA }
 
 ## Everything shown while paused (hidden otherwise).
 var _panel: Control = null
@@ -53,6 +54,11 @@ func _build_panel() -> void:
 	var size: float = Balance.PAUSE_BUTTON_SIZE
 	var gap: float = size * 0.5
 	var icons: Array[Icon] = [Icon.RESUME, Icon.RESTART, Icon.QUIT, Icon.MUSIC]
+	var webcam: WebcamStare = _webcam()
+	if webcam != null and webcam.is_ready():
+		icons.append(Icon.CAMERA)
+		# Redraw the camera button whenever the mode changes (loading, on, failed).
+		webcam.state_changed.connect(func(_s: StringName) -> void: _buttons[icons.size() - 1].queue_redraw())
 	var left: float = screen.x * 0.5 - (icons.size() * size + (icons.size() - 1) * gap) * 0.5
 	for i in icons.size():
 		var b := _round_button(size, _draw_icon.bind(icons[i]))
@@ -157,6 +163,15 @@ func _on_button(icon: Icon) -> void:
 			if bus >= 0:
 				AudioServer.set_bus_mute(bus, not AudioServer.is_bus_mute(bus))
 			_buttons[3].queue_redraw()
+		Icon.CAMERA:
+			var webcam: WebcamStare = _webcam()
+			if webcam != null:
+				webcam.toggle()
+
+
+## The webcam stare node GameFlow adds (null if missing).
+func _webcam() -> WebcamStare:
+	return get_tree().get_first_node_in_group(&"webcam") as WebcamStare
 
 
 # ---------------------------------------------------------------------------
@@ -209,4 +224,18 @@ func _draw_icon(b: Button, icon: Icon) -> void:
 			b.draw_line(top, top + Vector2(s * 0.14, s * 0.12), col, s * 0.05)
 			var bus: int = AudioServer.get_bus_index(MUSIC_BUS)
 			if bus >= 0 and AudioServer.is_bus_mute(bus):
+				b.draw_line(c + Vector2(-s * 0.26, -s * 0.26), c + Vector2(s * 0.26, s * 0.26), Balance.COLOR_GOLD, s * 0.07)
+		Icon.CAMERA:
+			# A camera: body, viewfinder bump, round lens. Off or failed: a gold slash.
+			# Loading: a gold lens ring. On: a gold ring with a gold eye in the lens.
+			var webcam: WebcamStare = _webcam()
+			var mode: StringName = webcam.state if webcam != null else &"off"
+			var lit: bool = mode == &"on" or mode == &"loading"
+			b.draw_rect(Rect2(c + Vector2(-s * 0.26, -s * 0.15), Vector2(s * 0.52, s * 0.34)), col, false, s * 0.05)
+			b.draw_rect(Rect2(c + Vector2(-s * 0.08, -s * 0.22), Vector2(s * 0.16, s * 0.07)), col)
+			var lens: Vector2 = c + Vector2(0.0, s * 0.02)
+			b.draw_arc(lens, s * 0.1, 0.0, TAU, 24, Balance.COLOR_GOLD if lit else col, s * 0.04, true)
+			if mode == &"on":
+				b.draw_circle(lens, s * 0.05, Balance.COLOR_GOLD)
+			if not lit:
 				b.draw_line(c + Vector2(-s * 0.26, -s * 0.26), c + Vector2(s * 0.26, s * 0.26), Balance.COLOR_GOLD, s * 0.07)

@@ -49,6 +49,7 @@ func _ready() -> void:
 	layer.add_child(_fade)
 	# The wordless pause menu (Esc / P / corner button) lives here so it survives scene
 	# changes; it only opens inside the levels.
+	add_child(WebcamStare.new())  # webcam stare mode's link to the page (web only, opt-in)
 	add_child(PauseMenu.new())
 	# A signal is "something happened" announced on the Events bus; connect() makes
 	# next_level run every time it is emitted, so no script has to poll for the exit.

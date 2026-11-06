@@ -823,6 +823,19 @@ const PAUSE_BUTTONS_Y: float = 0.28
 const PAUSE_LEGEND_Y: float = 0.72
 const PAUSE_LEGEND_STEP: float = 0.12
 const PAUSE_LEGEND_SCALE: float = 2.25
+
+## Webcam stare mode (web/shell.html + scripts/webcam_stare.gd). MediaPipe scores how
+## wide the eyes are open (0..1). The first CALIBRATE_S seconds learn the player's
+## relaxed value; a stare starts at that + STARE_DELTA and ends below
+## that + STARE_DELTA * RELEASE (so it does not flicker). Eyes more than BLINK closed
+## never count. DETECT_HZ looks per second (lower = lighter on phones).
+const WEBCAM_STARE_DELTA: float = 0.15
+const WEBCAM_RELEASE: float = 0.6
+const WEBCAM_CALIBRATE_S: float = 1.5
+const WEBCAM_BLINK: float = 0.35
+const WEBCAM_DETECT_HZ: int = 12
+## Size (px) of the round mirror preview at the top of the screen.
+const WEBCAM_PREVIEW_PX: int = 96
 ## Fade to black between levels: seconds out and seconds back in.
 # --- Museum ending (scripts/museum.gd) ---
 ## At most this many of the run's statues are shown (the first ones petrified).

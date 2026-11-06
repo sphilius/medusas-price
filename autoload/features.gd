@@ -10,5 +10,6 @@ const VASE_AI: bool = true
 const GALLERY_AI: bool = true
 ## Perseus adaptation: boss timing adapts to the player's measured reaction time (local only).
 const PERSEUS_ADAPT: bool = true
-## Webcam stare mode: MediaPipe in the HTML shell, runs only in the browser. Off until P16.
-const WEBCAM: bool = false
+## Webcam stare mode: MediaPipe in the HTML shell, runs only in the browser, opt-in from
+## the pause menu's camera button. Fallback: the gaze key / gaze button, always.
+const WEBCAM: bool = true

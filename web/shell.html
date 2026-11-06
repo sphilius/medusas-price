@@ -5,7 +5,7 @@
   fills the window. The Godot export fills in the $GODOT_* placeholders.
   Phone-safe: the page never scrolls, zooms, selects text or pops a long-press menu,
   and it follows the real visible height as the phone's address bar slides away.
-  P16 (webcam) and P18 (hardening) extend this file.
+  Webcam stare mode (P16) lives in the second <script> below.
 -->
 <html lang="en">
 <head>
@@ -75,6 +75,141 @@
 			if (now - lastTouchEnd < 300) e.preventDefault();
 			lastTouchEnd = now;
 		}, { passive: false });
+	</script>
+	<script>
+		// ---------------------------------------------------------------------------
+		// Webcam stare mode (P16). Off until the player taps the camera button in the
+		// pause menu; Godot (scripts/webcam_stare.gd) talks to this object through
+		// JavaScriptBridge. Widen your eyes at the camera and Medusa gazes.
+		// - Everything runs on this device: the video never leaves the browser. Only the
+		//   MediaPipe library and its face model are downloaded (from public CDNs), and
+		//   only when the mode is first switched on.
+		// - Wordless: a small round mirror of your face appears at the top of the screen;
+		//   its ring turns gold while you stare.
+		// - Any failure (no camera, permission refused, offline) just turns the mode off
+		//   and reports "failed" to Godot. No popups.
+		// ---------------------------------------------------------------------------
+		window.medusaStare = (() => {
+			// Exact versions, so a library update can never change the game.
+			const VISION = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
+			const MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+			// Tunables arrive from Godot (Balance.WEBCAM_*) in start(); these are fallbacks.
+			let cfg = { delta: 0.15, release: 0.6, calibrate: 1.5, hz: 12, size: 96, blink: 0.35 };
+			let state = 'off';        // off | loading | on | failed
+			let staring = false;
+			let landmarker = null;    // MediaPipe FaceLandmarker, built once and kept
+			let stream = null;        // the camera stream (stopped on every stop())
+			let video = null, frame = null, timer = 0;
+			let baseline = 0, samples = 0, startedAt = 0;
+			let callback = null;      // Godot callback(state, staring)
+
+			const tell = () => { if (callback) callback(state, staring); };
+			const setStaring = (value) => {
+				if (value === staring) return;
+				staring = value;
+				if (frame) frame.style.borderColor = value ? '#E8B547' : '#F2EFE8';
+				tell();
+			};
+
+			// The round mirror preview: top centre, above the canvas, never takes touches.
+			function buildPreview() {
+				frame = document.createElement('div');
+				Object.assign(frame.style, {
+					position: 'fixed', top: '10px', left: '50%', transform: 'translateX(-50%)',
+					width: cfg.size + 'px', height: cfg.size + 'px', borderRadius: '50%',
+					overflow: 'hidden', border: '3px solid #F2EFE8', background: '#1A1410',
+					pointerEvents: 'none', zIndex: 10, opacity: 0.85,
+				});
+				video = document.createElement('video');
+				video.muted = true;
+				video.playsInline = true;   // iPhone: play inside the page, not full screen
+				Object.assign(video.style, {
+					width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)',
+				});
+				frame.appendChild(video);
+				document.body.appendChild(frame);
+			}
+
+			// GPU first (fast); some phones refuse it, so fall back to the CPU.
+			async function buildLandmarker() {
+				const vision = await import(VISION + '/vision_bundle.mjs');
+				const files = await vision.FilesetResolver.forVisionTasks(VISION + '/wasm');
+				const options = (delegate) => ({
+					baseOptions: { modelAssetPath: MODEL, delegate },
+					outputFaceBlendshapes: true, runningMode: 'VIDEO', numFaces: 1,
+				});
+				try {
+					return await vision.FaceLandmarker.createFromOptions(files, options('GPU'));
+				} catch (e) {
+					return await vision.FaceLandmarker.createFromOptions(files, options('CPU'));
+				}
+			}
+
+			// One look at the face. Blendshapes are 0..1 scores for facial movements;
+			// eyeWide* rises when the eyes open wide. The first `calibrate` seconds learn
+			// this face's relaxed value (baseline); a stare is baseline + delta, and it ends
+			// below baseline + delta * release (hysteresis, so it does not flicker).
+			function detect() {
+				if (state !== 'on' || !video || video.readyState < 2) return;
+				let result;
+				try { result = landmarker.detectForVideo(video, performance.now()); } catch (e) { return; }
+				const face = result.faceBlendshapes && result.faceBlendshapes[0];
+				if (!face) { setStaring(false); return; }
+				const score = (name) => {
+					const c = face.categories.find((x) => x.categoryName === name);
+					return c ? c.score : 0;
+				};
+				const wide = (score('eyeWideLeft') + score('eyeWideRight')) / 2;
+				const blink = (score('eyeBlinkLeft') + score('eyeBlinkRight')) / 2;
+				if (performance.now() - startedAt < cfg.calibrate * 1000) {
+					samples += 1;
+					baseline += (wide - baseline) / samples;   // running average
+					return;
+				}
+				const on = staring ? baseline + cfg.delta * cfg.release : baseline + cfg.delta;
+				setStaring(wide > on && blink < cfg.blink);
+			}
+
+			async function start(config) {
+				if (state === 'loading' || state === 'on') return;
+				if (config) cfg = Object.assign(cfg, config);
+				state = 'loading'; tell();
+				try {
+					stream = await navigator.mediaDevices.getUserMedia({
+						video: { facingMode: 'user', width: 320, height: 240 }, audio: false,
+					});
+					if (!landmarker) landmarker = await buildLandmarker();
+					if (state !== 'loading') { stop(); return; }   // switched off meanwhile
+					buildPreview();
+					video.srcObject = stream;
+					await video.play();
+					baseline = 0; samples = 0; startedAt = performance.now();
+					state = 'on'; tell();
+					timer = setInterval(detect, 1000 / cfg.hz);
+				} catch (e) {
+					stop();
+					state = 'failed'; tell();
+				}
+			}
+
+			function stop() {
+				clearInterval(timer);
+				if (stream) stream.getTracks().forEach((t) => t.stop());
+				stream = null;
+				if (frame) frame.remove();
+				frame = null; video = null;
+				staring = false;
+				state = 'off'; tell();
+			}
+
+			return {
+				available: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+				setCallback: (cb) => { callback = cb; },
+				start: (configJson) => start(configJson ? JSON.parse(configJson) : null),
+				stop: () => stop(),
+				state: () => state,
+			};
+		})();
 	</script>
 </body>
 </html>
