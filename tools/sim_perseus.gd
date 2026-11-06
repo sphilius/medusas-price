@@ -61,6 +61,13 @@ func _test_fight() -> void:
 	_check("a held gaze in the window lands one hit", perseus.hits_in_phase == 1)
 	_check("the reaction time was recorded", perseus.reactions.size() == 1)
 
+	# Her death mid-fight: when she gets up, the fight starts over from phase 1.
+	Events.player_died.emit(Vector2.ZERO)
+	Events.player_respawned.emit(Vector2.ZERO)
+	_check("her respawn restarts the fight (phase 1, no hits)", perseus.phase == 1 and perseus.hits_in_phase == 0 and perseus.state == perseus.State.HOVER)
+	_check("he still remembers her reactions", perseus.reactions.size() == 1)
+	perseus.register_gaze_hit()  # back to one hit, as before the restart
+
 	var per: int = Balance.PERSEUS_GAZE_HITS_PER_PHASE
 	for i in per - 1:
 		perseus.register_gaze_hit()

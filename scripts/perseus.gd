@@ -22,6 +22,10 @@
 ## he loses leaves stone creeping further over him (petrify shader, partial), with a
 ## white flash; during the study the world dims and each echo is joined to his shield
 ## by a gold beam (he is studying her reflections), then the echoes shatter.
+## If Medusa dies during the fight, the whole fight starts over from phase 1 when she
+## gets up (Events.player_respawned): pips empty, stone gone, he rises to hover again.
+## A lash that does neither (parry or braced shield) glances off with a gold spark and
+## a clank, so the player sees the whip connect and learns when it matters.
 ## Adaptation (Features.PERSEUS_ADAPT): the window shrinks to her median reaction time
 ## + 0.15 s (clamped 0.45 to 1.0 s), and he attacks from the side she faces least.
 ## With the flag off the window stays SHIELD_WINDOW_BASE and he attacks from behind
@@ -77,6 +81,10 @@ var _pips: Node2D = null
 var _dim: ColorRect = null
 ## How far the stone has crept over him (0 = none); grows each phase he loses.
 var _stone: float = 0.0
+## Where the fight starts (set in _ready): a restart after her death puts him back here.
+var _start_pos: Vector2 = Vector2.ZERO
+## The study beat's movement tween, kept so a restart can stop it.
+var _study_tween: Tween = null
 
 
 ## _ready runs once when he enters the scene. super._ready() runs Enemy's setup first
@@ -84,6 +92,12 @@ var _stone: float = 0.0
 func _ready() -> void:
 	super._ready()
 	_floor_y = global_position.y
+	_start_pos = global_position
+	# Her death freezes him; her getting up restarts the fight from phase 1.
+	Events.player_died.connect(func(_p: Vector2) -> void:
+		if state != State.DEFEATED:
+			set_physics_process(false))
+	Events.player_respawned.connect(func(_p: Vector2) -> void: _restart_fight())
 	SpriteKit.weapon(_shield, &"shield")
 	_place_shield(true)
 	_glint.color = Color(Balance.COLOR_GOLD, Balance.GLINT_ALPHA)
@@ -165,6 +179,42 @@ func whip_hit(_away_dir: int) -> void:
 	elif state == State.GUARD:
 		_knocked(1.0)
 		RunLedger.log_event("perseus_shield_knocked", {"phase": phase})
+	elif state != State.DEFEATED and state != State.STUDY:
+		_glance()
+
+
+## A lash that only hits the shield: a gold flash on it and a high clank, nothing else.
+func _glance() -> void:
+	Fx.play(&"mirror_glint", 1.4)
+	_shield.modulate = Balance.COLOR_GOLD
+	var back := create_tween()
+	back.tween_property(_shield, "modulate", Color.WHITE, Balance.PERSEUS_GLANCE_FLASH_S)
+
+
+## Her death undone: back to the very start of the fight (phase 1, no hits, no stone).
+## The adaptation data (reactions, facing_time) is kept: he still remembers her.
+func _restart_fight() -> void:
+	if state == State.DEFEATED:
+		return
+	if _study_tween != null and _study_tween.is_valid():
+		_study_tween.kill()
+	phase = 1
+	hits_in_phase = 0
+	_stone = 0.0
+	_gaze_time = 0.0
+	if _petrify_mat != null:
+		_petrify_mat.set_shader_parameter(&"progress", 0.0)
+	if _dim != null:
+		_dim.color = Color(Balance.COLOR_BLACK, 0.0)
+	_glint.visible = false
+	_place_shield(true)
+	global_position = _start_pos
+	velocity = Vector2.ZERO
+	visual.modulate = Color.WHITE
+	if _pips != null:
+		_pips.queue_redraw()
+	set_physics_process(true)
+	_start_hover()
 
 
 ## The lash landed: gold flash, glint sound, hit-stop and shake, then the open window.
@@ -366,6 +416,8 @@ func register_gaze_hit() -> void:
 	Fx.hit_stop(Balance.HITSTOP_PERSEUS)
 	Events.shake_requested.emit(Balance.SHAKE_PERSEUS_HIT_PX, Balance.SHAKE_PERSEUS_HIT_TIME)
 	RunLedger.log_event("perseus_hit", {"phase": phase, "hits": hits_in_phase})
+	if _pips != null:
+		_pips.queue_redraw()  # fill this hit's pip now, not only when the phase ends
 	var flash := create_tween()
 	visual.modulate = Balance.COLOR_MARBLE
 	flash.tween_property(visual, "modulate", Color.WHITE, Balance.PERSEUS_REEL_TIME)
@@ -451,6 +503,7 @@ func _study() -> void:
 	var echoes: Array = RunLedger.events_of("gaze")
 	echoes = echoes.slice(maxi(echoes.size() - Balance.PERSEUS_ECHO_COUNT, 0))
 	var tween := create_tween()
+	_study_tween = tween
 	if _dim != null:
 		var dim := create_tween()
 		dim.tween_property(_dim, "color", Color(Balance.COLOR_BLACK, Balance.PERSEUS_STUDY_DIM), 0.5)

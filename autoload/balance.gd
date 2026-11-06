@@ -662,7 +662,7 @@ const DEATH_FADE_BACK_TIME: float = 0.4
 # ---------------------------------------------------------------------------
 const PERSEUS_PHASES: int = 3
 ## Gaze hits needed per phase.
-const PERSEUS_GAZE_HITS_PER_PHASE: int = 3
+const PERSEUS_GAZE_HITS_PER_PHASE: int = 2
 ## Base shield-down window after each attack (s).
 const SHIELD_WINDOW_BASE: float = 1.0
 ## Adapted window = clamp(median reaction + OFFSET, MIN, MAX).
@@ -705,6 +705,8 @@ const PERSEUS_PARRY_WINDOW_MULT: float = 1.6
 const PERSEUS_GUARD_TIME: float = 2.2
 ## The whip icon pulsing over him while he braces (px tall), like the gaze eye.
 const PERSEUS_WHIP_ICON_SIZE: float = 24.0
+## A lash that only glances off the shield flashes it gold for this long (s).
+const PERSEUS_GLANCE_FLASH_S: float = 0.25
 ## Defeat: seconds the stone takes to cover him before he becomes a statue.
 const PERSEUS_DEFEAT_STONE_TIME: float = 1.5
 ## His shield (Visual/Shield): held in front, or dropped to his side during the window.
