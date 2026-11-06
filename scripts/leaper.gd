@@ -19,6 +19,14 @@ var _timer: float = 0.0
 var _air_time: float = 0.0
 
 
+## Leapers pass THROUGH Medusa's body (her layer is dropped from their mask): one that
+## landed on her head used to stand there and hurt her over and over. Touching her
+## still hurts through the shared contact area (Enemy.check_contact).
+func _ready() -> void:
+	super._ready()
+	collision_mask &= ~Balance.PHYS_PLAYER  # &= ~ clears that one bit
+
+
 func _physics_process(delta: float) -> void:
 	apply_gravity(delta)
 	if tick_stagger(delta):
@@ -76,7 +84,7 @@ func _leap(delta: float) -> void:
 	# Takeoff pose first, then the stretched-out mid-leap pose.
 	if _air_time >= Balance.LEAPER_TAKEOFF_POSE_S:
 		SpriteKit.play(sprite, &"leap")
-	if _air_time >= Balance.LEAPER_MIN_AIR_TIME and is_on_floor():
+	if (_air_time >= Balance.LEAPER_MIN_AIR_TIME and is_on_floor()) or _air_time >= Balance.LEAPER_MAX_AIR_S:
 		velocity.x = 0.0
 		state = State.RECOVER
 		_timer = Balance.LEAPER_RECOVERY

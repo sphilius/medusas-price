@@ -484,6 +484,9 @@ const LEAPER_APEX_BL: float = 1.5
 const LEAPER_HOP_ON_FLAT: bool = true
 ## Leaping UP to a higher ledge, the arc's top clears the target by this much (BL).
 const LEAPER_APEX_CLEAR_BL: float = 0.5
+## A leap that has not landed after this many seconds (wedged on a ledge corner) ends:
+## the leaper drops into RECOVER and falls normally (playtest, 2026-11-06).
+const LEAPER_MAX_AIR_S: float = 2.0
 const LEAPER_MAX_SPEED: float = 500.0
 const LEAPER_RECOVERY: float = 0.8
 const LEAPER_MIN_AIR_TIME: float = 0.1
