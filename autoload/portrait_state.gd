@@ -15,6 +15,9 @@ signal cracked(total_in_stage: int)
 signal healed(stage: int)
 ## The last stage filled. Emitted once; cracks are ignored until reset_after_death().
 signal died
+## The gold ward around the portrait changed (rings left). A ward ring absorbs one
+## crack before it can reach the painting; shards make them (see mend).
+signal ward_changed(rings: int)
 
 ## 1 (Defiant) to Balance.PORTRAIT_STAGE_COUNT (Stone).
 var stage: int = 1
@@ -23,6 +26,8 @@ var cracks_in_stage: int = 0
 var is_dead: bool = false
 ## What dealt the latest cracks (for the death entry in the ledger).
 var last_source: StringName = &""
+## Gold ward rings: each one absorbs one crack (made by shards, see mend()).
+var ward: int = 0
 
 
 func _ready() -> void:
@@ -47,6 +52,15 @@ func total_cracks() -> int:
 func add_cracks(n: int, source: StringName) -> void:
 	if n <= 0 or is_dead:
 		return
+	# Ward rings take cracks first; only what is left reaches the painting.
+	if ward > 0:
+		var absorbed: int = mini(ward, n)
+		ward -= absorbed
+		n -= absorbed
+		ward_changed.emit(ward)
+		RunLedger.log_event("ward", {"absorbed": absorbed, "left": ward})
+		if n <= 0:
+			return
 	var stage_before: int = stage
 	var dies: bool = false
 	var left: int = n
@@ -96,11 +110,19 @@ func heal_at_pool() -> void:
 ## A shard: close up to `n` cracks of the current stage (never below 0, never a stage
 ## back; that is what pools are for). The HUD redraws from `cracked`.
 func mend(n: int) -> void:
-	if is_dead or n <= 0 or cracks_in_stage == 0:
+	if is_dead or n <= 0:
 		return
-	cracks_in_stage = maxi(cracks_in_stage - n, 0)
-	RunLedger.log_event("mend", {"stage": stage, "in_stage": cracks_in_stage, "level": RunLedger.level})
-	cracked.emit(cracks_in_stage)
+	var healed_now: int = mini(n, cracks_in_stage)
+	if healed_now > 0:
+		cracks_in_stage -= healed_now
+		RunLedger.log_event("mend", {"stage": stage, "in_stage": cracks_in_stage, "level": RunLedger.level})
+		cracked.emit(cracks_in_stage)
+	# What could not mend (no cracks to close) is kept as ward rings, so a shard is
+	# never wasted: the next cracks hit the gold ring instead of the painting.
+	var spare: int = n - healed_now
+	if spare > 0 and ward < Balance.SHARD_WARD_MAX:
+		ward = mini(ward + spare, Balance.SHARD_WARD_MAX)
+		ward_changed.emit(ward)
 
 
 ## Back on her feet after dying: Balance.DEATH_RESPAWN_STAGE with 0 cracks.
@@ -110,6 +132,8 @@ func reset_after_death() -> void:
 
 ## A brand new run: stage 1, 0 cracks.
 func reset_run() -> void:
+	ward = 0
+	ward_changed.emit(0)
 	_set_fresh(1)
 
 

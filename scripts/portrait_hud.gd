@@ -84,6 +84,8 @@ func _ready() -> void:
 	PortraitState.stage_changed.connect(_on_stage_changed)
 	PortraitState.cracked.connect(_on_cracked)
 	Events.shard_collected.connect(_on_shard_collected)
+	PortraitState.ward_changed.connect(_on_ward_changed)
+	_build_ward()
 	PortraitState.healed.connect(_on_healed)
 	Events.player_died.connect(_on_player_died)
 	Events.player_respawned.connect(_on_player_respawned)
@@ -233,6 +235,30 @@ func _on_shard_collected(world_pos: Vector2) -> void:
 		_pulse_tween = create_tween()
 		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.SHARD_PULSE_SCALE, 0.12)
 		_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, 0.3))
+
+
+## Gold ward rings drawn around the portrait (one per ring PortraitState.ward holds).
+## A plain Node2D on the shield draws them through its `draw` signal.
+var _ward: Node2D = null
+
+
+func _build_ward() -> void:
+	_ward = Node2D.new()
+	_ward.position = Vector2.ONE * Balance.HUD_SIZE * 0.5
+	_ward.draw.connect(func() -> void:
+		for i in PortraitState.ward:
+			var r: float = Balance.HUD_SIZE * 0.5 + Balance.WARD_RING_GAP * (i + 1)
+			_ward.draw_arc(Vector2.ZERO, r, 0.0, TAU, 48, Balance.COLOR_GOLD, Balance.WARD_RING_WIDTH, true))
+	_shield.add_child(_ward)
+
+
+## A ring was added (shard) or used up (it took a crack): redraw, and pulse the shield.
+func _on_ward_changed(_rings: int) -> void:
+	_ward.queue_redraw()
+	_rest()
+	_pulse_tween = create_tween()
+	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE * Balance.SHARD_PULSE_SCALE, 0.12)
+	_pulse_tween.tween_property(_shield, "scale", Vector2.ONE, 0.3)
 
 
 ## A petrify: a crisp pop outward and back, like a stone snapping into place.

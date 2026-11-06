@@ -190,7 +190,7 @@ func _test_shard() -> void:
 	var before: int = PortraitState.cracks_in_stage
 	player.global_position = Vector2(500.0, 576.0)
 	await _wait(0.3)
-	_check(PortraitState.cracks_in_stage == before - 1, "a shard mends one crack")
+	_check(PortraitState.cracks_in_stage == before - Balance.SHARD_MEND, "a shard mends SHARD_MEND cracks")
 	PortraitState.reset_run()
 	level.free()
 	await get_tree().physics_frame

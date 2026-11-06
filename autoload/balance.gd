@@ -1029,6 +1029,14 @@ const SPEAR_THRUST_SPEED: float = 10.0
 const GATE_MOVE_S: float = 0.4
 ## Shard pickup radius (px, also its drawn size).
 const SHARD_RADIUS: float = 10.0
+## A shard mends this many cracks. Whatever cannot be mended right now (the stage has
+## fewer cracks) becomes a gold ward ring on the portrait that absorbs the next crack;
+## at most SHARD_WARD_MAX rings at once.
+const SHARD_MEND: int = 2
+const SHARD_WARD_MAX: int = 3
+## HUD ward rings: gap between rings and their width (px).
+const WARD_RING_GAP: float = 5.0
+const WARD_RING_WIDTH: float = 3.0
 ## Picking one up: a gold sparkle (px) flies to the portrait in SHARD_FLY_S seconds,
 ## then the portrait swells to this scale and back.
 const SHARD_FLY_SIZE: float = 9.0

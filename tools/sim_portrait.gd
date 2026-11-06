@@ -29,6 +29,7 @@ func _ready() -> void:
 	await _test_pool()
 	await _test_death()
 	await _test_hud()
+	_test_shard_ward()
 	print("sim_portrait: %s" % ("ALL PASS" if _failures == 0 else "%d FAILED" % _failures))
 	get_tree().quit(_failures)
 
@@ -214,6 +215,17 @@ func _test_hud() -> void:
 
 
 # ---------------------------------------------------------------------------
+
+## Shards: mend what they can, keep the rest as ward rings that absorb the next cracks.
+func _test_shard_ward() -> void:
+	PortraitState.reset_run()
+	PortraitState.add_cracks(1, &"sim")
+	PortraitState.mend(Balance.SHARD_MEND)
+	_check("a shard mends the crack and keeps the rest as a ward ring", PortraitState.cracks_in_stage == 0 and PortraitState.ward == Balance.SHARD_MEND - 1)
+	PortraitState.add_cracks(2, &"sim")
+	_check("the ward ring takes the first crack", PortraitState.ward == 0 and PortraitState.cracks_in_stage == 1)
+	PortraitState.reset_run()
+
 
 func _count_lines(parent: Node) -> int:
 	return parent.get_children().filter(func(n: Node) -> bool: return n is Line2D and not n.is_queued_for_deletion()).size()
