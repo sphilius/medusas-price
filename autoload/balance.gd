@@ -761,10 +761,25 @@ const LEVEL_SURFACE_TINT: Array[Color] = [
 ## World px covered by one copy of the surface painting (a temple brick ends up
 ## about 1.3 BL wide, close to Medusa's size).
 const TERRAIN_SURFACE_PX: float = 224.0
-## Marker atlas for terrain.gdshader: 16 blank 32 px tiles; the tile index = exposed sides.
+## Marker atlas for terrain.gdshader: 16 x 8 blank 32 px tiles. Column = exposed sides
+## (bits: 1 top, 2 left, 4 right, 8 bottom); row = depth below the surface (0-7).
 const TERRAIN_EDGE_ATLAS: String = "res://art/tiles/terrain_edges.png"
 ## Black outline on exposed terrain sides, and the Greek-key lip on exposed tops, px.
 const TERRAIN_EDGE_PX: float = 3.0
+## Terrain at this row (y = row x 32) or lower counts as ground and is extended down to
+## TERRAIN_BOTTOM_ROW, so the ground is one solid mass below the view's bottom edge.
+const TERRAIN_GROUND_ROW: int = 19
+const TERRAIN_BOTTOM_ROW: int = 30
+## Depth darkening by Lighting: deep rock fades toward this colour over TERRAIN_DEEP_PX
+## px below the surface, by at most TERRAIN_DEEP_MAX.
+const TERRAIN_DEEP_COLOR: Array[Color] = [
+	Color("2A120A"), Color("240E08"), Color("120C09"), Color("120C09"),
+]
+const TERRAIN_DEEP_PX: float = 160.0
+const TERRAIN_DEEP_MAX: float = 0.85
+## Camera zoom (2 = twice as close). 1.5 makes Medusa about 96 screen px tall, about
+## an eighth of the screen, like the reference platformers.
+const CAMERA_ZOOM: float = 1.5
 const TERRAIN_LIP_PX: float = 12.0
 ## Background haze (shaders/haze.gdshader) by Lighting: the colour the painting fades
 ## toward, and how far (0 = none). Light terracotta makes the black figures pop by day;

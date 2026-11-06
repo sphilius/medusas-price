@@ -82,7 +82,10 @@ func _build_world_art() -> void:
 	if bg != null:
 		# The painting is 720 px tall like the screen: it slides sideways a little with
 		# the camera (PARALLAX_BG_SCROLL) and stays put vertically (scroll y = 0).
-		var bg_art: Sprite2D = _add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, 1.0, Balance.PARALLAX_BG_Z)
+		# It is drawn at 1 / CAMERA_ZOOM so it keeps its on-screen size while the
+		# camera zooms in on the characters: the scenery reads as far away, not huge.
+		var unzoom: float = 1.0 / Balance.CAMERA_ZOOM
+		var bg_art: Sprite2D = _add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, unzoom, Balance.PARALLAX_BG_Z)
 		# Haze pushes the painting back so the characters and terrain read in front.
 		var haze := ShaderMaterial.new()
 		haze.shader = load("res://shaders/haze.gdshader")
@@ -93,11 +96,28 @@ func _build_world_art() -> void:
 	_build_terrain_art(index)
 	var band: Texture2D = _load_texture(Balance.MEANDER_TEXTURE)
 	if band != null:
-		var band_scale: float = Balance.MEANDER_HEIGHT / band.get_height()
-		var screen_h: float = get_viewport_rect().size.y
-		var scroll := Vector2(Balance.MEANDER_SCROLL, 0.0)
-		_add_parallax(band, scroll, Vector2.ZERO, band_scale, Balance.MEANDER_Z)
-		_add_parallax(band, scroll, Vector2(0.0, screen_h - Balance.MEANDER_HEIGHT), band_scale, Balance.MEANDER_Z)
+		_add_meander_bands(band)
+
+
+## The Greek-key bands along the top and bottom screen edges. They sit on their own
+## CanvasLayer (screen space), so camera zoom and limits never move them; a world-space
+## Parallax2D band drifted into the middle of the ground once the camera zoomed in.
+## TextureRect's TILE stretch repeats the 40 px tile; scale shrinks it to MEANDER_HEIGHT.
+func _add_meander_bands(band: Texture2D) -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = Balance.HUD_LAYER - 2  # above the world, below the portrait HUD
+	add_child(layer)
+	var screen: Vector2 = get_viewport_rect().size
+	var band_scale: float = Balance.MEANDER_HEIGHT / band.get_height()
+	for top: bool in [true, false]:
+		var rect := TextureRect.new()
+		rect.texture = band
+		rect.stretch_mode = TextureRect.STRETCH_TILE
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		rect.size = Vector2(screen.x / band_scale, band.get_height())
+		rect.scale = Vector2.ONE * band_scale
+		rect.position = Vector2(0.0, 0.0 if top else screen.y - Balance.MEANDER_HEIGHT)
+		layer.add_child(rect)
 
 
 ## One repeating Parallax2D layer holding `texture` drawn from `top_left` (screen px)
@@ -116,7 +136,7 @@ func _add_parallax(texture: Texture2D, scroll: Vector2, top_left: Vector2, art_s
 	# A tile narrower than the screen (the meander) is drawn as one long strip: the
 	# sprite shows a region wider than the screen and texture_repeat tiles it inside.
 	# Parallax2D then only has to wrap the strip by one tile width.
-	var screen_w: float = get_viewport_rect().size.x
+	var screen_w: float = get_viewport_rect().size.x / Balance.CAMERA_ZOOM  # view width in world px
 	if texture.get_width() * art_scale < screen_w:
 		art.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		art.region_enabled = true
@@ -146,17 +166,30 @@ func _build_terrain_art(index: int) -> void:
 		return
 	source.texture = markers
 	var base: TileData = source.get_tile_data(Vector2i.ZERO, 0)
-	for flags in range(1, 16):
-		var coords := Vector2i(flags, 0)
-		if not source.has_tile(coords):
-			source.create_tile(coords)
-		var data: TileData = source.get_tile_data(coords, 0)
-		for i in base.get_collision_polygons_count(0):
-			data.add_collision_polygon(0)
-			data.set_collision_polygon_points(0, i, base.get_collision_polygon_points(0, i))
+	for depth in range(8):
+		for flags in range(16):
+			var coords := Vector2i(flags, depth)
+			if coords == Vector2i.ZERO:
+				continue  # the original tile, which already has its collision
+			if not source.has_tile(coords):
+				source.create_tile(coords)
+			var data: TileData = source.get_tile_data(coords, 0)
+			for i in base.get_collision_polygons_count(0):
+				data.add_collision_polygon(0)
+				data.set_collision_polygon_points(0, i, base.get_collision_polygon_points(0, i))
 	_terrain.tile_set = tile_set
-	# Re-tile: an "exposed" side is one with no terrain cell next to it.
 	var source_id: int = tile_set.get_source_id(0)
+	# Ground goes all the way down: any cell at ground level or below with nothing under
+	# it is extended to TERRAIN_BOTTOM_ROW, so the playable ground is one solid mass to
+	# the bottom of the view (no slab floating over the painting). Floating ledges above
+	# ground level are left as they are.
+	for cell: Vector2i in _terrain.get_used_cells():
+		if cell.y >= Balance.TERRAIN_GROUND_ROW and _terrain.get_cell_source_id(cell + Vector2i.DOWN) == -1:
+			for row in range(cell.y + 1, Balance.TERRAIN_BOTTOM_ROW + 1):
+				_terrain.set_cell(Vector2i(cell.x, row), source_id, Vector2i.ZERO)
+	# Re-tile: an "exposed" side is one with no terrain cell next to it. The atlas row
+	# is the depth: how many solid cells sit above this one (0 = a top surface), capped
+	# at 7. The shader darkens the rock with depth, like light falling off underground.
 	for cell: Vector2i in _terrain.get_used_cells():
 		var flags: int = 0
 		if _terrain.get_cell_source_id(cell + Vector2i.UP) == -1:
@@ -167,7 +200,10 @@ func _build_terrain_art(index: int) -> void:
 			flags |= 4
 		if _terrain.get_cell_source_id(cell + Vector2i.DOWN) == -1:
 			flags |= 8
-		_terrain.set_cell(cell, source_id, Vector2i(flags, 0))
+		var depth: int = 0
+		while depth < 7 and _terrain.get_cell_source_id(cell + Vector2i(0, -(depth + 1))) != -1:
+			depth += 1
+		_terrain.set_cell(cell, source_id, Vector2i(flags, depth))
 	var mat := ShaderMaterial.new()
 	mat.shader = load("res://shaders/terrain.gdshader")
 	mat.set_shader_parameter("surface", surface)
@@ -178,7 +214,11 @@ func _build_terrain_art(index: int) -> void:
 	mat.set_shader_parameter("edge_px", Balance.TERRAIN_EDGE_PX)
 	mat.set_shader_parameter("edge_color", Balance.COLOR_BLACK)
 	mat.set_shader_parameter("atlas_tiles", 16.0)
+	mat.set_shader_parameter("atlas_rows", 8.0)
 	mat.set_shader_parameter("tile_px", float(Balance.TILE_SIZE))
+	mat.set_shader_parameter("deep_color", Balance.TERRAIN_DEEP_COLOR[index])
+	mat.set_shader_parameter("deep_px", Balance.TERRAIN_DEEP_PX)
+	mat.set_shader_parameter("deep_max", Balance.TERRAIN_DEEP_MAX)
 	_terrain.material = mat
 
 
@@ -214,7 +254,14 @@ func _spawn_player() -> void:
 	# Position first: Player remembers where it was first added as its respawn point.
 	player.position = _spawn.position
 	add_child(player)
-	player.add_child(CAMERA_SCENE.instantiate())
+	var camera := CAMERA_SCENE.instantiate() as Camera2D
+	camera.zoom = Vector2.ONE * Balance.CAMERA_ZOOM
+	# Keep the view inside the level: never past its side walls or below the ground.
+	var used: Rect2i = _terrain.get_used_rect()
+	camera.limit_left = used.position.x * Balance.TILE_SIZE
+	camera.limit_right = used.end.x * Balance.TILE_SIZE
+	camera.limit_bottom = (Balance.TERRAIN_BOTTOM_ROW + 1) * Balance.TILE_SIZE
+	player.add_child(camera)
 
 
 ## Open the exit (shown, trigger on). Deferred: it may be called during a physics callback.
