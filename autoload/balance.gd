@@ -93,6 +93,16 @@ const SHAKE_PETRIFY_PX: float = 6.0
 const SHAKE_PETRIFY_TIME: float = 0.2
 ## Sample rate (Hz) of every placeholder sound generated in code.
 const SFX_MIX_RATE: int = 22050
+## Music (autoload Music): stage loops by number, the extras, their scene indexes in
+## GameFlow.ORDER, the playing and silent volumes (dB), and the crossfade time (s).
+const MUSIC_STAGE_PATH: String = "res://audio/music/stage_%d.ogg"
+const MUSIC_BOSS_PATH: String = "res://audio/music/boss.ogg"
+const MUSIC_ENDING_PATH: String = "res://audio/music/ending.ogg"
+const MUSIC_BOSS_SCENE: int = 4
+const MUSIC_ENDING_SCENE: int = 6
+const MUSIC_VOLUME_DB: float = -8.0
+const MUSIC_SILENT_DB: float = -60.0
+const MUSIC_FADE_S: float = 2.0
 ## Recorded sound effects (CC0, Freesound; see audio/CREDITS.md), played by Fx.play().
 const SFX_FILES: Dictionary = {
 	&"petrify": "res://audio/sfx/petrify.ogg",

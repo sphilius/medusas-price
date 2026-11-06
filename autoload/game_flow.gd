@@ -125,6 +125,7 @@ func _adopt_current_scene() -> void:
 ## A scene in ORDER is now showing: remember it and log it.
 func _begin_level(index: int) -> void:
 	current_index = index
+	Events.level_started.emit(index)
 	_level_start_ms = Time.get_ticks_msec()
 	if index == 0:
 		RunLedger.start_run()  # a new run begins at the intro
