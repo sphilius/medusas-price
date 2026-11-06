@@ -58,7 +58,11 @@ func _physics_process(delta: float) -> void:
 		State.WARN:
 			if _timer <= 0.0:
 				_set_state(State.UP, Balance.SPEAR_UP_S)
-				Fx.play(&"spear")
+				# Only traps near Medusa are heard (the sound is not positional, so
+				# otherwise every trap in the level would clack all the time).
+				var player: Node2D = get_tree().get_first_node_in_group(&"player")
+				if player != null and player.global_position.distance_to(global_position) < Balance.SPEAR_SFX_RANGE:
+					Fx.play(&"spear", Balance.SPEAR_SFX_PITCH)
 		State.UP:
 			# Pull back at once if a statue landed in the trap while it was up.
 			if _timer <= 0.0 or is_jammed():

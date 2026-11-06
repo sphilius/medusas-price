@@ -62,6 +62,7 @@ func _build_cone() -> PackedVector2Array:
 ## True if nothing on the LOS layers sits between the eye and the enemy's center.
 func _has_line_of_sight(enemy: Enemy) -> bool:
 	var query := PhysicsRayQueryParameters2D.create(global_position, enemy.global_position, Balance.GAZE_LOS_MASK)
+	query.hit_from_inside = true  # an eye pressed into a wall is blocked by it, not let through
 	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
 
 

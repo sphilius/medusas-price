@@ -39,7 +39,7 @@ func _ready() -> void:
 	Events.statue_cracked.connect(_on_statue_cracked)
 	Events.statue_shattered.connect(_on_statue_shattered)
 	# More events that only need a sound: connect() with a lambda (an inline func).
-	Events.player_hit.connect(_on_player_hit)
+	Events.player_hurt.connect(_on_player_hit)  # landed hits only, never the repeats
 	Events.gaze_reflected.connect(func(_t: StringName, _p: Vector2) -> void: play(&"reflect"))
 	Events.pool_used.connect(func(_p: Vector2) -> void: play(&"pool"))
 	Events.player_died.connect(func(_p: Vector2) -> void: play(&"petrify", Balance.SFX_DEATH_PITCH))

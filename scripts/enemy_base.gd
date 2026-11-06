@@ -180,8 +180,10 @@ func _parry() -> void:
 	RunLedger.log_event("parry", {"enemy": String(enemy_type)})
 
 
-## The snake finisher: the snakes latch on (a black line from her head to the enemy),
-## the enemy shakes and turns poison-dark, then dies.
+## The snake finisher: one of her snakes (the whip's snake art) bites on and stays
+## stretched from her head to the enemy, following her if she moves and fading out;
+## the enemy shakes and turns poison-dark, then dies. (Playtest 2026-11-06: the old
+## straight black line stayed put where she had stood and read as a glitch.)
 func _finisher() -> void:
 	_dying = true
 	_exposed_left = 0.0
@@ -189,13 +191,28 @@ func _finisher() -> void:
 	Fx.play(&"hiss", 1.2)
 	Fx.hit_stop(Balance.HITSTOP_FINISHER)
 	var player: Player = find_player()
-	if player != null:
-		var latch := Line2D.new()
-		latch.width = Balance.FINISHER_LATCH_WIDTH
-		latch.default_color = Balance.COLOR_BLACK
-		latch.top_level = true  # drawn in world space, not moved by this enemy
-		latch.points = PackedVector2Array([player.global_position + Balance.WHIP_HEAD_OFFSET, global_position])
-		add_child(latch)
+	if player != null and not Balance.WHIP_SNAKE_TEXTURES.is_empty() and ResourceLoader.exists(Balance.WHIP_SNAKE_TEXTURES[0]):
+		var snake := Sprite2D.new()
+		snake.texture = load(Balance.WHIP_SNAKE_TEXTURES[0])
+		snake.centered = false
+		snake.offset = Vector2(0.0, -snake.texture.get_height() * 0.5)  # pivot at its tail
+		snake.top_level = true  # placed in world space each frame below
+		add_child(snake)
+		# tween_method calls the function with a value going 0 -> 1 over the finisher:
+		# re-aim the snake from her head to this enemy and fade it as t grows.
+		var bite := create_tween()
+		bite.tween_method(func(t: float) -> void:
+			if not is_instance_valid(player):
+				return
+			var head: Vector2 = player.global_position + Balance.WHIP_HEAD_OFFSET
+			var reach: Vector2 = global_position - head
+			snake.global_position = head
+			snake.rotation = reach.angle()
+			snake.scale = Vector2(reach.length() / snake.texture.get_width(),
+				Balance.WHIP_SNAKE_THICKNESS / snake.texture.get_height())
+			snake.modulate.a = 1.0 - t * t,
+			0.0, 1.0, Balance.FINISHER_TIME)
+		bite.tween_callback(snake.queue_free)
 	var tween := create_tween()
 	for i in 6:  # a struggling shake
 		tween.tween_property(visual, "position:x", 3.0 if i % 2 == 0 else -3.0, Balance.FINISHER_TIME / 6.0)

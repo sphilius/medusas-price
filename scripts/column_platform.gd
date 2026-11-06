@@ -45,3 +45,20 @@ func _add_column() -> void:
 	sprite.position = Vector2((size_px().x - width) * 0.5, size_px().y)
 	sprite.z_index = -1
 	add_child(sprite)
+	_add_sight_blocker(sprite.position, Vector2(width, reach))
+
+
+## The column is solid stone to the gaze: an invisible box over the shaft (and the
+## slab above it) on the sight-only layer. Bodies never touch it (nothing has that
+## layer in its mask); only the gaze's line-of-sight ray stops at it.
+func _add_sight_blocker(top_left: Vector2, shaft: Vector2) -> void:
+	var blocker := StaticBody2D.new()
+	blocker.collision_layer = Balance.PHYS_SIGHT
+	blocker.collision_mask = 0
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = Vector2(shaft.x, shaft.y + size_px().y)
+	shape.shape = rect
+	shape.position = Vector2(top_left.x + shaft.x * 0.5, (shaft.y + size_px().y) * 0.5)
+	blocker.add_child(shape)
+	add_child(blocker)

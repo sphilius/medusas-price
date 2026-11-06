@@ -15,6 +15,10 @@ signal shake_requested(strength: float, duration: float)
 ## The player was struck. source names the attacker (&"hoplite", &"leaper");
 ## from_position is where it came from, so the player knows which way to fly.
 signal player_hit(cracks: int, source: StringName, from_position: Vector2)
+## A player_hit that actually landed (she was not invulnerable, stunned or dead).
+## Attackers may re-send player_hit every frame they touch her; only this one, sent
+## once per real hit by player.gd, drives the sound, shake and hit-stop (Fx).
+signal player_hurt(cracks: int, source: StringName, from_position: Vector2)
 ## A mirror-bearer's mirror threw Medusa's gaze back at her. position is the mirror.
 signal gaze_reflected(enemy_type: StringName, position: Vector2)
 ## Medusa touched a safe ledge marker; position is on the floor surface. A pit fall

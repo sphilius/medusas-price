@@ -19,6 +19,9 @@ const PHYS_PLAYER: int = 2       # layer 2
 const PHYS_ENEMIES: int = 4      # layer 3
 const PHYS_STATUES: int = 8      # layer 4
 const PHYS_GAZE: int = 32        # layer 6
+## Layer 7: sight blockers only (column shafts). Nothing collides with it; it only
+## stops the gaze's line-of-sight ray, so you cannot stare through solid stone.
+const PHYS_SIGHT: int = 64
 
 # ---------------------------------------------------------------------------
 # Color code (the wordless UI)
@@ -80,7 +83,7 @@ const GAZE_CONE_ALPHA: float = 0.35
 ## Points along the cone's far arc (more = rounder).
 const GAZE_ARC_SEGMENTS: int = 8
 ## Line-of-sight ray mask: anything on these layers blocks the gaze.
-const GAZE_LOS_MASK: int = PHYS_WORLD | PHYS_STATUES
+const GAZE_LOS_MASK: int = PHYS_WORLD | PHYS_STATUES | PHYS_SIGHT
 
 # ---------------------------------------------------------------------------
 # Game feel
@@ -207,7 +210,7 @@ const SFX_FILES: Dictionary = {
 }
 ## Per-sound volume trims in dB (0 = as recorded); tune by ear.
 const SFX_VOLUME_DB: Dictionary = {
-	&"hiss": -8.0, &"crack_portrait": -6.0, &"spear": -14.0, &"gate": -4.0, &"shard": -4.0, &"statue_thud": -3.0,
+	&"hiss": -8.0, &"crack_portrait": -6.0, &"spear": -20.0, &"gate": -4.0, &"shard": -4.0, &"statue_thud": -3.0,
 }
 ## How many copies of one sound may overlap, and the random pitch spread (+/-).
 const SFX_POLYPHONY: int = 4
@@ -261,9 +264,8 @@ const PARRY_GAZE_HOLD: float = 0.08
 const HITSTOP_PARRY: float = 0.09
 const SHAKE_PARRY_PX: float = 5.0
 const SHAKE_PARRY_TIME: float = 0.15
-## Snake finisher: seconds of struggle, latch line width (px), poison tint, hit-stop.
+## Snake finisher: seconds of struggle, poison tint, hit-stop.
 const FINISHER_TIME: float = 0.55
-const FINISHER_LATCH_WIDTH: float = 3.0
 const FINISHER_POISON_TINT: Color = Color(0.35, 0.45, 0.25, 1.0)
 const HITSTOP_FINISHER: float = 0.12
 ## Dust puffs (Fx.dust): colour, seconds a speck lives, launch speed and gravity (px/s).
@@ -1012,6 +1014,10 @@ const COLUMN_TEXTURE: String = "res://art/sprites/props/column.png"
 const COLUMN_WIDTH: float = 56.0
 ## Spear trap: seconds hidden, glinting (the warning) and up; how tall the spears rise
 ## (px) and how fast they move (fraction of full height per second).
+## Spike trap sound: only traps closer to Medusa than this (px) are heard, and the
+## clack plays a little lower (pitch) so it is less shrill.
+const SPEAR_SFX_RANGE: float = 9.0 * BL
+const SPEAR_SFX_PITCH: float = 0.8
 const SPEAR_DOWN_S: float = 1.6
 const SPEAR_WARN_S: float = 0.45
 const SPEAR_UP_S: float = 0.9

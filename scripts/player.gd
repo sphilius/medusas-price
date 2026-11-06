@@ -173,6 +173,7 @@ func _on_player_hit(cracks: int, source: StringName, from_position: Vector2) -> 
 	# Only a hit that gets past the gate above costs cracks (hits during the
 	# invulnerable window are ignored, however often the enemy re-sends them).
 	PortraitState.add_cracks(cracks, source)
+	Events.player_hurt.emit(cracks, source, from_position)  # feedback once per real hit
 	if _dying:
 		return
 	var away: float = signf(global_position.x - from_position.x)
