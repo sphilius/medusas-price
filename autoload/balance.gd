@@ -806,6 +806,19 @@ const KEY_HINT_ICONS: Dictionary = {
 	"whip": "res://art/sprites/ui/icon_whip.png",
 	"gaze": "res://art/sprites/ui/icon_gaze.png",
 }
+# --- Pause menu (scripts/pause_menu.gd) ---
+## Corner pause button: size and distance from the screen edge (px).
+const PAUSE_CORNER_SIZE: float = 44.0
+const PAUSE_CORNER_MARGIN: float = 14.0
+## How dark the world gets behind the menu (0 to 1).
+const PAUSE_DIM: float = 0.72
+## The round buttons: size (px) and height on screen (fraction of screen height).
+const PAUSE_BUTTON_SIZE: float = 120.0
+const PAUSE_BUTTONS_Y: float = 0.28
+## The controls legend: height on screen, spacing (fraction of screen width), scale.
+const PAUSE_LEGEND_Y: float = 0.72
+const PAUSE_LEGEND_STEP: float = 0.12
+const PAUSE_LEGEND_SCALE: float = 2.25
 ## Fade to black between levels: seconds out and seconds back in.
 const FADE_OUT_S: float = 0.35
 const FADE_IN_S: float = 0.35

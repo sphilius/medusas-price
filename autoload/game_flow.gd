@@ -46,6 +46,9 @@ func _ready() -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(_fade)
+	# The wordless pause menu (Esc / P / corner button) lives here so it survives scene
+	# changes; it only opens inside the levels.
+	add_child(PauseMenu.new())
 	# A signal is "something happened" announced on the Events bus; connect() makes
 	# next_level run every time it is emitted, so no script has to poll for the exit.
 	Events.level_exit_reached.connect(next_level)

@@ -18,12 +18,20 @@ var _ending: AudioStreamPlayer = null
 var _current: AudioStreamPlayer = null
 ## The running volume tween per player, so a new fade can cancel an old one.
 var _fades: Dictionary = {}
+## The audio bus every music player uses (PauseMenu mutes it).
+const MUSIC_BUS: StringName = &"Music"
 
 
 ## Loads what exists and listens for the things that change the music. connect() hooks
 ## each signal to a function here: signals over polling.
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS  # keep playing through hit-stops and pauses
+	# A "Music" audio bus (made here, routed into Master) so the pause menu can mute the
+	# score on its own without silencing the sound effects.
+	if AudioServer.get_bus_index(MUSIC_BUS) < 0:
+		AudioServer.add_bus()
+		AudioServer.set_bus_name(AudioServer.bus_count - 1, MUSIC_BUS)
+		AudioServer.set_bus_send(AudioServer.bus_count - 1, &"Master")
 	for i in Balance.PORTRAIT_STAGE_COUNT:
 		var player := _make_player(Balance.MUSIC_STAGE_PATH % (i + 1))
 		if player != null:
@@ -48,6 +56,7 @@ func _make_player(path: String) -> AudioStreamPlayer:
 	var player := AudioStreamPlayer.new()
 	player.stream = stream
 	player.volume_db = Balance.MUSIC_SILENT_DB
+	player.bus = MUSIC_BUS
 	add_child(player)
 	return player
 
