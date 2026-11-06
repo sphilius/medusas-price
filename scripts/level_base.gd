@@ -82,17 +82,15 @@ func _build_world_art() -> void:
 	if bg != null:
 		# The painting is 720 px tall like the screen: it slides sideways a little with
 		# the camera (PARALLAX_BG_SCROLL) and stays put vertically (scroll y = 0).
-		_add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, 1.0, Balance.PARALLAX_BG_Z)
+		var bg_art: Sprite2D = _add_parallax(bg, Vector2(Balance.PARALLAX_BG_SCROLL, 0.0), Vector2.ZERO, 1.0, Balance.PARALLAX_BG_Z)
+		# Haze pushes the painting back so the characters and terrain read in front.
+		var haze := ShaderMaterial.new()
+		haze.shader = load("res://shaders/haze.gdshader")
+		haze.set_shader_parameter("haze_color", Balance.LEVEL_HAZE_COLOR[index])
+		haze.set_shader_parameter("amount", Balance.LEVEL_HAZE_AMOUNT[index])
+		bg_art.material = haze
 		_backdrop.visible = false
-	var tiles: Texture2D = _load_texture(Balance.LEVEL_TERRAIN[index])
-	if tiles != null and _terrain.tile_set != null:
-		# Copy the shared TileSet (deep, so the atlas source is copied too) and swap only
-		# its texture: same 32 px tile, same collision, new look.
-		var tile_set := _terrain.tile_set.duplicate(true) as TileSet
-		var source := tile_set.get_source(tile_set.get_source_id(0)) as TileSetAtlasSource
-		if source != null:
-			source.texture = tiles
-			_terrain.tile_set = tile_set
+	_build_terrain_art(index)
 	var band: Texture2D = _load_texture(Balance.MEANDER_TEXTURE)
 	if band != null:
 		var band_scale: float = Balance.MEANDER_HEIGHT / band.get_height()
@@ -104,7 +102,7 @@ func _build_world_art() -> void:
 
 ## One repeating Parallax2D layer holding `texture` drawn from `top_left` (screen px)
 ## at `art_scale`. repeat_size makes it tile left and right forever.
-func _add_parallax(texture: Texture2D, scroll: Vector2, top_left: Vector2, art_scale: float, z: int) -> void:
+func _add_parallax(texture: Texture2D, scroll: Vector2, top_left: Vector2, art_scale: float, z: int) -> Sprite2D:
 	var layer := Parallax2D.new()
 	layer.scroll_scale = scroll
 	layer.repeat_size = Vector2(texture.get_width() * art_scale, 0.0)
@@ -127,6 +125,61 @@ func _add_parallax(texture: Texture2D, scroll: Vector2, top_left: Vector2, art_s
 	layer.add_child(art)
 	add_child(layer)
 	move_child(layer, 0)  # behind the level's own nodes in tree order
+	return art
+
+
+## The terrain look (shaders/terrain.gdshader): a seamless painted surface drawn in
+## world space, with black outlines on exposed sides and a Greek-key lip on exposed
+## tops. Each cell is switched to one of 16 marker tiles whose atlas x is a bit set of
+## its exposed sides (1 top, 2 left, 4 right, 8 bottom); the shader reads it back.
+## If any art is missing, the terrain keeps its plain placeholder tiles.
+func _build_terrain_art(index: int) -> void:
+	var surface: Texture2D = _load_texture(Balance.LEVEL_SURFACE[index])
+	var markers: Texture2D = _load_texture(Balance.TERRAIN_EDGE_ATLAS)
+	if surface == null or markers == null or _terrain.tile_set == null:
+		return
+	# Copy the shared TileSet (deep, so the atlas source is copied too), then give the
+	# copy the marker atlas and 15 more tiles with the same collision as tile (0, 0).
+	var tile_set := _terrain.tile_set.duplicate(true) as TileSet
+	var source := tile_set.get_source(tile_set.get_source_id(0)) as TileSetAtlasSource
+	if source == null:
+		return
+	source.texture = markers
+	var base: TileData = source.get_tile_data(Vector2i.ZERO, 0)
+	for flags in range(1, 16):
+		var coords := Vector2i(flags, 0)
+		if not source.has_tile(coords):
+			source.create_tile(coords)
+		var data: TileData = source.get_tile_data(coords, 0)
+		for i in base.get_collision_polygons_count(0):
+			data.add_collision_polygon(0)
+			data.set_collision_polygon_points(0, i, base.get_collision_polygon_points(0, i))
+	_terrain.tile_set = tile_set
+	# Re-tile: an "exposed" side is one with no terrain cell next to it.
+	var source_id: int = tile_set.get_source_id(0)
+	for cell: Vector2i in _terrain.get_used_cells():
+		var flags: int = 0
+		if _terrain.get_cell_source_id(cell + Vector2i.UP) == -1:
+			flags |= 1
+		if _terrain.get_cell_source_id(cell + Vector2i.LEFT) == -1:
+			flags |= 2
+		if _terrain.get_cell_source_id(cell + Vector2i.RIGHT) == -1:
+			flags |= 4
+		if _terrain.get_cell_source_id(cell + Vector2i.DOWN) == -1:
+			flags |= 8
+		_terrain.set_cell(cell, source_id, Vector2i(flags, 0))
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/terrain.gdshader")
+	mat.set_shader_parameter("surface", surface)
+	mat.set_shader_parameter("surface_px", Balance.TERRAIN_SURFACE_PX)
+	mat.set_shader_parameter("tint", Balance.LEVEL_SURFACE_TINT[index])
+	mat.set_shader_parameter("lip", _load_texture(Balance.MEANDER_TEXTURE))
+	mat.set_shader_parameter("lip_px", Balance.TERRAIN_LIP_PX)
+	mat.set_shader_parameter("edge_px", Balance.TERRAIN_EDGE_PX)
+	mat.set_shader_parameter("edge_color", Balance.COLOR_BLACK)
+	mat.set_shader_parameter("atlas_tiles", 16.0)
+	mat.set_shader_parameter("tile_px", float(Balance.TILE_SIZE))
+	_terrain.material = mat
 
 
 ## Load a texture if the file exists; null (and no error popup) if it does not.

@@ -17,7 +17,7 @@ If a step fails, fix it, re-export, and start the checklist again from step 1.
 
 ## 3. Browsers (play the itch page, not localhost)
 
-Do one pass in each browser: title → level 1 → at least the first gap → press 4 is NOT possible, so play on.
+Do one pass in each browser: the title card, then level 1 at least as far as the first gap.
 
 - [ ] Chrome: plays, sound starts after the first click or key, the canvas fills the window when it is resized.
 - [ ] Firefox: same.

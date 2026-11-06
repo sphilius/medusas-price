@@ -745,6 +745,34 @@ const LEVEL_BACKGROUNDS: Array[String] = [
 	"res://art/bg/level_3_bg.png",
 	"res://art/bg/level_4_bg.png",
 ]
+## Seamless painted terrain surfaces (texkit `tile --method graphcut --size 512` on the
+## P12 paintings with their Greek-key band cut off), by Lighting. The cave reuses the
+## cliff rock (darkened by its tint): texkit's cave result showed seams by eye.
+const LEVEL_SURFACE: Array[String] = [
+	"res://art/tiles/surface_temple.png",
+	"res://art/tiles/surface_rock.png",
+	"res://art/tiles/surface_rock.png",
+	"res://art/tiles/surface_rock.png",
+]
+## Multiplies each level's surface colour (1 = as painted).
+const LEVEL_SURFACE_TINT: Array[Color] = [
+	Color(1.0, 1.0, 1.0), Color(1.0, 0.95, 0.92), Color(0.62, 0.55, 0.52), Color(0.8, 0.76, 0.76),
+]
+## World px covered by one copy of the surface painting (a temple brick ends up
+## about 1.3 BL wide, close to Medusa's size).
+const TERRAIN_SURFACE_PX: float = 224.0
+## Marker atlas for terrain.gdshader: 16 blank 32 px tiles; the tile index = exposed sides.
+const TERRAIN_EDGE_ATLAS: String = "res://art/tiles/terrain_edges.png"
+## Black outline on exposed terrain sides, and the Greek-key lip on exposed tops, px.
+const TERRAIN_EDGE_PX: float = 3.0
+const TERRAIN_LIP_PX: float = 12.0
+## Background haze (shaders/haze.gdshader) by Lighting: the colour the painting fades
+## toward, and how far (0 = none). Light terracotta makes the black figures pop by day;
+## dark clay lets the cave and storm paintings sink into the dark.
+const LEVEL_HAZE_COLOR: Array[Color] = [
+	Color("E3A27F"), Color("D98A6A"), Color("5A2A18"), Color("4A2A22"),
+]
+const LEVEL_HAZE_AMOUNT: Array[float] = [0.45, 0.4, 0.35, 0.35]
 const LEVEL_TERRAIN: Array[String] = [
 	"res://art/tiles/terrain_temple.png",
 	"res://art/tiles/terrain_cliffs.png",
