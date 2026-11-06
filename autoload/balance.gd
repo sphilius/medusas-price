@@ -788,6 +788,17 @@ const CRUMBLE_TINT: Color = Color(1.25, 1.18, 1.1, 1.0)
 const COLUMN_ONE_WAY_THICKNESS: float = 8.0
 const COLUMN_TEXTURE: String = "res://art/sprites/props/column.png"
 const COLUMN_WIDTH: float = 56.0
+## Spear trap: seconds hidden, glinting (the warning) and up; how tall the spears rise
+## (px) and how fast they move (fraction of full height per second).
+const SPEAR_DOWN_S: float = 1.6
+const SPEAR_WARN_S: float = 0.45
+const SPEAR_UP_S: float = 0.9
+const SPEAR_HEIGHT: float = 40.0
+const SPEAR_THRUST_SPEED: float = 10.0
+## Gate: seconds for the bars to slide open or shut.
+const GATE_MOVE_S: float = 0.4
+## Shard pickup radius (px, also its drawn size).
+const SHARD_RADIUS: float = 10.0
 ## Camera zoom (2 = twice as close). 1.5 makes Medusa about 96 screen px tall, about
 ## an eighth of the screen, like the reference platformers.
 const CAMERA_ZOOM: float = 1.5

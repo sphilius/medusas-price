@@ -93,6 +93,16 @@ func heal_at_pool() -> void:
 	healed.emit(stage)
 
 
+## A shard: close up to `n` cracks of the current stage (never below 0, never a stage
+## back; that is what pools are for). The HUD redraws from `cracked`.
+func mend(n: int) -> void:
+	if is_dead or n <= 0 or cracks_in_stage == 0:
+		return
+	cracks_in_stage = maxi(cracks_in_stage - n, 0)
+	RunLedger.log_event("mend", {"stage": stage, "in_stage": cracks_in_stage, "level": RunLedger.level})
+	cracked.emit(cracks_in_stage)
+
+
 ## Back on her feet after dying: Balance.DEATH_RESPAWN_STAGE with 0 cracks.
 func reset_after_death() -> void:
 	_set_fresh(Balance.DEATH_RESPAWN_STAGE)
