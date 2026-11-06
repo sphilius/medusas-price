@@ -125,6 +125,9 @@ func _transition_reel(beats: Array) -> void:
 	reel.panels = beats
 	reel.show_portrait = false
 	add_child(reel)
+	# Above the black fade screen (layer 200), which is fully up during a transition;
+	# set AFTER add_child because the reel's _ready sets its own (title-card) layer.
+	reel.layer = 201
 	await reel.finished
 	reel.queue_free()
 

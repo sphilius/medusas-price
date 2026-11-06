@@ -47,6 +47,13 @@ var _safe_ledge_point: Vector2 = Vector2.ZERO
 var _pool_point: Vector2 = Vector2.ZERO
 ## True from the moment the portrait runs out until she is back on her feet.
 var _dying: bool = false
+## Whip wall-grab: true while her snakes hold a wall. _cling_time counts up from the
+## grab (hang still for WALL_GRAB_HOLD_S, then slide). _cling_point is the grabbed spot.
+var _clinging: bool = false
+var _cling_time: float = 0.0
+var _cling_point: Vector2 = Vector2.ZERO
+## The snake line from her head to the wall (made in _ready, shown only while clinging).
+var _cling_line: Line2D = null
 ## Whether Shift (sprint) was held on her last frame on the ground. In the air this stays
 ## as it was at take-off, so a jump keeps the speed it started with.
 var _air_sprint: bool = false
@@ -80,6 +87,13 @@ func _ready() -> void:
 	_sprite = SpriteKit.attach(_visual, &"medusa")
 	state_changed.connect(func(_old: State, _new: State) -> void: _refresh_animation())
 	($Whip as Node).frame_changed.connect(_on_whip_frame)
+	# The wall-grab snake line. top_level: it ignores her flip and draws in world space.
+	_cling_line = Line2D.new()
+	_cling_line.top_level = true
+	_cling_line.width = Balance.WALL_GRAB_LINE_WIDTH
+	_cling_line.default_color = Balance.COLOR_BLACK
+	_cling_line.visible = false
+	add_child(_cling_line)
 	_refresh_animation()
 
 
@@ -105,6 +119,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var dir: float = Input.get_axis("move_left", "move_right")
+	if _clinging:
+		_process_cling(dir, delta)
+		return
 	_update_facing(dir)
 
 	# Horizontal: accelerate toward the target speed (also brakes when dir is 0).
@@ -265,6 +282,7 @@ func _teleport(point: Vector2) -> void:
 	global_position = point
 	velocity = Vector2.ZERO
 	_push_time = 0.0
+	_end_cling()  # a respawn never leaves her hanging
 	for node: Node in find_children("*", "Camera2D", false, false):
 		(node as Camera2D).reset_smoothing()
 
@@ -305,6 +323,9 @@ func enter_state(new_state: State) -> void:
 	# However the lash ends (finished, jump-cancelled, interrupted by a hit), clear its phase.
 	if old == State.WHIP:
 		_set_whip_phase(WhipPhase.NONE)
+	# Gazing, a new lash, a hit or death make the snakes let go of a wall.
+	if new_state in [State.WHIP, State.GAZE, State.HURT, State.DEAD]:
+		_end_cling()
 
 
 ## False while whipping (anticipation through recovery), hurt or dead.
@@ -333,6 +354,9 @@ func _tick_whip(delta: float) -> void:
 			WhipPhase.ANTICIPATION:
 				_set_whip_phase(WhipPhase.ACTIVE)
 				_whip_left += Balance.WHIP_ACTIVE
+				# In mid-air, a lash that reaches a wall grabs it (and ends the lash).
+				if not is_on_floor() and _try_wall_grab():
+					return
 			WhipPhase.ACTIVE:
 				_set_whip_phase(WhipPhase.RECOVERY)
 				_whip_left += Balance.WHIP_RECOVERY
@@ -341,6 +365,59 @@ func _tick_whip(delta: float) -> void:
 				return
 	if whip_phase == WhipPhase.RECOVERY and _buffer_left > 0.0 and _coyote_left > 0.0:
 		_update_locomotion_state(0.0)
+
+
+## Whip wall-grab: a ray from her head, the way she faces, WALL_GRAB_REACH_BL long,
+## against the world and statues. A hit ends the lash and starts the cling. Returns
+## true if she grabbed.
+func _try_wall_grab() -> bool:
+	var head: Vector2 = global_position + Vector2(0.0, -Balance.WALL_GRAB_HEAD_Y)
+	var reach: Vector2 = Vector2(facing * Balance.WALL_GRAB_REACH_BL * Balance.BL, 0.0)
+	var query := PhysicsRayQueryParameters2D.create(head, head + reach, Balance.PHYS_WORLD | Balance.PHYS_STATUES, [get_rid()])
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	_cling_point = hit["position"]
+	enter_state(State.FALL)  # ends the lash (its phase is cleared in enter_state)
+	_clinging = true
+	_cling_time = 0.0
+	velocity = Vector2.ZERO
+	_cling_line.visible = true
+	Fx.play(&"whip_snap")
+	return true
+
+
+## One frame of hanging from the wall: still for WALL_GRAB_HOLD_S, then a slow slide
+## for WALL_GRAB_SLIDE_S, then she lets go. Jump: spring up and toward the wall (the
+## mantle). Pushing away from the wall, or landing, lets go too.
+func _process_cling(dir: float, delta: float) -> void:
+	_cling_time += delta
+	if _buffer_left > 0.0:
+		_buffer_left = 0.0
+		_end_cling()
+		velocity = Vector2(facing * _top_speed(), Balance.PLAYER_JUMP_VELOCITY * Balance.WALL_GRAB_JUMP_MULT)
+		_squash = Balance.JUICE_JUMP_STRETCH
+		move_and_slide()
+		_update_locomotion_state(dir)
+		return
+	if dir * facing < 0.0 or _cling_time > Balance.WALL_GRAB_HOLD_S + Balance.WALL_GRAB_SLIDE_S:
+		_end_cling()
+		return
+	velocity = Vector2(0.0, Balance.WALL_GRAB_SLIDE_SPEED if _cling_time > Balance.WALL_GRAB_HOLD_S else 0.0)
+	_cling_point.y += velocity.y * delta  # the snakes slide down the wall with her
+	move_and_slide()
+	if is_on_floor():
+		_end_cling()
+	else:
+		_cling_line.points = PackedVector2Array([global_position + Vector2(0.0, -Balance.WALL_GRAB_HEAD_Y), _cling_point])
+	_update_locomotion_state(dir)
+
+
+## Let go of the wall (safe to call when not clinging).
+func _end_cling() -> void:
+	_clinging = false
+	if _cling_line != null:
+		_cling_line.visible = false
 
 
 func _start_whip() -> void:

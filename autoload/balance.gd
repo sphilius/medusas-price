@@ -145,7 +145,13 @@ const STORY_PANELS: Array[Dictionary] = [
 ## Seconds per portrait stage in the aging beat, fade time (s), and the skip delay (s).
 const STORY_PORTRAIT_STEP_S: float = 0.9
 const STORY_FADE_S: float = 0.6
-const STORY_SKIP_AFTER: float = 2.0
+## The skip button (a media-player "skip forward" icon, bottom right of a story reel):
+## hidden until the player presses a key or button, clicks or touches; then it fades in
+## over SKIP_FADE_S and hides again after SKIP_HIDE_S with no input. Size and margin in px.
+const STORY_SKIP_SIZE: float = 72.0
+const STORY_SKIP_MARGIN: float = 28.0
+const STORY_SKIP_FADE_S: float = 0.2
+const STORY_SKIP_HIDE_S: float = 3.0
 ## Between levels: the painting shown before each GameFlow index, its seconds and zoom.
 const TRANSITION_PANELS: Dictionary = {
 	2: "res://art/bg/level_2_bg.png",
@@ -234,6 +240,21 @@ const CRACK_SFX_VOLUME_DB: float = -6.0
 # ---------------------------------------------------------------------------
 ## Reach in BL.
 const WHIP_REACH_BL: float = 2.0
+## Whip wall-grab (player.gd): lash at a wall or statue in mid-air and her snakes hold on.
+## REACH_BL: how far the grab ray reaches from her head (body lengths).
+## HOLD_S: seconds she hangs still; then she slides down at SLIDE_SPEED px/s for at most
+## SLIDE_S seconds before the snakes let go. A jump while hanging or sliding springs her
+## up at JUMP_MULT x a normal jump and toward the wall at full run speed, so she rises
+## past the edge and lands on top of the ledge (a mantle).
+const WALL_GRAB_REACH_BL: float = 1.6
+const WALL_GRAB_HOLD_S: float = 0.6
+const WALL_GRAB_SLIDE_SPEED: float = 70.0
+const WALL_GRAB_SLIDE_S: float = 0.9
+const WALL_GRAB_JUMP_MULT: float = 1.15
+## Height of her head above her body's centre (px): where the grab ray and snake line start.
+const WALL_GRAB_HEAD_Y: float = 20.0
+## Width (px) of the black snake line drawn from her head to the grabbed wall.
+const WALL_GRAB_LINE_WIDTH: float = 4.0
 ## Number of snakes in the fan (3 to 5).
 const WHIP_SNAKES_MIN: int = 3
 const WHIP_SNAKES_MAX: int = 5

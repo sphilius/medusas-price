@@ -22,6 +22,7 @@ const PATTERNS: Array[String] = [
 const ALLOW: Dictionary = {
 	"res://scripts/key_hint.gd": "key-cap letters (allowed by the rule)",
 	"res://scripts/pause_menu.gd": "icon-only Buttons: their text is never set, they draw shapes",
+	"res://scripts/story_reel.gd": "icon-only skip Button: its text is never set, it draws two triangles and a bar",
 }
 
 ## Folders not shipped as game content.
