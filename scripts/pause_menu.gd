@@ -1,8 +1,9 @@
 ## pause_menu.gd (built in code by GameFlow; not a scene)
 ## Purpose: the wordless pause menu. Esc or P, or the small two-bar button in the top
 ## right corner (for mouse and touch), pauses a level and shows:
-##   - three round buttons: resume (play triangle), restart this level (circular arrow;
-##     the portrait keeps its cracks, so it is no free heal), music on/off (a note);
+##   - four round buttons, standard symbols: return to the game (the bent arrow of the
+##     Enter key), restart this level (circular arrow; the portrait keeps its cracks,
+##     so it is no free heal), quit to the title card (an X), music on/off (a note);
 ##   - below them, the controls legend: each action's icon over its key-caps (KeyHint).
 ## Everything is drawn with shapes and icons, no words or numbers (CLAUDE.md HARD RULE).
 ## The buttons are real Godot Buttons, so mouse, touch, arrow keys + Enter all work.
@@ -11,7 +12,7 @@ class_name PauseMenu
 extends CanvasLayer
 
 ## What each round button draws (see _draw_icon).
-enum Icon { RESUME, RESTART, MUSIC }
+enum Icon { RESUME, RESTART, QUIT, MUSIC }
 
 ## Everything shown while paused (hidden otherwise).
 var _panel: Control = null
@@ -51,7 +52,7 @@ func _build_panel() -> void:
 	_panel.add_child(dim)
 	var size: float = Balance.PAUSE_BUTTON_SIZE
 	var gap: float = size * 0.5
-	var icons: Array[Icon] = [Icon.RESUME, Icon.RESTART, Icon.MUSIC]
+	var icons: Array[Icon] = [Icon.RESUME, Icon.RESTART, Icon.QUIT, Icon.MUSIC]
 	var left: float = screen.x * 0.5 - (icons.size() * size + (icons.size() - 1) * gap) * 0.5
 	for i in icons.size():
 		var b := _round_button(size, _draw_icon.bind(icons[i]))
@@ -148,11 +149,14 @@ func _on_button(icon: Icon) -> void:
 		Icon.RESTART:
 			_close()
 			GameFlow.go_to(GameFlow.current_index)
+		Icon.QUIT:
+			_close()
+			GameFlow.go_to(0)  # back to the title card (a new run starts from there)
 		Icon.MUSIC:
 			var bus: int = AudioServer.get_bus_index(MUSIC_BUS)
 			if bus >= 0:
 				AudioServer.set_bus_mute(bus, not AudioServer.is_bus_mute(bus))
-			_buttons[2].queue_redraw()
+			_buttons[3].queue_redraw()
 
 
 # ---------------------------------------------------------------------------
@@ -175,10 +179,20 @@ func _draw_icon(b: Button, icon: Icon) -> void:
 	var col: Color = Balance.COLOR_MARBLE
 	match icon:
 		Icon.RESUME:
-			# A play triangle, nudged right so it looks centred.
-			var r: float = s * 0.24
+			# The Enter key's return arrow: down from the top right, then left, with
+			# an arrowhead pointing left.
+			var w: float = s * 0.07
+			var corner: Vector2 = c + Vector2(s * 0.2, s * 0.08)
+			b.draw_line(c + Vector2(s * 0.2, -s * 0.22), corner, col, w)
+			b.draw_line(corner + Vector2(w * 0.5, 0.0), c + Vector2(-s * 0.12, s * 0.08), col, w)
+			var tip: Vector2 = c + Vector2(-s * 0.24, s * 0.08)
 			b.draw_colored_polygon(PackedVector2Array([
-				c + Vector2(-r * 0.7, -r), c + Vector2(-r * 0.7, r), c + Vector2(r * 1.1, 0.0)]), col)
+				tip, tip + Vector2(s * 0.14, -s * 0.12), tip + Vector2(s * 0.14, s * 0.12)]), col)
+		Icon.QUIT:
+			# An X: two crossing bars.
+			var r: float = s * 0.2
+			b.draw_line(c + Vector2(-r, -r), c + Vector2(r, r), col, s * 0.08)
+			b.draw_line(c + Vector2(r, -r), c + Vector2(-r, r), col, s * 0.08)
 		Icon.RESTART:
 			# Three quarters of a circle with an arrowhead at its open end.
 			var r: float = s * 0.22
