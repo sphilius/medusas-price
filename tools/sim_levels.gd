@@ -74,7 +74,7 @@ func _test_victim_statue() -> void:
 	var level: LevelBase = (load("res://scenes/levels/level_1_temple.tscn") as PackedScene).instantiate()
 	add_child(level)
 	await get_tree().physics_frame
-	var victim: Statue = level.get_node("VictimStatue")
+	var victim: Statue = level.get_node("VictimPush")  # the forecourt statue (build_levels.gd)
 	_check(victim.is_in_group(&"statues") and victim.state == Statue.State.INTACT, "victim starts intact, in statues group")
 	victim.whip_hit()
 	_check(victim.state == Statue.State.CRACKED, "victim cracks on first hit")
@@ -98,7 +98,8 @@ func _test_flow() -> void:
 	_check(GameFlow.current_index == 1 and RunLedger.level == 1, "flow index and ledger level = 1")
 
 	Events.level_exit_reached.emit()
-	await get_tree().create_timer(1.5).timeout
+	# The cliffs have a painted transition panel first (Balance.TRANSITION_S).
+	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout
 	_check(GameFlow.current_index == 2, "exit signal moves on to the cliffs")
 	var ends: Array = RunLedger.events_of("level_end")
 	_check(ends.size() == 1 and ends[0]["data"]["name"] == "level_1_temple" and ends[0]["data"]["seconds"] >= 0.0, "level_end logged with time")
@@ -109,7 +110,7 @@ func _test_flow() -> void:
 	key.keycode = KEY_4
 	key.pressed = true
 	GameFlow._unhandled_input(key)
-	await get_tree().create_timer(1.5).timeout
+	await get_tree().create_timer(1.5 + Balance.TRANSITION_S).timeout  # the boss has a panel too
 	_check(GameFlow.current_index == 4, "key 4 skips to the boss")
 
 	# Intro resets the ledger (start_run).

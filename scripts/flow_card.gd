@@ -21,6 +21,11 @@ const INPUT_DELAY_S: float = 0.5
 ## Seconds since the card appeared.
 var _age: float = 0.0
 
+## The title card sets this in intro.tscn: the first key press plays the story reel
+## (scripts/story_reel.gd) before level 1 instead of going straight there.
+@export var play_story: bool = false
+var _story_started: bool = false
+
 
 func _ready() -> void:
 	if _add_art():
@@ -38,7 +43,14 @@ func _process(delta: float) -> void:
 
 ## Any key, button or touch moves on. _unhandled_input only sees input nothing else used.
 func _unhandled_input(event: InputEvent) -> void:
-	if _age < INPUT_DELAY_S or not event.is_pressed() or event.is_echo():
+	if _age < INPUT_DELAY_S or not event.is_pressed() or event.is_echo() or _story_started:
+		return
+	if play_story:
+		# Play the reel; its `finished` signal (connect) moves on to level 1.
+		_story_started = true
+		var reel := StoryReel.new()
+		reel.finished.connect(GameFlow.next_level)
+		add_child(reel)
 		return
 	GameFlow.next_level()
 

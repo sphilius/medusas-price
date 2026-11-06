@@ -91,6 +91,10 @@ func go_to(index: int) -> void:
 	var out: Tween = create_tween()
 	out.tween_property(_fade, "modulate:a", 1.0, Balance.FADE_OUT_S)
 	await out.finished
+	# Between levels: the next level's painting rises out of the dark and drifts,
+	# then sinks back, before the level itself fades in (wordless "chapter" beat).
+	if Balance.TRANSITION_PANELS.has(index):
+		await _transition_panel(Balance.TRANSITION_PANELS[index])
 	get_tree().change_scene_to_file(ORDER[index])
 	# The new scene is in the tree a frame later.
 	await get_tree().process_frame
@@ -100,6 +104,29 @@ func go_to(index: int) -> void:
 	back.tween_property(_fade, "modulate:a", 0.0, Balance.FADE_IN_S)
 	await back.finished
 	_changing = false
+
+
+## Show one painting over the black fade: fade up, slow push-in, fade down. `await`
+## on the tween's `finished` signal waits for it without freezing the game.
+func _transition_panel(path: String) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var panel := TextureRect.new()
+	panel.texture = load(path)
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	panel.size = get_viewport().get_visible_rect().size
+	panel.pivot_offset = panel.size * 0.5
+	panel.modulate.a = 0.0
+	_fade.get_parent().add_child(panel)  # on the fade's layer, above the black
+	var drift := create_tween()
+	drift.tween_property(panel, "scale", Vector2.ONE * Balance.TRANSITION_ZOOM, Balance.TRANSITION_S)
+	var show := create_tween()
+	show.tween_property(panel, "modulate:a", 1.0, Balance.STORY_FADE_S)
+	show.tween_interval(Balance.TRANSITION_S - Balance.STORY_FADE_S * 2.0)
+	show.tween_property(panel, "modulate:a", 0.0, Balance.STORY_FADE_S)
+	await show.finished
+	panel.queue_free()
 
 
 ## Debug builds: keys 1 to 5 jump to the temple, cliffs, cave, boss and run vase.

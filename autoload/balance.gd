@@ -130,6 +130,27 @@ const SHAKE_PETRIFY_TIME: float = 0.2
 const SFX_MIX_RATE: int = 22050
 ## Music (autoload Music): stage loops by number, the extras, their scene indexes in
 ## GameFlow.ORDER, the playing and silent volumes (dB), and the crossfade time (s).
+# --- Story reel (scripts/story_reel.gd) and level transitions (GameFlow) ---
+## The panels in order: picture, seconds on screen, zoom and pan (px) at start and end,
+## and an optional sound. The portrait-aging beat follows them.
+const STORY_PANELS: Array[Dictionary] = [
+	{"path": "res://art/story/panel_1_temple.png", "seconds": 3.5, "zoom_from": 1.0, "zoom_to": 1.08, "pan_from": Vector2.ZERO, "pan_to": Vector2(-20, 0)},
+	{"path": "res://art/story/panel_2_gorgon.png", "seconds": 3.0, "zoom_from": 1.0, "zoom_to": 1.3, "pan_from": Vector2.ZERO, "pan_to": Vector2(-60, 40), "sound": "hiss"},
+	{"path": "res://art/story/panel_3_heroes.png", "seconds": 3.5, "zoom_from": 1.12, "zoom_to": 1.12, "pan_from": Vector2(60, 0), "pan_to": Vector2(-60, 0)},
+	{"path": "res://art/story/panel_4_gaze.png", "seconds": 3.5, "zoom_from": 1.15, "zoom_to": 1.0, "pan_from": Vector2.ZERO, "pan_to": Vector2.ZERO, "sound": "petrify"},
+]
+## Seconds per portrait stage in the aging beat, fade time (s), and the skip delay (s).
+const STORY_PORTRAIT_STEP_S: float = 0.9
+const STORY_FADE_S: float = 0.6
+const STORY_SKIP_AFTER: float = 2.0
+## Between levels: the painting shown before each GameFlow index, its seconds and zoom.
+const TRANSITION_PANELS: Dictionary = {
+	2: "res://art/bg/level_2_bg.png",
+	3: "res://art/bg/level_3_bg.png",
+	4: "res://art/bg/level_4_bg.png",
+}
+const TRANSITION_S: float = 2.4
+const TRANSITION_ZOOM: float = 1.08
 const MUSIC_STAGE_PATH: String = "res://audio/music/stage_%d.ogg"
 const MUSIC_BOSS_PATH: String = "res://audio/music/boss.ogg"
 const MUSIC_ENDING_PATH: String = "res://audio/music/ending.ogg"

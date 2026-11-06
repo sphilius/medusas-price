@@ -6,3 +6,4 @@
 script = ExtResource("1_card")
 art = "res://art/cards/title.png"
 logo = "res://art/cards/logo.png"
+play_story = true
