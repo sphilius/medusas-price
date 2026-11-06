@@ -597,6 +597,9 @@ const TORCH_FLICKER_RATE: float = 12.0
 ## Level exit door: width and height in BL.
 const LEVEL_EXIT_WIDTH_BL: float = 1.0
 const LEVEL_EXIT_HEIGHT_BL: float = 2.0
+## Tint of an exit door that is shut (the cave's pressure-plate door while no statue
+## holds the plate down): the door still shows where to go, but dark.
+const EXIT_LOCKED_TINT: Color = Color(0.35, 0.3, 0.28, 1.0)
 ## Fade to black between levels: seconds out and seconds back in.
 const FADE_OUT_S: float = 0.35
 const FADE_IN_S: float = 0.35

@@ -25,6 +25,10 @@ const CAMERA_SCENE: PackedScene = preload("res://scenes/game_camera.tscn")
 @export var lighting: Lighting = Lighting.NOON
 ## Boss arena: the exit stays shut (hidden, no trigger) until Events.boss_defeated.
 @export var exit_locked: bool = false
+## True for a level whose exit door is held open by a pressure plate (the cave). The
+## door is shown dark and shut until the plate's `pressed` calls unlock_exit(); the
+## plate's `released` calls lock_exit() again. build_levels.gd wires those signals.
+@export var exit_needs_plate: bool = false
 
 @onready var _spawn: Marker2D = $Spawn
 @onready var _exit: Area2D = $LevelExit
@@ -49,6 +53,8 @@ func _ready() -> void:
 		_exit.visible = false
 		_exit.monitoring = false
 		Events.boss_defeated.connect(unlock_exit)
+	elif exit_needs_plate:
+		lock_exit()
 	if lighting == Lighting.STORM:
 		_lightning_timer = Timer.new()
 		_lightning_timer.one_shot = true
@@ -161,7 +167,16 @@ func _spawn_player() -> void:
 ## Open the exit (shown, trigger on). Deferred: it may be called during a physics callback.
 func unlock_exit() -> void:
 	_exit.visible = true
+	_exit.modulate = Color.WHITE
 	_exit.set_deferred("monitoring", true)
+
+
+## Shut the exit again (plate released): the door stays visible but dark, and walking
+## into it does nothing. Deferred like unlock_exit.
+func lock_exit() -> void:
+	_exit.visible = true
+	_exit.modulate = Balance.EXIT_LOCKED_TINT
+	_exit.set_deferred("monitoring", false)
 
 
 func _on_exit_body_entered(body: Node2D) -> void:
