@@ -3,7 +3,10 @@
 # one line per sim (exit code = number of failed checks; 124 = it hung and was killed).
 # Usage from the project root (Git Bash):  bash tools/run_sims.sh [name ...]
 # With no names it runs all tools/sim_*.tscn.
-G="${GODOT:-/c/Users/sphil/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe}"
+# Default Godot: the WinGet install under the current user's Local AppData folder, so no
+# username is written into the repo. cygpath turns Windows' C:\Users\... form into Git
+# Bash's /c/Users/... form. Set GODOT to use any other Godot build.
+G="${GODOT:-$(cygpath -u "${LOCALAPPDATA:-C:/missing}")/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe}"
 names=("$@")
 if [ ${#names[@]} -eq 0 ]; then
 	# sim_room.tscn is the shared test room the sims load, not a sim itself.
